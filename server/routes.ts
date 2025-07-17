@@ -285,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", async (req, res) => {
     try {
-      const validatedData = insertUserSchema.parse(req.body);
+      const validatedData = insertUserManagementSchema.parse(req.body);
       const user = await storage.createUser(validatedData);
       res.status(201).json(user);
     } catch (error) {
@@ -300,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/users/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const validatedData = insertUserSchema.partial().parse(req.body);
+      const validatedData = insertUserManagementSchema.partial().parse(req.body);
       const user = await storage.updateUser(id, validatedData);
       
       if (!user) {
@@ -388,6 +388,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Erro ao atualizar veículo" });
       }
+    }
+  });
+
+  app.patch("/api/vehicles/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      const vehicle = await storage.updateVehicle(id, { status });
+      
+      if (!vehicle) {
+        return res.status(404).json({ message: "Veículo não encontrado" });
+      }
+      
+      res.json(vehicle);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao atualizar status do veículo" });
     }
   });
 

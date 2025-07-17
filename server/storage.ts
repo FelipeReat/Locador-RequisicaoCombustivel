@@ -239,20 +239,20 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser | InsertUserManagement): Promise<User> {
     const id = this.currentUserId++;
     const now = new Date().toISOString();
     const user: User = { 
       ...insertUser, 
       id,
-      email: null,
-      fullName: null,
-      departmentId: null,
-      phone: null,
-      position: null,
-      role: "employee",
-      active: "true",
-      hireDate: null,
+      email: insertUser.email || null,
+      fullName: insertUser.fullName || null,
+      departmentId: insertUser.departmentId || null,
+      phone: insertUser.phone || null,
+      position: insertUser.position || null,
+      role: insertUser.role || "employee",
+      active: insertUser.active || "true",
+      hireDate: insertUser.hireDate || null,
       createdAt: now,
       updatedAt: now,
     };

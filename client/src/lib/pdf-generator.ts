@@ -322,169 +322,136 @@ export class PDFGenerator {
   }
 
   generatePurchaseOrderPDF(requisition: FuelRequisition): void {
-    this.addHeader({
-      title: 'ORDEM DE COMPRA - COMBUSTÍVEL',
-      subtitle: `Requisição #${String(requisition.id).padStart(4, '0')}`,
-      company: 'FuelControl System',
-      date: new Date().toLocaleDateString('pt-BR')
+    // Criar documento A4 com duas colunas lado a lado
+    this.doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
     });
 
-    // Informações do fornecedor (espaço para preenchimento)
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('DADOS DO FORNECEDOR', 20, this.currentY);
-    this.currentY += 10;
-
+    // Configurar fonte padrão
     this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
-    
-    // Campos em branco para preenchimento manual
-    const supplierFields = [
-      'Razão Social: ___________________________________________',
-      'CNPJ: _______________________   IE: ____________________',
-      'Endereço: __________________________________________',
-      'Telefone: ___________________   Email: __________________'
-    ];
+    this.doc.setFontSize(8);
 
-    supplierFields.forEach(field => {
-      this.doc.text(field, 20, this.currentY);
-      this.currentY += 8;
-    });
-
-    this.currentY += 10;
-
-    // Informações da requisição
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('DADOS DA REQUISIÇÃO', 20, this.currentY);
-    this.currentY += 10;
-
-    const requisitionInfo = [
-      ['Número da Requisição:', `#${String(requisition.id).padStart(4, '0')}`],
-      ['Solicitante:', requisition.requester],
-      ['Departamento:', this.getDepartmentLabel(requisition.department)],
-      ['Data da Solicitação:', new Date(requisition.createdAt).toLocaleDateString('pt-BR')],
-      ['Data Necessária:', new Date(requisition.requiredDate).toLocaleDateString('pt-BR')],
-      ['Aprovado por:', requisition.approver || 'N/A'],
-      ['Data de Aprovação:', requisition.approvedDate ? new Date(requisition.approvedDate).toLocaleDateString('pt-BR') : 'N/A']
-    ];
-
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
-    
-    requisitionInfo.forEach(([label, value]) => {
+    // Função para desenhar uma via do documento
+    const drawVia = (x: number, viaTitle: string) => {
+      let y = 20;
+      
+      // Título principal
+      this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text(label, 20, this.currentY);
+      this.doc.text('REQUISIÇÃO PARA ABASTECIMENTO COM COMBUSTÍVEIS', x, y, { maxWidth: 90 });
+      y += 15;
+      
+      // Título da via
+      this.doc.setFontSize(8);
+      this.doc.text(viaTitle, x, y);
+      y += 10;
+      
+      // Linha de requisição
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text(value, 70, this.currentY);
-      this.currentY += 6;
-    });
-
-    this.currentY += 10;
-
-    // Tabela de itens
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('ITENS SOLICITADOS', 20, this.currentY);
-    this.currentY += 10;
-
-    const itemData = [
-      [
-        '001',
-        this.getFuelTypeLabel(requisition.fuelType),
-        `${requisition.quantity}`,
-        'Litros',
-        this.calculateEstimatedValue(requisition.fuelType, parseInt(requisition.quantity)),
-        this.calculateEstimatedValue(requisition.fuelType, parseInt(requisition.quantity))
-      ]
-    ];
-
-    autoTable(this.doc, {
-      head: [['Item', 'Descrição', 'Qtd', 'Unid', 'Vlr Unit.', 'Vlr Total']],
-      body: itemData,
-      startY: this.currentY,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [52, 144, 220] },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 60 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 30 },
-        5: { cellWidth: 30 }
-      }
-    });
-
-    this.currentY = (this.doc as any).lastAutoTable.finalY + 15;
-
-    // Valor total
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text(`VALOR TOTAL: ${this.calculateEstimatedValue(requisition.fuelType, parseInt(requisition.quantity))}`, 120, this.currentY);
-    this.currentY += 15;
-
-    // Observações
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('OBSERVAÇÕES', 20, this.currentY);
-    this.currentY += 10;
-
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
-    const observations = [
-      `• Justificativa: ${requisition.justification}`,
-      '• Prazo de entrega conforme data necessária indicada acima',
-      '• Combustível deve atender às especificações técnicas da ANP',
-      '• Emitir nota fiscal para: FuelControl System',
-      '• Entrega no endereço: [A DEFINIR PELO SETOR DE COMPRAS]'
-    ];
-
-    observations.forEach(obs => {
-      const lines = this.doc.splitTextToSize(obs, 150);
-      this.doc.text(lines, 20, this.currentY);
-      this.currentY += lines.length * 5 + 2;
-    });
-
-    this.currentY += 10;
-
-    // Assinaturas
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('APROVAÇÕES', 20, this.currentY);
-    this.currentY += 15;
-
-    // Campos de assinatura
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
+      this.doc.text('REQUISIÇÃO | ID | EMISSÃO', x, y);
+      y += 5;
+      
+      // Dados da requisição
+      const requisitionId = String(requisition.id).padStart(4, '0');
+      const emissionDate = new Date(requisition.createdAt).toLocaleDateString('pt-BR') + ' ' + 
+                          new Date(requisition.createdAt).toLocaleTimeString('pt-BR');
+      this.doc.text(`${requisitionId}   ${emissionDate}`, x, y);
+      y += 10;
+      
+      // FORNECEDOR
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('FORNECEDOR', x, y);
+      y += 5;
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text('CPF/CNPJ: 10.272.444/0001-30', x, y);
+      y += 4;
+      this.doc.text('Nome Empresarial: D DA C SAMPAIO COMERCIO', x, y);
+      y += 3;
+      this.doc.text('DE COMBUSTIVEIS LTDA', x, y);
+      y += 4;
+      this.doc.text('Contato: CARLOS', x, y);
+      y += 4;
+      this.doc.text('Telefone: (92) 9883-8218', x, y);
+      y += 4;
+      this.doc.text('Celular: (92) 98838-2180', x, y);
+      y += 4;
+      this.doc.text('E-Mail: csilva@blomaq.com.br', x, y);
+      y += 8;
+      
+      // CLIENTE
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('CLIENTE', x, y);
+      y += 5;
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text('CPF/CNPJ: 13.844.973/0001-59', x, y);
+      y += 4;
+      this.doc.text('Nome Empresarial: BBM SERVICOS,', x, y);
+      y += 3;
+      this.doc.text('ALUGUEL DE MAQUINAS E TECNOLOGIA LT', x, y);
+      y += 4;
+      this.doc.text('Contato: CLEVERSON', x, y);
+      y += 4;
+      this.doc.text('Telefone: (92) 3233-0634', x, y);
+      y += 4;
+      this.doc.text('Celular: (92) 99378-4409', x, y);
+      y += 4;
+      this.doc.text('E-Mail: csilva@blomaq.com.br', x, y);
+      y += 8;
+      
+      // VEÍCULO
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('VEÍCULO', x, y);
+      y += 5;
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text('Placa: TAC-5I79', x, y);
+      y += 4;
+      this.doc.text('Marca/Modelo: HONDA/CG 160 CARGO', x, y);
+      y += 4;
+      this.doc.text('Cor: BRANCA', x, y);
+      y += 4;
+      this.doc.text('Hodometro: 22.004', x, y);
+      y += 8;
+      
+      // ABASTECIMENTO
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('ABASTECIMENTO', x, y);
+      y += 5;
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text('Tanque Cheio.    QTI. / L        R$/L', x, y);
+      this.doc.text('[R$] TOTAL', x + 65, y);
+      y += 5;
+      
+      // Dados do abastecimento (usando dados da requisição)
+      const quantity = parseFloat(requisition.quantity) || 0;
+      const pricePerLiter = 6.99; // Preço fixo como no template
+      const total = quantity * pricePerLiter;
+      
+      this.doc.text(`                 ${quantity.toFixed(3)}`, x, y);
+      this.doc.text(`${pricePerLiter.toFixed(3)}`, x + 35, y);
+      this.doc.text(`${total.toFixed(2)}`, x + 65, y);
+      y += 30;
+      
+      // Assinatura
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('ALEXANDRE SERRÃO DE SOUZA', x, y);
+      y += 5;
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text('OBRIGATÓRIO ANEXAR GRAMPEADO', x, y);
+      y += 3;
+      this.doc.text('O CUPOM FISCAL NA VIA BLOMAQ.', x, y);
+    };
     
-    // Solicitante
-    this.doc.text('_' + '_'.repeat(40), 20, this.currentY);
-    this.doc.text('_' + '_'.repeat(20), 120, this.currentY);
-    this.currentY += 8;
-    this.doc.text(`${requisition.requester}`, 20, this.currentY);
-    this.doc.text('Data: ___/___/____', 120, this.currentY);
-    this.currentY += 4;
-    this.doc.text('Solicitante', 20, this.currentY);
-    this.currentY += 15;
-
-    // Aprovador
-    this.doc.text('_' + '_'.repeat(40), 20, this.currentY);
-    this.doc.text('_' + '_'.repeat(20), 120, this.currentY);
-    this.currentY += 8;
-    this.doc.text(`${requisition.approver || 'Aprovador'}`, 20, this.currentY);
-    this.doc.text('Data: ___/___/____', 120, this.currentY);
-    this.currentY += 4;
-    this.doc.text('Aprovador', 20, this.currentY);
-    this.currentY += 15;
-
-    // Responsável por compras
-    this.doc.text('_' + '_'.repeat(40), 20, this.currentY);
-    this.doc.text('_' + '_'.repeat(20), 120, this.currentY);
-    this.currentY += 8;
-    this.doc.text('Responsável por Compras', 20, this.currentY);
-    this.doc.text('Data: ___/___/____', 120, this.currentY);
-
-    this.addFooter();
+    // Desenhar 1ª via (lado esquerdo)
+    drawVia(10, '1ª Via - Fornecedor');
+    
+    // Desenhar 2ª via (lado direito)
+    drawVia(110, '2ª Via - Cliente');
+    
+    // Linha vertical separadora
+    this.doc.setLineWidth(0.5);
+    this.doc.line(105, 10, 105, 280);
   }
 
   save(filename: string): void {
