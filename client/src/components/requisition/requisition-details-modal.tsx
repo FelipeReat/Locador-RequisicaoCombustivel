@@ -13,7 +13,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import StatusBadge from "./status-badge";
-import { X, Edit, Check, Loader2 } from "lucide-react";
+import { PDFGenerator } from "@/lib/pdf-generator";
+import { X, Edit, Check, Loader2, FileText } from "lucide-react";
 import { useState } from "react";
 
 interface RequisitionDetailsModalProps {
@@ -125,6 +126,25 @@ export default function RequisitionDetailsModal({
     return labels[priority as keyof typeof labels] || priority;
   };
 
+  const generatePurchasePDF = () => {
+    try {
+      const pdfGenerator = new PDFGenerator();
+      pdfGenerator.generatePurchaseOrderPDF(requisition);
+      pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
+      
+      toast({
+        title: "PDF Gerado",
+        description: "Ordem de compra gerada com sucesso!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!requisition) return null;
 
   return (
@@ -226,6 +246,17 @@ export default function RequisitionDetailsModal({
 
         <DialogFooter className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex space-x-3">
+            {(requisition.status === "approved" || requisition.status === "fulfilled") && (
+              <Button
+                variant="outline"
+                onClick={generatePurchasePDF}
+                className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+              >
+                <FileText className="mr-1 h-4 w-4" />
+                Gerar Ordem de Compra
+              </Button>
+            )}
+
             {requisition.status === "pending" && onEdit && (
               <Button
                 variant="outline"

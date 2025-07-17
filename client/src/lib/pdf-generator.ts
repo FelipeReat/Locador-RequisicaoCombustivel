@@ -321,6 +321,172 @@ export class PDFGenerator {
     return quantity * price;
   }
 
+  generatePurchaseOrderPDF(requisition: FuelRequisition): void {
+    this.addHeader({
+      title: 'ORDEM DE COMPRA - COMBUSTÍVEL',
+      subtitle: `Requisição #${String(requisition.id).padStart(4, '0')}`,
+      company: 'FuelControl System',
+      date: new Date().toLocaleDateString('pt-BR')
+    });
+
+    // Informações do fornecedor (espaço para preenchimento)
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('DADOS DO FORNECEDOR', 20, this.currentY);
+    this.currentY += 10;
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    
+    // Campos em branco para preenchimento manual
+    const supplierFields = [
+      'Razão Social: ___________________________________________',
+      'CNPJ: _______________________   IE: ____________________',
+      'Endereço: __________________________________________',
+      'Telefone: ___________________   Email: __________________'
+    ];
+
+    supplierFields.forEach(field => {
+      this.doc.text(field, 20, this.currentY);
+      this.currentY += 8;
+    });
+
+    this.currentY += 10;
+
+    // Informações da requisição
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('DADOS DA REQUISIÇÃO', 20, this.currentY);
+    this.currentY += 10;
+
+    const requisitionInfo = [
+      ['Número da Requisição:', `#${String(requisition.id).padStart(4, '0')}`],
+      ['Solicitante:', requisition.requester],
+      ['Departamento:', this.getDepartmentLabel(requisition.department)],
+      ['Data da Solicitação:', new Date(requisition.createdAt).toLocaleDateString('pt-BR')],
+      ['Data Necessária:', new Date(requisition.requiredDate).toLocaleDateString('pt-BR')],
+      ['Aprovado por:', requisition.approver || 'N/A'],
+      ['Data de Aprovação:', requisition.approvedDate ? new Date(requisition.approvedDate).toLocaleDateString('pt-BR') : 'N/A']
+    ];
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    
+    requisitionInfo.forEach(([label, value]) => {
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(label, 20, this.currentY);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(value, 70, this.currentY);
+      this.currentY += 6;
+    });
+
+    this.currentY += 10;
+
+    // Tabela de itens
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('ITENS SOLICITADOS', 20, this.currentY);
+    this.currentY += 10;
+
+    const itemData = [
+      [
+        '001',
+        this.getFuelTypeLabel(requisition.fuelType),
+        `${requisition.quantity}`,
+        'Litros',
+        this.calculateEstimatedValue(requisition.fuelType, parseInt(requisition.quantity)),
+        this.calculateEstimatedValue(requisition.fuelType, parseInt(requisition.quantity))
+      ]
+    ];
+
+    autoTable(this.doc, {
+      head: [['Item', 'Descrição', 'Qtd', 'Unid', 'Vlr Unit.', 'Vlr Total']],
+      body: itemData,
+      startY: this.currentY,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [52, 144, 220] },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 60 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 30 },
+        5: { cellWidth: 30 }
+      }
+    });
+
+    this.currentY = (this.doc as any).lastAutoTable.finalY + 15;
+
+    // Valor total
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text(`VALOR TOTAL: ${this.calculateEstimatedValue(requisition.fuelType, parseInt(requisition.quantity))}`, 120, this.currentY);
+    this.currentY += 15;
+
+    // Observações
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('OBSERVAÇÕES', 20, this.currentY);
+    this.currentY += 10;
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    const observations = [
+      `• Justificativa: ${requisition.justification}`,
+      '• Prazo de entrega conforme data necessária indicada acima',
+      '• Combustível deve atender às especificações técnicas da ANP',
+      '• Emitir nota fiscal para: FuelControl System',
+      '• Entrega no endereço: [A DEFINIR PELO SETOR DE COMPRAS]'
+    ];
+
+    observations.forEach(obs => {
+      const lines = this.doc.splitTextToSize(obs, 150);
+      this.doc.text(lines, 20, this.currentY);
+      this.currentY += lines.length * 5 + 2;
+    });
+
+    this.currentY += 10;
+
+    // Assinaturas
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('APROVAÇÕES', 20, this.currentY);
+    this.currentY += 15;
+
+    // Campos de assinatura
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    
+    // Solicitante
+    this.doc.text('_' + '_'.repeat(40), 20, this.currentY);
+    this.doc.text('_' + '_'.repeat(20), 120, this.currentY);
+    this.currentY += 8;
+    this.doc.text(`${requisition.requester}`, 20, this.currentY);
+    this.doc.text('Data: ___/___/____', 120, this.currentY);
+    this.currentY += 4;
+    this.doc.text('Solicitante', 20, this.currentY);
+    this.currentY += 15;
+
+    // Aprovador
+    this.doc.text('_' + '_'.repeat(40), 20, this.currentY);
+    this.doc.text('_' + '_'.repeat(20), 120, this.currentY);
+    this.currentY += 8;
+    this.doc.text(`${requisition.approver || 'Aprovador'}`, 20, this.currentY);
+    this.doc.text('Data: ___/___/____', 120, this.currentY);
+    this.currentY += 4;
+    this.doc.text('Aprovador', 20, this.currentY);
+    this.currentY += 15;
+
+    // Responsável por compras
+    this.doc.text('_' + '_'.repeat(40), 20, this.currentY);
+    this.doc.text('_' + '_'.repeat(20), 120, this.currentY);
+    this.currentY += 8;
+    this.doc.text('Responsável por Compras', 20, this.currentY);
+    this.doc.text('Data: ___/___/____', 120, this.currentY);
+
+    this.addFooter();
+  }
+
   save(filename: string): void {
     this.doc.save(filename);
   }
