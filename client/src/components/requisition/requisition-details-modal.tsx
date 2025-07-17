@@ -131,7 +131,7 @@ export default function RequisitionDetailsModal({
       const pdfGenerator = new PDFGenerator();
       pdfGenerator.generatePurchaseOrderPDF(requisition);
       pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
-      
+
       toast({
         title: "PDF Gerado",
         description: "Ordem de compra gerada com sucesso!",

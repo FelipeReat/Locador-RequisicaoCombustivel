@@ -1,51 +1,54 @@
-import { Clock, CheckCircle, XCircle, Package } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/language-context";
+
+type Status = "pending" | "approved" | "rejected" | "fulfilled";
 
 interface StatusBadgeProps {
-  status: "pending" | "approved" | "rejected" | "fulfilled";
+  status: Status;
 }
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
-  const getStatusConfig = () => {
+  const { t } = useLanguage();
+
+  const getStatusConfig = (status: Status) => {
     switch (status) {
       case "pending":
         return {
-          label: "Pendente",
-          icon: Clock,
-          className: "status-badge status-pending",
+          label: t('pending'),
+          variant: "secondary" as const,
+          className: "bg-yellow-100 text-yellow-800",
         };
       case "approved":
         return {
-          label: "Aprovada",
-          icon: CheckCircle,
-          className: "status-badge status-approved",
+          label: t('approved'),
+          variant: "secondary" as const,
+          className: "bg-green-100 text-green-800",
         };
       case "rejected":
         return {
-          label: "Rejeitada",
-          icon: XCircle,
-          className: "status-badge status-rejected",
+          label: t('rejected'),
+          variant: "destructive" as const,
+          className: "bg-red-100 text-red-800",
         };
       case "fulfilled":
         return {
-          label: "Cumprida",
-          icon: Package,
-          className: "status-badge status-fulfilled",
+          label: t('fulfilled'),
+          variant: "secondary" as const,
+          className: "bg-blue-100 text-blue-800",
         };
       default:
         return {
-          label: "Desconhecido",
-          icon: Clock,
-          className: "status-badge",
+          label: status,
+          variant: "secondary" as const,
+          className: "",
         };
     }
   };
-
-  const { label, icon: Icon, className } = getStatusConfig();
+  const { label, variant, className } = getStatusConfig(status);
 
   return (
-    <span className={className}>
-      <Icon className="mr-1 h-3 w-3 inline" />
+    <Badge variant={variant} className={className}>
       {label}
-    </span>
+    </Badge>
   );
 }

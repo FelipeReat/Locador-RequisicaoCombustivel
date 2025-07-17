@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { insertFuelRequisitionSchema, type InsertFuelRequisition, type FuelRequisition } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
 import { PDFGenerator } from "@/lib/pdf-generator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ interface RequisitionFormProps {
 export default function RequisitionForm({ onSuccess, requisition }: RequisitionFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
 
   const form = useForm<InsertFuelRequisition>({
     resolver: zodResolver(insertFuelRequisitionSchema),
@@ -57,8 +59,8 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
       toast({
-        title: "Sucesso",
-        description: "Requisição criada com sucesso!",
+        title: t("success"),
+        description: t("form-saved"),
       });
       
       // Gerar PDF automaticamente
@@ -71,8 +73,8 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
     },
     onError: (error) => {
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao criar requisição",
+        title: t("error"),
+        description: error.message || t("operation-failed"),
         variant: "destructive",
       });
     },
@@ -110,9 +112,9 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
             name="requester"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Solicitante *</FormLabel>
+                <FormLabel>{t('requester-label')} *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nome do solicitante" {...field} />
+                  <Input placeholder={t('requester-placeholder')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -124,18 +126,18 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
             name="department"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Departamento *</FormLabel>
+                <FormLabel>{t('department-label')} *</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um departamento" />
+                      <SelectValue placeholder={t('select-department-placeholder')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="logistica">Logística</SelectItem>
-                    <SelectItem value="manutencao">Manutenção</SelectItem>
-                    <SelectItem value="transporte">Transporte</SelectItem>
-                    <SelectItem value="operacoes">Operações</SelectItem>
+                    <SelectItem value="logistica">{t('logistics')}</SelectItem>
+                    <SelectItem value="manutencao">{t('maintenance')}</SelectItem>
+                    <SelectItem value="transporte">{t('transport')}</SelectItem>
+                    <SelectItem value="operacoes">{t('operations')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -150,18 +152,18 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
             name="fuelType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tipo de Combustível *</FormLabel>
+                <FormLabel>{t('fuel-type-label')} *</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o combustível" />
+                      <SelectValue placeholder={t('select-fuel-type')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="gasolina">Gasolina</SelectItem>
-                    <SelectItem value="etanol">Etanol</SelectItem>
-                    <SelectItem value="diesel">Diesel</SelectItem>
-                    <SelectItem value="diesel_s10">Diesel S10</SelectItem>
+                    <SelectItem value="gasolina">{t('gasoline')}</SelectItem>
+                    <SelectItem value="etanol">{t('ethanol')}</SelectItem>
+                    <SelectItem value="diesel">{t('diesel')}</SelectItem>
+                    <SelectItem value="diesel_s10">{t('diesel-s10')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -174,9 +176,9 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
             name="quantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quantidade (Litros) *</FormLabel>
+                <FormLabel>{t('quantity-liters')} *</FormLabel>
                 <FormControl>
-                  <Input type="number" min="1" placeholder="Ex: 500" {...field} />
+                  <Input type="number" min="1" placeholder={t('quantity-placeholder')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -189,11 +191,11 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
           name="justification"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Justificativa *</FormLabel>
+              <FormLabel>{t('justification-label-form')} *</FormLabel>
               <FormControl>
                 <Textarea
                   rows={4}
-                  placeholder="Descreva a necessidade do combustível..."
+                  placeholder={t('justification-placeholder')}
                   {...field}
                 />
               </FormControl>
@@ -208,7 +210,7 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
             name="requiredDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Data Necessária *</FormLabel>
+                <FormLabel>{t('needed-date-form')} *</FormLabel>
                 <FormControl>
                   <Input 
                     type="date" 
@@ -227,7 +229,7 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
             name="priority"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prioridade</FormLabel>
+                <FormLabel>{t('priority-form')}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -235,10 +237,10 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="media">Média</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                    <SelectItem value="urgente">Urgente</SelectItem>
+                    <SelectItem value="baixa">{t('low')}</SelectItem>
+                    <SelectItem value="media">{t('medium-priority')}</SelectItem>
+                    <SelectItem value="alta">{t('high')}</SelectItem>
+                    <SelectItem value="urgente">{t('urgent')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -249,13 +251,13 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
 
         <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
           <Button type="button" variant="outline" onClick={() => form.reset()}>
-            Cancelar
+            {t('cancel')}
           </Button>
           <Button type="submit" disabled={createRequisition.isPending}>
             {createRequisition.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Criar Requisição
+            {t('create-requisition')}
           </Button>
         </div>
       </form>

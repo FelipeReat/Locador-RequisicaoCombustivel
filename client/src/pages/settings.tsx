@@ -347,10 +347,10 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Lock className="mr-2 h-5 w-5" />
-                    Alterar Senha
+                    {t('change-password-title')}
                   </CardTitle>
                   <CardDescription>
-                    Mantenha sua conta segura com uma senha forte
+                    {t('keep-account-secure')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -362,9 +362,9 @@ export default function Settings() {
                           name="currentPassword"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Senha Atual *</FormLabel>
+                              <FormLabel>{t('current-password-label')} *</FormLabel>
                               <FormControl>
-                                <Input type="password" placeholder="Digite sua senha atual" {...field} />
+                                <Input type="password" placeholder={t('current-password-placeholder')} {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -376,9 +376,9 @@ export default function Settings() {
                           name="newPassword"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Nova Senha *</FormLabel>
+                              <FormLabel>{t('new-password-label')} *</FormLabel>
                               <FormControl>
-                                <Input type="password" placeholder="Digite sua nova senha" {...field} />
+                                <Input type="password" placeholder={t('new-password-placeholder')} {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -390,9 +390,9 @@ export default function Settings() {
                           name="confirmPassword"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Confirmar Nova Senha *</FormLabel>
+                              <FormLabel>{t('confirm-new-password')} *</FormLabel>
                               <FormControl>
-                                <Input type="password" placeholder="Confirme sua nova senha" {...field} />
+                                <Input type="password" placeholder={t('confirm-password-placeholder')} {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -404,7 +404,7 @@ export default function Settings() {
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           )}
                           <Shield className="mr-2 h-4 w-4" />
-                          Alterar Senha
+                          {t('change-password-button')}
                         </Button>
                       </form>
                     </Form>
@@ -414,8 +414,8 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Dicas de Segurança</CardTitle>
-                  <CardDescription>Mantenha sua conta sempre segura</CardDescription>
+                  <CardTitle>{t('security-tips')}</CardTitle>
+                  <CardDescription>{t('keep-account-always-secure')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm text-gray-600">
@@ -434,18 +434,18 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Bell className="mr-2 h-5 w-5" />
-                    {t('notification-settings')}
+                    {t('notification-settings-title')}
                   </CardTitle>
                   <CardDescription>
-                    Configure como e quando você deseja receber notificações
+                    {t('configure-notifications')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">{t('new-requisitions')}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Receba notificações quando uma nova requisição for criada</p>
+                        <h4 className="font-medium">{t('new-requisitions-notif')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{t('new-requisitions-desc')}</p>
                       </div>
                       <Button 
                         variant={notificationSettings.newRequisitions ? "default" : "outline"} 
@@ -458,8 +458,8 @@ export default function Settings() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">{t('pending-approvals')}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Notificações sobre requisições aguardando aprovação</p>
+                        <h4 className="font-medium">{t('pending-approvals-notif')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{t('pending-approvals-desc')}</p>
                       </div>
                       <Button 
                         variant={notificationSettings.pendingApprovals ? "default" : "outline"} 
@@ -507,10 +507,10 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <SettingsIcon className="mr-2 h-5 w-5" />
-                    Configurações do Sistema
+                    {t('system-configurations')}
                   </CardTitle>
                   <CardDescription>
-                    Personalize a aparência e comportamento do sistema
+                    {t('customize-appearance-behavior')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

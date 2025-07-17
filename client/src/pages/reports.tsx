@@ -213,7 +213,7 @@ export default function Reports() {
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                Total de Requisições
+                {t('total-requisitions')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -226,7 +226,7 @@ export default function Reports() {
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                Taxa de Aprovação
+                {t('approval-rate')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -241,7 +241,7 @@ export default function Reports() {
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                Total Consumido
+                {t('total-consumed')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -254,7 +254,7 @@ export default function Reports() {
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                Pendentes
+                {t('pending-label')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -270,14 +270,14 @@ export default function Reports() {
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
               <FileText className="mr-2 h-5 w-5" />
-              Exportar Relatórios
+              {t('export-reports')}
             </h3>
           </div>
           <div className="p-6">
             <div className="flex flex-wrap gap-4">
               <Button onClick={handleExportReport} className="flex items-center">
                 <Download className="mr-2 h-4 w-4" />
-                Exportar Relatório Completo
+                {t('export-complete-report')}
               </Button>
               
               <div className="flex items-center space-x-2">
@@ -312,7 +312,7 @@ export default function Reports() {
                 
                 <Button onClick={handleMonthlyAnalysis} className="flex items-center">
                   <Calendar className="mr-2 h-4 w-4" />
-                  Análise Mensal
+                  {t('monthly-analysis')}
                 </Button>
               </div>
             </div>
@@ -324,7 +324,7 @@ export default function Reports() {
           <CardHeader>
             <CardTitle className="text-gray-800 dark:text-white flex items-center">
               <BarChart3 className="mr-2 h-5 w-5" />
-              Tendência Mensal ({selectedYear})
+              {t('monthly-trend')} ({selectedYear})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -359,7 +359,7 @@ export default function Reports() {
           {/* Department Chart */}
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle className="text-gray-800 dark:text-white">Consumo por Departamento</CardTitle>
+              <CardTitle className="text-gray-800 dark:text-white">{t('consumption-by-department')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -379,7 +379,7 @@ export default function Reports() {
           {/* Fuel Type Chart */}
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle className="text-gray-800 dark:text-white">Distribuição por Tipo de Combustível</CardTitle>
+              <CardTitle className="text-gray-800 dark:text-white">{t('distribution-by-fuel-type')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -410,16 +410,16 @@ export default function Reports() {
           {/* Department Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Detalhes por Departamento</CardTitle>
+              <CardTitle>{t('department-details')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2">Departamento</th>
-                      <th className="text-right py-2">Requisições</th>
-                      <th className="text-right py-2">Litros</th>
+                      <th className="text-left py-2">{t('department')}</th>
+                      <th className="text-right py-2">{t('requisitions-count')}</th>
+                      <th className="text-right py-2">{t('liters-count')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -441,16 +441,16 @@ export default function Reports() {
           {/* Fuel Type Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Detalhes por Tipo de Combustível</CardTitle>
+              <CardTitle>{t('fuel-type-details')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2">Combustível</th>
-                      <th className="text-right py-2">Requisições</th>
-                      <th className="text-right py-2">Litros</th>
+                      <th className="text-left py-2">{t('fuel-label')}</th>
+                      <th className="text-right py-2">{t('requisitions-count')}</th>
+                      <th className="text-right py-2">{t('liters-count')}</th>
                     </tr>
                   </thead>
                   <tbody>
