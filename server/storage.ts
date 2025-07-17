@@ -1,9 +1,12 @@
-import { users, fuelRequisitions, type User, type InsertUser, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus } from "@shared/schema";
+import { users, fuelRequisitions, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserProfile(id: number, profile: UpdateUserProfile): Promise<User | undefined>;
+  changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean>;
+  getCurrentUser(): Promise<User | undefined>;
   
   // Fuel Requisitions
   getFuelRequisitions(): Promise<FuelRequisition[]>;
@@ -46,6 +49,23 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    
+    // Sample user
+    const sampleUser: User = {
+      id: 1,
+      username: "joao.silva",
+      password: "123456",
+      email: "joao.silva@empresa.com",
+      fullName: "João Silva",
+      department: "administracao",
+      phone: "(11) 99999-9999",
+      position: "Gerente de Operações",
+      createdAt: yesterday.toISOString(),
+      updatedAt: yesterday.toISOString(),
+    };
+    
+    this.users.set(1, sampleUser);
+    this.currentUserId = 2;
     
     // Sample requisitions
     const sampleRequisitions = [
@@ -118,9 +138,52 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
+    const now = new Date().toISOString();
+    const user: User = { 
+      ...insertUser, 
+      id,
+      email: null,
+      fullName: null,
+      department: null,
+      phone: null,
+      position: null,
+      createdAt: now,
+      updatedAt: now,
+    };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUserProfile(id: number, profile: UpdateUserProfile): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updatedUser = {
+      ...user,
+      ...profile,
+      updatedAt: new Date().toISOString(),
+    };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean> {
+    const user = this.users.get(id);
+    if (!user || user.password !== currentPassword) return false;
+
+    const updatedUser = {
+      ...user,
+      password: newPassword,
+      updatedAt: new Date().toISOString(),
+    };
+    this.users.set(id, updatedUser);
+    return true;
+  }
+
+  async getCurrentUser(): Promise<User | undefined> {
+    // In a real app, this would get the current authenticated user
+    // For demo purposes, return the sample user
+    return this.users.get(1);
   }
 
   async getFuelRequisitions(): Promise<FuelRequisition[]> {

@@ -1,9 +1,60 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema } from "@shared/schema";
+import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // User routes
+  app.get("/api/user/profile", async (req, res) => {
+    try {
+      const user = await storage.getCurrentUser();
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar perfil do usuário" });
+    }
+  });
+
+  app.put("/api/user/profile", async (req, res) => {
+    try {
+      const validatedData = updateUserProfileSchema.parse(req.body);
+      const user = await storage.updateUserProfile(1, validatedData); // Using ID 1 for demo
+      
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao atualizar perfil" });
+      }
+    }
+  });
+
+  app.post("/api/user/change-password", async (req, res) => {
+    try {
+      const validatedData = changePasswordSchema.parse(req.body);
+      const success = await storage.changePassword(1, validatedData.currentPassword, validatedData.newPassword);
+      
+      if (!success) {
+        return res.status(400).json({ message: "Senha atual incorreta" });
+      }
+      
+      res.json({ message: "Senha alterada com sucesso" });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao alterar senha" });
+      }
+    }
+  });
+
   // Get all fuel requisitions
   app.get("/api/fuel-requisitions", async (req, res) => {
     try {

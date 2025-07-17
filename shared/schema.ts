@@ -6,6 +6,13 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email"),
+  fullName: text("full_name"),
+  department: text("department"),
+  phone: text("phone"),
+  position: text("position"),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
 });
 
 export const fuelRequisitions = pgTable("fuel_requisitions", {
@@ -28,6 +35,31 @@ export const fuelRequisitions = pgTable("fuel_requisitions", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+});
+
+export const updateUserProfileSchema = createInsertSchema(users, {
+  email: z.string().email("Email inválido").optional(),
+  fullName: z.string().min(1, "Nome completo é obrigatório"),
+  department: z.enum(["logistica", "manutencao", "transporte", "operacoes", "administracao"], {
+    errorMap: () => ({ message: "Departamento inválido" }),
+  }),
+  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional(),
+  position: z.string().min(1, "Cargo é obrigatório").optional(),
+}).pick({
+  email: true,
+  fullName: true,
+  department: true,
+  phone: true,
+  position: true,
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+  newPassword: z.string().min(6, "Nova senha deve ter pelo menos 6 caracteres"),
+  confirmPassword: z.string().min(1, "Confirmação de senha é obrigatória"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
 export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, {
@@ -69,6 +101,8 @@ export const updateFuelRequisitionStatusSchema = z.object({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
+export type ChangePassword = z.infer<typeof changePasswordSchema>;
 export type InsertFuelRequisition = z.infer<typeof insertFuelRequisitionSchema>;
 export type FuelRequisition = typeof fuelRequisitions.$inferSelect;
 export type UpdateFuelRequisitionStatus = z.infer<typeof updateFuelRequisitionStatusSchema>;
