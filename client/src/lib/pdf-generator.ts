@@ -23,31 +23,31 @@ export class PDFGenerator {
 
   private addHeader(options: PDFOptions) {
     const { title = 'Relatório de Requisições', subtitle, company = 'FuelControl System', date = new Date().toLocaleDateString('pt-BR') } = options;
-    
+
     // Logo/Company
     this.doc.setFontSize(16);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text(company, 20, this.currentY);
-    
+
     this.currentY += 15;
-    
+
     // Title
     this.doc.setFontSize(14);
     this.doc.text(title, 20, this.currentY);
-    
+
     if (subtitle) {
       this.currentY += 8;
       this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'normal');
       this.doc.text(subtitle, 20, this.currentY);
     }
-    
+
     // Date
     this.doc.setFontSize(10);
     this.doc.text(`Data: ${date}`, 150, 20);
-    
+
     this.currentY += 15;
-    
+
     // Line separator
     this.doc.setLineWidth(0.5);
     this.doc.line(20, this.currentY, 190, this.currentY);
@@ -79,7 +79,7 @@ export class PDFGenerator {
 
     this.doc.setFont('helvetica', 'normal');
     this.doc.setFontSize(10);
-    
+
     basicInfo.forEach(([label, value]) => {
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(label, 20, this.currentY);
@@ -104,7 +104,7 @@ export class PDFGenerator {
 
     this.doc.setFont('helvetica', 'normal');
     this.doc.setFontSize(10);
-    
+
     fuelInfo.forEach(([label, value]) => {
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(label, 20, this.currentY);
@@ -141,7 +141,7 @@ export class PDFGenerator {
 
       this.doc.setFont('helvetica', 'normal');
       this.doc.setFontSize(10);
-      
+
       approvalInfo.forEach(([label, value]) => {
         this.doc.setFont('helvetica', 'bold');
         this.doc.text(label, 20, this.currentY);
@@ -195,7 +195,7 @@ export class PDFGenerator {
 
     this.doc.setFont('helvetica', 'normal');
     this.doc.setFontSize(10);
-    
+
     statsData.forEach(([label, value]) => {
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(label, 20, this.currentY);
@@ -231,7 +231,7 @@ export class PDFGenerator {
 
   private addFooter(): void {
     const pageCount = this.doc.getNumberOfPages();
-    
+
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
       this.doc.setFontSize(8);
@@ -321,137 +321,198 @@ export class PDFGenerator {
     return quantity * price;
   }
 
-  generatePurchaseOrderPDF(requisition: FuelRequisition): void {
-    // Criar documento A4 com duas colunas lado a lado
-    this.doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+  generatePurchaseOrderPDF(requisition: any) {
+    this.doc = new jsPDF();
+    this.currentY = 20;
 
-    // Configurar fonte padrão
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(8);
+    // Função para criar uma via do documento
+    const createVia = (viaTitle: string) => {
+      // Cabeçalho
+      this.doc.setFontSize(16);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('REQUISIÇÃO PARA ABASTECIMENTO COM COMBUSTÍVEIS', 20, this.currentY);
+      this.currentY += 15;
 
-    // Função para desenhar uma via do documento
-    const drawVia = (x: number, viaTitle: string) => {
-      let y = 20;
-      
-      // Título principal
+      this.doc.setFontSize(12);
+      this.doc.text(viaTitle, 20, this.currentY);
+      this.currentY += 15;
+
+      // Informações da requisição com dados reais
       this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('REQUISIÇÃO PARA ABASTECIMENTO COM COMBUSTÍVEIS', x, y, { maxWidth: 90 });
-      y += 15;
-      
-      // Título da via
-      this.doc.setFontSize(8);
-      this.doc.text(viaTitle, x, y);
-      y += 10;
-      
-      // Linha de requisição
+      this.doc.text('REQUISIÇÃO | ID | EMISSÃO', 20, this.currentY);
+      this.currentY += 5;
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text('REQUISIÇÃO | ID | EMISSÃO', x, y);
-      y += 5;
-      
-      // Dados da requisição
-      const requisitionId = String(requisition.id).padStart(4, '0');
-      const emissionDate = new Date(requisition.createdAt).toLocaleDateString('pt-BR') + ' ' + 
-                          new Date(requisition.createdAt).toLocaleTimeString('pt-BR');
-      this.doc.text(`${requisitionId}   ${emissionDate}`, x, y);
-      y += 10;
-      
-      // FORNECEDOR
+      const dataEmissao = new Date(requisition.createdAt).toLocaleDateString('pt-BR');
+      const horaEmissao = new Date(requisition.createdAt).toLocaleTimeString('pt-BR');
+      this.doc.text(`REQ${String(requisition.id).padStart(3, '0')} | ${dataEmissao} | ${horaEmissao}`, 20, this.currentY);
+      this.currentY += 15;
+
+      // Fornecedor (dados fixos da empresa)
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('FORNECEDOR', x, y);
-      y += 5;
+      this.doc.text('FORNECEDOR', 20, this.currentY);
+      this.currentY += 5;
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text('CPF/CNPJ: 10.272.444/0001-30', x, y);
-      y += 4;
-      this.doc.text('Nome Empresarial: D DA C SAMPAIO COMERCIO', x, y);
-      y += 3;
-      this.doc.text('DE COMBUSTIVEIS LTDA', x, y);
-      y += 4;
-      this.doc.text('Contato: CARLOS', x, y);
-      y += 4;
-      this.doc.text('Telefone: (92) 9883-8218', x, y);
-      y += 4;
-      this.doc.text('Celular: (92) 98838-2180', x, y);
-      y += 4;
-      this.doc.text('E-Mail: csilva@blomaq.com.br', x, y);
-      y += 8;
-      
-      // CLIENTE
+
+      const fornecedorInfo = [
+        'CPF/CNPJ: 22.222.444/0001-30',
+        'Nome Empresarial: D DA C SAMPAIO COMERCIO',
+        'DE COMBUSTIVEIS LTDA',
+        'Contato: CARLOS',
+        'Telefone: (92) 9883-8218',
+        'Celular: (92) 98838-2180',
+        'E-Mail: csilva@blomaq.com.br'
+      ];
+
+      fornecedorInfo.forEach(info => {
+        this.doc.text(info, 20, this.currentY);
+        this.currentY += 5;
+      });
+      this.currentY += 10;
+
+      // Cliente (dados da empresa)
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('CLIENTE', x, y);
-      y += 5;
+      this.doc.text('CLIENTE', 20, this.currentY);
+      this.currentY += 5;
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text('CPF/CNPJ: 13.844.973/0001-59', x, y);
-      y += 4;
-      this.doc.text('Nome Empresarial: BBM SERVICOS,', x, y);
-      y += 3;
-      this.doc.text('ALUGUEL DE MAQUINAS E TECNOLOGIA LT', x, y);
-      y += 4;
-      this.doc.text('Contato: CLEVERSON', x, y);
-      y += 4;
-      this.doc.text('Telefone: (92) 3233-0634', x, y);
-      y += 4;
-      this.doc.text('Celular: (92) 99378-4409', x, y);
-      y += 4;
-      this.doc.text('E-Mail: csilva@blomaq.com.br', x, y);
-      y += 8;
-      
-      // VEÍCULO
+
+      const clienteInfo = [
+        'CPF/CNPJ: 13.844.973/0001-59',
+        'Nome Empresarial: BBM SERVIÇOS,',
+        'ALUGUEL DE MÁQUINAS E TECNOLOGIA LT',
+        `Contato: ${requisition.requester}`,
+        `Departamento: ${this.getDepartmentLabel(requisition.department)}`,
+        'Telefone: (92) 3233-0634',
+        'E-Mail: csilva@blomaq.com.br'
+      ];
+
+      clienteInfo.forEach(info => {
+        this.doc.text(info, 20, this.currentY);
+        this.currentY += 5;
+      });
+      this.currentY += 10;
+
+      // Veículo (se houver informação do veículo na requisição)
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('VEÍCULO', x, y);
-      y += 5;
+      this.doc.text('VEÍCULO', 20, this.currentY);
+      this.currentY += 5;
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text('Placa: TAC-5I79', x, y);
-      y += 4;
-      this.doc.text('Marca/Modelo: HONDA/CG 160 CARGO', x, y);
-      y += 4;
-      this.doc.text('Cor: BRANCA', x, y);
-      y += 4;
-      this.doc.text('Hodometro: 22.004', x, y);
-      y += 8;
-      
-      // ABASTECIMENTO
+
+      const veiculoInfo = [
+        requisition.vehicleId ? `ID Veículo: ${requisition.vehicleId}` : 'Veículo: A ser definido',
+        `Tipo de Combustível: ${this.getFuelTypeLabel(requisition.fuelType)}`,
+        `Data Necessária: ${new Date(requisition.requiredDate).toLocaleDateString('pt-BR')}`,
+        `Prioridade: ${this.getPriorityLabel(requisition.priority)}`
+      ];
+
+      veiculoInfo.forEach(info => {
+        this.doc.text(info, 20, this.currentY);
+        this.currentY += 5;
+      });
+      this.currentY += 10;
+
+      // Abastecimento com dados reais da requisição
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('ABASTECIMENTO', x, y);
-      y += 5;
+      this.doc.text('ABASTECIMENTO', 20, this.currentY);
+      this.currentY += 10;
+
+      // Tabela de abastecimento
+      const headers = ['Combustível', 'QTD. / L', 'R$/L', '[R$] TOTAL'];
+      const colWidths = [50, 30, 25, 35];
+      let startX = 20;
+
+      // Cabeçalho da tabela
+      this.doc.setFont('helvetica', 'bold');
+      headers.forEach((header, index) => {
+        this.doc.text(header, startX, this.currentY);
+        startX += colWidths[index];
+      });
+      this.currentY += 8;
+
+      // Linha separadora
+      this.doc.line(20, this.currentY, 160, this.currentY);
+      this.currentY += 5;
+
+      // Dados da tabela com informações reais
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text('Tanque Cheio.    QTI. / L        R$/L', x, y);
-      this.doc.text('[R$] TOTAL', x + 65, y);
-      y += 5;
-      
-      // Dados do abastecimento (usando dados da requisição)
-      const quantity = parseFloat(requisition.quantity) || 0;
-      const pricePerLiter = 6.99; // Preço fixo como no template
-      const total = quantity * pricePerLiter;
-      
-      this.doc.text(`                 ${quantity.toFixed(3)}`, x, y);
-      this.doc.text(`${pricePerLiter.toFixed(3)}`, x + 35, y);
-      this.doc.text(`${total.toFixed(2)}`, x + 65, y);
-      y += 30;
-      
+      startX = 20;
+      const quantity = parseFloat(requisition.quantity);
+      const estimatedPrice = this.getEstimatedFuelPrice(requisition.fuelType);
+      const total = quantity * estimatedPrice;
+
+      const rowData = [
+        this.getFuelTypeLabel(requisition.fuelType),
+        quantity.toFixed(3),
+        `R$ ${estimatedPrice.toFixed(2)}`,
+        `R$ ${total.toFixed(2)}`
+      ];
+
+      rowData.forEach((data, index) => {
+        this.doc.text(data, startX, this.currentY);
+        startX += colWidths[index];
+      });
+      this.currentY += 10;
+
+      // Linha separadora
+      this.doc.line(20, this.currentY, 160, this.currentY);
+      this.currentY += 10;
+
+      // Justificativa
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('JUSTIFICATIVA:', 20, this.currentY);
+      this.currentY += 5;
+      this.doc.setFont('helvetica', 'normal');
+      const justificationLines = this.doc.splitTextToSize(requisition.justification, 150);
+      justificationLines.forEach((line: string) => {
+        this.doc.text(line, 20, this.currentY);
+        this.currentY += 5;
+      });
+      this.currentY += 10;
+
+      // Status e aprovação
+      if (requisition.status === 'approved' || requisition.status === 'fulfilled') {
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.text('APROVAÇÃO:', 20, this.currentY);
+        this.currentY += 5;
+        this.doc.setFont('helvetica', 'normal');
+        this.doc.text(`Aprovado por: ${requisition.approver || 'N/A'}`, 20, this.currentY);
+        this.currentY += 5;
+        if (requisition.approvedDate) {
+          this.doc.text(`Data de Aprovação: ${new Date(requisition.approvedDate).toLocaleDateString('pt-BR')}`, 20, this.currentY);
+          this.currentY += 5;
+        }
+        this.currentY += 10;
+      }
+
       // Assinatura
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('ALEXANDRE SERRÃO DE SOUZA', x, y);
-      y += 5;
+      this.doc.text('RESPONSÁVEL PELA REQUISIÇÃO', 20, this.currentY);
+      this.currentY += 5;
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text('OBRIGATÓRIO ANEXAR GRAMPEADO', x, y);
-      y += 3;
-      this.doc.text('O CUPOM FISCAL NA VIA BLOMAQ.', x, y);
+      this.doc.text(`Nome: ${requisition.requester}`, 20, this.currentY);
+      this.currentY += 5;
+      this.doc.text('Assinatura: ________________________', 20, this.currentY);
+      this.currentY += 5;
+      this.doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, this.currentY);
     };
-    
-    // Desenhar 1ª via (lado esquerdo)
-    drawVia(10, '1ª Via - Fornecedor');
-    
-    // Desenhar 2ª via (lado direito)
-    drawVia(110, '2ª Via - Cliente');
-    
-    // Linha vertical separadora
-    this.doc.setLineWidth(0.5);
-    this.doc.line(105, 10, 105, 280);
+
+    // Primeira via - Fornecedor
+    createVia('1ª Via - Fornecedor');
+
+    // Segunda via - Cliente
+    this.doc.addPage();
+    this.currentY = 20;
+    createVia('2ª Via - Cliente');
+  }
+
+  private getEstimatedFuelPrice(fuelType: string): number {
+    const prices = {
+      'gasolina': 6.20,
+      'etanol': 4.80,
+      'diesel': 6.90,
+      'diesel_s10': 7.10
+    };
+    return prices[fuelType as keyof typeof prices] || 6.00;
   }
 
   save(filename: string): void {
