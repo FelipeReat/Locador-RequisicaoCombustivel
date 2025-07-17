@@ -53,8 +53,8 @@ export default function Reports() {
   const handleExportReport = () => {
     if (!allRequisitions || allRequisitions.length === 0) {
       toast({
-        title: "Erro",
-        description: "Não há dados para exportar",
+        title: t("error"),
+        description: t("no-data-to-export"),
         variant: "destructive",
       });
       return;
@@ -70,13 +70,13 @@ export default function Reports() {
       pdfGenerator.save(`relatorio-completo-${new Date().toISOString().split('T')[0]}.pdf`);
       
       toast({
-        title: "Relatório Exportado",
-        description: "Relatório PDF baixado com sucesso!",
+        title: t("report-generated-success"),
+        description: t("complete-report-exported"),
       });
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Erro ao gerar relatório PDF",
+        title: t("error"),
+        description: t("report-generation-error"),
         variant: "destructive",
       });
     }
@@ -85,8 +85,8 @@ export default function Reports() {
   const handleMonthlyAnalysis = () => {
     if (!allRequisitions || allRequisitions.length === 0) {
       toast({
-        title: "Erro",
-        description: "Não há dados para análise",
+        title: t("error"),
+        description: t("no-data-for-analysis"),
         variant: "destructive",
       });
       return;
@@ -96,8 +96,8 @@ export default function Reports() {
     
     if (monthlyData.length === 0) {
       toast({
-        title: "Sem Dados",
-        description: `Não há requisições para ${getMonthName(selectedMonth)}/${selectedYear}`,
+        title: t("error"),
+        description: t("no-requisitions-for-period"),
         variant: "destructive",
       });
       return;
@@ -113,13 +113,13 @@ export default function Reports() {
       pdfGenerator.save(`analise-mensal-${selectedMonth + 1}-${selectedYear}.pdf`);
       
       toast({
-        title: "Análise Mensal Gerada",
-        description: "Relatório mensal PDF baixado com sucesso!",
+        title: t("report-generated-success"),
+        description: t("monthly-analysis-generated"),
       });
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Erro ao gerar análise mensal",
+        title: t("error"),
+        description: t("report-generation-error"),
         variant: "destructive",
       });
     }

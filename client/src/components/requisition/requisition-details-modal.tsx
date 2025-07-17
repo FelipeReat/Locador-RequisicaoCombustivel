@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { type FuelRequisition } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +32,7 @@ export default function RequisitionDetailsModal({
   onEdit,
 }: RequisitionDetailsModalProps) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionInput, setShowRejectionInput] = useState(false);
@@ -48,8 +50,8 @@ export default function RequisitionDetailsModal({
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
       toast({
-        title: "Sucesso",
-        description: "Status da requisição atualizado com sucesso!",
+        title: t("success"),
+        description: t("status-updated-success"),
       });
       onClose();
       setRejectionReason("");
@@ -74,8 +76,8 @@ export default function RequisitionDetailsModal({
   const handleReject = () => {
     if (!rejectionReason.trim()) {
       toast({
-        title: "Erro",
-        description: "Por favor, informe o motivo da rejeição",
+        title: t("error"),
+        description: t("rejection-reason-required"),
         variant: "destructive",
       });
       return;
@@ -133,13 +135,13 @@ export default function RequisitionDetailsModal({
       pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
 
       toast({
-        title: "PDF Gerado",
-        description: "Ordem de compra gerada com sucesso!",
+        title: t("pdf-generated-success"),
+        description: t("purchase-order-generated"),
       });
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Erro ao gerar PDF",
+        title: t("error"),
+        description: t("pdf-generation-error"),
         variant: "destructive",
       });
     }

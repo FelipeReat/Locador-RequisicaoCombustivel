@@ -317,6 +317,27 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-reports-notif': 'Relatórios Mensais',
     'monthly-reports-desc': 'Resumo mensal do consumo de combustível',
     
+    // Mensagens de notificação/toast
+    'requisition-created-success': 'Requisição criada com sucesso!',
+    'requisition-updated-success': 'Requisição atualizada com sucesso!',
+    'status-updated-success': 'Status da requisição atualizado com sucesso!',
+    'profile-updated-success': 'Perfil atualizado com sucesso!',
+    'password-changed-success': 'Senha alterada com sucesso!',
+    'report-generated-success': 'Relatório gerado com sucesso!',
+    'pdf-generated-success': 'PDF gerado com sucesso!',
+    'purchase-order-generated': 'Ordem de compra gerada com sucesso!',
+    'requisition-document-downloaded': 'Documento da requisição baixado com sucesso!',
+    'monthly-analysis-generated': 'Análise mensal gerada com sucesso!',
+    'complete-report-exported': 'Relatório completo exportado com sucesso!',
+    'operation-error': 'Erro na operação',
+    'form-validation-error': 'Corrija os erros no formulário',
+    'rejection-reason-required': 'Por favor, informe o motivo da rejeição',
+    'no-data-to-export': 'Não há dados para exportar',
+    'no-data-for-analysis': 'Não há dados para análise',
+    'no-requisitions-for-period': 'Não há requisições para o período selecionado',
+    'pdf-generation-error': 'Erro ao gerar PDF',
+    'report-generation-error': 'Erro ao gerar relatório',
+    
     // Configurações - Sistema
     'system-configurations': 'Configurações do Sistema',
     'customize-appearance-behavior': 'Personalize a aparência e comportamento do sistema',
@@ -334,6 +355,13 @@ const translations: Record<Language, Record<string, string>> = {
     'last-update-label': 'Última Atualização',
     'developed-by-label': 'Desenvolvido por',
     'fuelcontrol-team': 'Equipe FuelControl',
+    
+    // Dicas de segurança
+    'security-tip-1': 'Use uma senha com pelo menos 6 caracteres',
+    'security-tip-2': 'Inclua letras maiúsculas, minúsculas e números',
+    'security-tip-3': 'Não compartilhe sua senha com outras pessoas',
+    'security-tip-4': 'Altere sua senha regularmente',
+    'security-tip-5': 'Evite usar informações pessoais óbvias',
   },
   'en-US': {
     // Navigation
@@ -642,6 +670,27 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-reports-notif': 'Monthly Reports',
     'monthly-reports-desc': 'Monthly summary of fuel consumption',
     
+    // Notification/toast messages
+    'requisition-created-success': 'Requisition created successfully!',
+    'requisition-updated-success': 'Requisition updated successfully!',
+    'status-updated-success': 'Requisition status updated successfully!',
+    'profile-updated-success': 'Profile updated successfully!',
+    'password-changed-success': 'Password changed successfully!',
+    'report-generated-success': 'Report generated successfully!',
+    'pdf-generated-success': 'PDF generated successfully!',
+    'purchase-order-generated': 'Purchase order generated successfully!',
+    'requisition-document-downloaded': 'Requisition document downloaded successfully!',
+    'monthly-analysis-generated': 'Monthly analysis generated successfully!',
+    'complete-report-exported': 'Complete report exported successfully!',
+    'operation-error': 'Operation error',
+    'form-validation-error': 'Please fix form errors',
+    'rejection-reason-required': 'Please provide rejection reason',
+    'no-data-to-export': 'No data to export',
+    'no-data-for-analysis': 'No data for analysis',
+    'no-requisitions-for-period': 'No requisitions for selected period',
+    'pdf-generation-error': 'Error generating PDF',
+    'report-generation-error': 'Error generating report',
+    
     // Settings - System
     'system-configurations': 'System Settings',
     'customize-appearance-behavior': 'Customize system appearance and behavior',
@@ -659,6 +708,13 @@ const translations: Record<Language, Record<string, string>> = {
     'last-update-label': 'Last Update',
     'developed-by-label': 'Developed by',
     'fuelcontrol-team': 'FuelControl Team',
+    
+    // Security tips
+    'security-tip-1': 'Use a password with at least 6 characters',
+    'security-tip-2': 'Include uppercase, lowercase letters and numbers',
+    'security-tip-3': 'Do not share your password with others',
+    'security-tip-4': 'Change your password regularly',
+    'security-tip-5': 'Avoid using obvious personal information',
   },
   'es-ES': {
     // Navegación
@@ -967,6 +1023,27 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-reports-notif': 'Informes Mensuales',
     'monthly-reports-desc': 'Resumen mensual del consumo de combustible',
     
+    // Mensajes de notificación/toast
+    'requisition-created-success': '¡Requisición creada con éxito!',
+    'requisition-updated-success': '¡Requisición actualizada con éxito!',
+    'status-updated-success': '¡Estado de requisición actualizado con éxito!',
+    'profile-updated-success': '¡Perfil actualizado con éxito!',
+    'password-changed-success': '¡Contraseña cambiada con éxito!',
+    'report-generated-success': '¡Informe generado con éxito!',
+    'pdf-generated-success': '¡PDF generado con éxito!',
+    'purchase-order-generated': '¡Orden de compra generada con éxito!',
+    'requisition-document-downloaded': '¡Documento de requisición descargado con éxito!',
+    'monthly-analysis-generated': '¡Análisis mensual generado con éxito!',
+    'complete-report-exported': '¡Informe completo exportado con éxito!',
+    'operation-error': 'Error en la operación',
+    'form-validation-error': 'Por favor corrija los errores del formulario',
+    'rejection-reason-required': 'Por favor proporcione el motivo del rechazo',
+    'no-data-to-export': 'No hay datos para exportar',
+    'no-data-for-analysis': 'No hay datos para análisis',
+    'no-requisitions-for-period': 'No hay requisiciones para el período seleccionado',
+    'pdf-generation-error': 'Error al generar PDF',
+    'report-generation-error': 'Error al generar informe',
+    
     // Configuraciones - Sistema
     'system-configurations': 'Configuraciones del Sistema',
     'customize-appearance-behavior': 'Personalice la apariencia y comportamiento del sistema',
@@ -984,6 +1061,13 @@ const translations: Record<Language, Record<string, string>> = {
     'last-update-label': 'Última Actualización',
     'developed-by-label': 'Desarrollado por',
     'fuelcontrol-team': 'Equipo FuelControl',
+    
+    // Consejos de seguridad
+    'security-tip-1': 'Use una contraseña con al menos 6 caracteres',
+    'security-tip-2': 'Incluya letras mayúsculas, minúsculas y números',
+    'security-tip-3': 'No comparta su contraseña con otras personas',
+    'security-tip-4': 'Cambie su contraseña regularmente',
+    'security-tip-5': 'Evite usar información personal obvia',
   },
 };
 

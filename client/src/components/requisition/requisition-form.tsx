@@ -60,7 +60,7 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
       toast({
         title: t("success"),
-        description: t("form-saved"),
+        description: t("requisition-created-success"),
       });
       
       // Gerar PDF automaticamente
@@ -91,13 +91,13 @@ export default function RequisitionForm({ onSuccess, requisition }: RequisitionF
       pdfGenerator.save(`requisicao-${String(req.id).padStart(4, '0')}.pdf`);
       
       toast({
-        title: "PDF Gerado",
-        description: "Documento da requisição baixado com sucesso!",
+        title: t("pdf-generated-success"),
+        description: t("requisition-document-downloaded"),
       });
     } catch (error) {
       toast({
-        title: "Erro",
-        description: "Erro ao gerar PDF",
+        title: t("error"),
+        description: t("pdf-generation-error"),
         variant: "destructive",
       });
     }

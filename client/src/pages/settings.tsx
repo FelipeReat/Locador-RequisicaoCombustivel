@@ -86,14 +86,14 @@ export default function Settings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
       toast({
-        title: "Sucesso",
-        description: "Perfil atualizado com sucesso!",
+        title: t("success"),
+        description: t("profile-updated-success"),
       });
     },
     onError: (error) => {
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao atualizar perfil",
+        title: t("error"),
+        description: error.message || t("operation-error"),
         variant: "destructive",
       });
     },
@@ -107,14 +107,14 @@ export default function Settings() {
     onSuccess: () => {
       passwordForm.reset();
       toast({
-        title: "Sucesso",
-        description: "Senha alterada com sucesso!",
+        title: t("success"),
+        description: t("password-changed-success"),
       });
     },
     onError: (error) => {
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao alterar senha",
+        title: t("error"),
+        description: error.message || t("operation-error"),
         variant: "destructive",
       });
     },
@@ -418,12 +418,12 @@ export default function Settings() {
                   <CardDescription>{t('keep-account-always-secure')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• Use uma senha com pelo menos 6 caracteres</li>
-                    <li>• Inclua letras maiúsculas, minúsculas e números</li>
-                    <li>• Não compartilhe sua senha com outras pessoas</li>
-                    <li>• Altere sua senha regularmente</li>
-                    <li>• Evite usar informações pessoais óbvias</li>
+                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    <li>• {t('security-tip-1')}</li>
+                    <li>• {t('security-tip-2')}</li>
+                    <li>• {t('security-tip-3')}</li>
+                    <li>• {t('security-tip-4')}</li>
+                    <li>• {t('security-tip-5')}</li>
                   </ul>
                 </CardContent>
               </Card>
@@ -472,8 +472,8 @@ export default function Settings() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">{t('requisition-status')}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Atualizações sobre o status das suas requisições</p>
+                        <h4 className="font-medium">{t('requisition-status-notif')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{t('requisition-status-desc')}</p>
                       </div>
                       <Button 
                         variant={notificationSettings.requisitionStatus ? "default" : "outline"} 
@@ -486,8 +486,8 @@ export default function Settings() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">{t('monthly-reports')}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Resumo mensal do consumo de combustível</p>
+                        <h4 className="font-medium">{t('monthly-reports-notif')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{t('monthly-reports-desc')}</p>
                       </div>
                       <Button 
                         variant={notificationSettings.monthlyReports ? "default" : "outline"} 
@@ -517,8 +517,8 @@ export default function Settings() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">{t('theme')}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Escolha entre tema claro ou escuro</p>
+                        <h4 className="font-medium">{t('theme-label')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{t('choose-theme')}</p>
                       </div>
                       <Select value={theme} onValueChange={setTheme}>
                         <SelectTrigger className="w-32">
@@ -534,8 +534,8 @@ export default function Settings() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">{t('language')}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">Idioma da interface do sistema</p>
+                        <h4 className="font-medium">{t('language-label')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{t('system-interface-language')}</p>
                       </div>
                       <Select value={language} onValueChange={setLanguage}>
                         <SelectTrigger className="w-32">
@@ -551,8 +551,8 @@ export default function Settings() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Formato de Data</h4>
-                        <p className="text-sm text-gray-600">Como as datas são exibidas no sistema</p>
+                        <h4 className="font-medium">{t('date-format-label')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{t('how-dates-displayed')}</p>
                       </div>
                       <Select defaultValue="DD/MM/YYYY">
                         <SelectTrigger className="w-32">
@@ -568,8 +568,8 @@ export default function Settings() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Itens por Página</h4>
-                        <p className="text-sm text-gray-600">Número de itens exibidos nas tabelas</p>
+                        <h4 className="font-medium">{t('items-per-page-label')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{t('items-displayed-tables')}</p>
                       </div>
                       <Select defaultValue="20">
                         <SelectTrigger className="w-32">
@@ -589,22 +589,22 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Sobre o Sistema</CardTitle>
-                  <CardDescription>Informações sobre o FuelControl</CardDescription>
+                  <CardTitle>{t('about-system-title')}</CardTitle>
+                  <CardDescription>{t('about-fuelcontrol')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Versão:</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{t('version-label')}:</span>
                       <span className="text-sm font-medium">1.0.0</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Última Atualização:</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{t('last-update-label')}:</span>
                       <span className="text-sm font-medium">Janeiro 2025</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Desenvolvido por:</span>
-                      <span className="text-sm font-medium">Equipe FuelControl</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{t('developed-by-label')}:</span>
+                      <span className="text-sm font-medium">{t('fuelcontrol-team')}</span>
                     </div>
                   </div>
                 </CardContent>
