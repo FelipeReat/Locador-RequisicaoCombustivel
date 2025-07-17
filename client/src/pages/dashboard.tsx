@@ -70,56 +70,56 @@ export default function Dashboard() {
       <main className="flex-1 p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="stats-card">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="stats-icon primary">
-                <ClipboardList />
+              <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-3">
+                <ClipboardList className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600">Total Requisições</p>
-                <p className="text-2xl font-semibold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">Total Requisições</p>
+                <p className="text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.totalRequests || 0}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="stats-card">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="stats-icon warning">
-                <Clock />
+              <div className="bg-yellow-100 dark:bg-yellow-900 rounded-full p-3">
+                <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600">Pendentes</p>
-                <p className="text-2xl font-semibold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">Pendentes</p>
+                <p className="text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.pendingRequests || 0}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="stats-card">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="stats-icon success">
-                <CheckCircle />
+              <div className="bg-green-100 dark:bg-green-900 rounded-full p-3">
+                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600">Aprovadas</p>
-                <p className="text-2xl font-semibold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">Aprovadas</p>
+                <p className="text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.approvedRequests || 0}
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="stats-card">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="stats-icon error">
-                <Fuel />
+              <div className="bg-red-100 dark:bg-red-900 rounded-full p-3">
+                <Fuel className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600">Litros Consumidos</p>
-                <p className="text-2xl font-semibold text-gray-800">
+                <p className="text-sm text-gray-600 dark:text-gray-300">Litros Consumidos</p>
+                <p className="text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.totalLiters?.toLocaleString("pt-BR") || 0}
                 </p>
               </div>
@@ -128,15 +128,15 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">Ações Rápidas</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Ações Rápidas</h3>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button
                 onClick={() => setLocation("/new-requisition")}
-                className="flex items-center justify-center p-4 bg-blue-50 text-blue-600 hover:bg-blue-100 border-none"
+                className="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 border-none"
                 variant="outline"
               >
                 <Plus className="mr-3 h-5 w-5" />
@@ -145,7 +145,7 @@ export default function Dashboard() {
               
               <Button
                 onClick={() => setLocation("/requisitions?filter=pending")}
-                className="flex items-center justify-center p-4 bg-yellow-50 text-yellow-600 hover:bg-yellow-100 border-none"
+                className="flex items-center justify-center p-4 bg-yellow-50 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-800 border-none"
                 variant="outline"
               >
                 <Clock className="mr-3 h-5 w-5" />
@@ -154,7 +154,7 @@ export default function Dashboard() {
               
               <Button
                 onClick={() => setLocation("/reports")}
-                className="flex items-center justify-center p-4 bg-green-50 text-green-600 hover:bg-green-100 border-none"
+                className="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 border-none"
                 variant="outline"
               >
                 <BarChart3 className="mr-3 h-5 w-5" />
@@ -165,14 +165,14 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Requisitions */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Requisições Recentes</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Requisições Recentes</h3>
               <Button
                 variant="link"
                 onClick={() => setLocation("/requisitions")}
-                className="text-primary hover:text-blue-700"
+                className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
               >
                 Ver todas
               </Button>
@@ -181,63 +181,63 @@ export default function Dashboard() {
           
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Solicitante
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Departamento
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Combustível
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Quantidade
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Data
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {recentRequisitions.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                       Nenhuma requisição encontrada
                     </td>
                   </tr>
                 ) : (
                   recentRequisitions.map((requisition) => (
-                    <tr key={requisition.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <tr key={requisition.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         #REQ{String(requisition.id).padStart(3, "0")}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                         {requisition.requester}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                         {getDepartmentLabel(requisition.department)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                         {getFuelTypeLabel(requisition.fuelType)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                         {requisition.quantity}L
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={requisition.status as any} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                         {formatDate(requisition.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">

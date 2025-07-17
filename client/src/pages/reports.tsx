@@ -1,8 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import Header from "@/components/layout/header";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PDFGenerator } from "@/lib/pdf-generator";
+import { useToast } from "@/hooks/use-toast";
 import { 
   BarChart, 
   Bar, 
@@ -14,11 +18,19 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  LineChart,
+  Line
 } from "recharts";
-import { Download, FileText, TrendingUp } from "lucide-react";
+import { Download, FileText, TrendingUp, Calendar, BarChart3 } from "lucide-react";
+import type { FuelRequisition } from "@shared/schema";
 
 export default function Reports() {
+  const { toast } = useToast();
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [showMonthlyAnalysis, setShowMonthlyAnalysis] = useState(false);
+
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/fuel-requisitions/stats/overview"],
   });
@@ -31,27 +43,83 @@ export default function Reports() {
     queryKey: ["/api/fuel-requisitions/stats/fuel-type"],
   });
 
+  const { data: allRequisitions, isLoading: requisitionsLoading } = useQuery<FuelRequisition[]>({
+    queryKey: ["/api/fuel-requisitions"],
+  });
+
   const handleExportReport = () => {
-    // In a real application, this would generate and download a PDF or Excel file
-    const reportData = {
-      generatedAt: new Date().toISOString(),
-      stats,
-      departmentStats,
-      fuelTypeStats,
-    };
+    if (!allRequisitions || allRequisitions.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Não há dados para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const pdfGenerator = new PDFGenerator('landscape');
+      pdfGenerator.generateRequisitionsReport(allRequisitions, {
+        title: 'Relatório Completo de Requisições',
+        subtitle: `Período: ${new Date().toLocaleDateString('pt-BR')}`,
+        company: 'FuelControl System'
+      });
+      pdfGenerator.save(`relatorio-completo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      toast({
+        title: "Relatório Exportado",
+        description: "Relatório PDF baixado com sucesso!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar relatório PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMonthlyAnalysis = () => {
+    if (!allRequisitions || allRequisitions.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Não há dados para análise",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const monthlyData = filterRequisitionsByMonth(allRequisitions, selectedMonth, selectedYear);
     
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], {
-      type: "application/json",
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `fuel-report-${new Date().toISOString().split("T")[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (monthlyData.length === 0) {
+      toast({
+        title: "Sem Dados",
+        description: `Não há requisições para ${getMonthName(selectedMonth)}/${selectedYear}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const pdfGenerator = new PDFGenerator('landscape');
+      pdfGenerator.generateRequisitionsReport(monthlyData, {
+        title: 'Análise Mensal de Requisições',
+        subtitle: `Período: ${getMonthName(selectedMonth)} de ${selectedYear}`,
+        company: 'FuelControl System'
+      });
+      pdfGenerator.save(`analise-mensal-${selectedMonth + 1}-${selectedYear}.pdf`);
+      
+      toast({
+        title: "Análise Mensal Gerada",
+        description: "Relatório mensal PDF baixado com sucesso!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar análise mensal",
+        variant: "destructive",
+      });
+    }
   };
 
   const getDepartmentLabel = (department: string) => {
@@ -86,7 +154,45 @@ export default function Reports() {
     color: ["#1976D2", "#FF9800", "#4CAF50", "#F44336"][index % 4],
   })) || [];
 
-  if (statsLoading || departmentLoading || fuelTypeLoading) {
+  const filterRequisitionsByMonth = (requisitions: FuelRequisition[], month: number, year: number) => {
+    return requisitions.filter(req => {
+      const reqDate = new Date(req.createdAt);
+      return reqDate.getMonth() === month && reqDate.getFullYear() === year;
+    });
+  };
+
+  const getMonthName = (month: number) => {
+    const months = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    return months[month];
+  };
+
+  const generateMonthlyTrend = () => {
+    if (!allRequisitions) return [];
+    
+    const monthlyData = Array.from({ length: 12 }, (_, i) => ({
+      month: getMonthName(i),
+      requisitions: 0,
+      liters: 0
+    }));
+
+    allRequisitions.forEach(req => {
+      const reqDate = new Date(req.createdAt);
+      if (reqDate.getFullYear() === selectedYear) {
+        const month = reqDate.getMonth();
+        monthlyData[month].requisitions += 1;
+        monthlyData[month].liters += parseInt(req.quantity) || 0;
+      }
+    });
+
+    return monthlyData;
+  };
+
+  const monthlyTrendData = generateMonthlyTrend();
+
+  if (statsLoading || departmentLoading || fuelTypeLoading || requisitionsLoading) {
     return <LoadingSpinner message="Carregando relatórios..." />;
   }
 
@@ -100,27 +206,27 @@ export default function Reports() {
       <main className="flex-1 p-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Total de Requisições
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {stats?.totalRequests || 0}
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Taxa de Aprovação
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {stats?.totalRequests 
                   ? Math.round((stats.approvedRequests / stats.totalRequests) * 100)
                   : 0}%
@@ -128,27 +234,27 @@ export default function Reports() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Total Consumido
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {stats?.totalLiters?.toLocaleString("pt-BR") || 0}L
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Pendentes
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                 {stats?.pendingRequests || 0}
               </div>
             </CardContent>
@@ -156,37 +262,100 @@ export default function Reports() {
         </div>
 
         {/* Export Actions */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
               <FileText className="mr-2 h-5 w-5" />
               Exportar Relatórios
             </h3>
           </div>
           <div className="p-6">
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-4">
               <Button onClick={handleExportReport} className="flex items-center">
                 <Download className="mr-2 h-4 w-4" />
-                Exportar Dados (JSON)
+                Exportar Relatório Completo
               </Button>
-              <Button variant="outline" className="flex items-center">
-                <FileText className="mr-2 h-4 w-4" />
-                Relatório PDF
-              </Button>
-              <Button variant="outline" className="flex items-center">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Análise Mensal
-              </Button>
+              
+              <div className="flex items-center space-x-2">
+                <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <SelectItem key={i} value={i.toString()}>
+                        {getMonthName(i)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 3 }, (_, i) => {
+                      const year = new Date().getFullYear() - i;
+                      return (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                
+                <Button onClick={handleMonthlyAnalysis} className="flex items-center">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Análise Mensal
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Monthly Trend Chart */}
+        <Card className="bg-white dark:bg-gray-800 mb-8">
+          <CardHeader>
+            <CardTitle className="text-gray-800 dark:text-white flex items-center">
+              <BarChart3 className="mr-2 h-5 w-5" />
+              Tendência Mensal ({selectedYear})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={monthlyTrendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="requisitions" 
+                  stroke="#1976D2" 
+                  strokeWidth={2}
+                  name="Requisições"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="liters" 
+                  stroke="#FF9800" 
+                  strokeWidth={2}
+                  name="Litros"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Department Chart */}
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle>Consumo por Departamento</CardTitle>
+              <CardTitle className="text-gray-800 dark:text-white">Consumo por Departamento</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -204,9 +373,9 @@ export default function Reports() {
           </Card>
 
           {/* Fuel Type Chart */}
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle>Distribuição por Tipo de Combustível</CardTitle>
+              <CardTitle className="text-gray-800 dark:text-white">Distribuição por Tipo de Combustível</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>

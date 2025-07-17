@@ -8,6 +8,20 @@ FuelControl is a comprehensive fuel requisition management system built with a m
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+**July 17, 2025 - PDF Generation and Theme Improvements**
+- Fixed dark theme inconsistencies across all pages (new-requisition, dashboard, reports, requisitions)
+- Implemented automatic PDF generation for each new requisition created
+- Added comprehensive PDF generation library with company branding and detailed formatting
+- Enhanced reports page with:
+  - Monthly analysis functionality with date selection
+  - PDF export for complete reports and monthly analysis
+  - Monthly trend chart showing requisition patterns
+  - Improved dark theme support for all report components
+- Updated dashboard with proper dark theme styling for all cards, buttons, and tables
+- All PDF documents include: company info, requisition details, fuel information, justification, approval data, and professional formatting
+
 ## System Architecture
 
 ### Frontend Architecture

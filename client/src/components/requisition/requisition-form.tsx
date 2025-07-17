@@ -2,8 +2,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { insertFuelRequisitionSchema, type InsertFuelRequisition } from "@shared/schema";
+import { insertFuelRequisitionSchema, type InsertFuelRequisition, type FuelRequisition } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { PDFGenerator } from "@/lib/pdf-generator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,13 +24,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText, Download } from "lucide-react";
 
 interface RequisitionFormProps {
   onSuccess?: () => void;
+  requisition?: FuelRequisition;
 }
 
-export default function RequisitionForm({ onSuccess }: RequisitionFormProps) {
+export default function RequisitionForm({ onSuccess, requisition }: RequisitionFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -51,13 +53,19 @@ export default function RequisitionForm({ onSuccess }: RequisitionFormProps) {
       const response = await apiRequest("POST", "/api/fuel-requisitions", data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newRequisition: FuelRequisition) => {
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
       toast({
         title: "Sucesso",
         description: "Requisição criada com sucesso!",
       });
+      
+      // Gerar PDF automaticamente
+      setTimeout(() => {
+        generatePDF(newRequisition);
+      }, 1000);
+      
       form.reset();
       onSuccess?.();
     },
@@ -72,6 +80,25 @@ export default function RequisitionForm({ onSuccess }: RequisitionFormProps) {
 
   const onSubmit = (data: InsertFuelRequisition) => {
     createRequisition.mutate(data);
+  };
+
+  const generatePDF = (req: FuelRequisition) => {
+    try {
+      const pdfGenerator = new PDFGenerator();
+      pdfGenerator.generateRequisitionPDF(req);
+      pdfGenerator.save(`requisicao-${String(req.id).padStart(4, '0')}.pdf`);
+      
+      toast({
+        title: "PDF Gerado",
+        description: "Documento da requisição baixado com sucesso!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
