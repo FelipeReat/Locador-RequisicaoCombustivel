@@ -30,38 +30,38 @@ export default function Sidebar() {
       
       <nav className="mt-6">
         <Link href="/dashboard">
-          <a className={`sidebar-link ${isActive("/dashboard") ? "active" : ""}`}>
+          <div className={`sidebar-link ${isActive("/dashboard") ? "active" : ""}`}>
             <LayoutDashboard className="mr-3 h-4 w-4" />
             Dashboard
-          </a>
+          </div>
         </Link>
         
         <Link href="/requisitions">
-          <a className={`sidebar-link ${isActive("/requisitions") ? "active" : ""}`}>
+          <div className={`sidebar-link ${isActive("/requisitions") ? "active" : ""}`}>
             <ClipboardList className="mr-3 h-4 w-4" />
             Requisições
-          </a>
+          </div>
         </Link>
         
         <Link href="/new-requisition">
-          <a className={`sidebar-link ${isActive("/new-requisition") ? "active" : ""}`}>
+          <div className={`sidebar-link ${isActive("/new-requisition") ? "active" : ""}`}>
             <Plus className="mr-3 h-4 w-4" />
             Nova Requisição
-          </a>
+          </div>
         </Link>
         
         <Link href="/reports">
-          <a className={`sidebar-link ${isActive("/reports") ? "active" : ""}`}>
+          <div className={`sidebar-link ${isActive("/reports") ? "active" : ""}`}>
             <BarChart3 className="mr-3 h-4 w-4" />
             Relatórios
-          </a>
+          </div>
         </Link>
         
         <Link href="/settings">
-          <a className={`sidebar-link ${isActive("/settings") ? "active" : ""}`}>
+          <div className={`sidebar-link ${isActive("/settings") ? "active" : ""}`}>
             <Settings className="mr-3 h-4 w-4" />
             Configurações
-          </a>
+          </div>
         </Link>
       </nav>
     </div>

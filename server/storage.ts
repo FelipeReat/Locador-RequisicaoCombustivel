@@ -37,6 +37,73 @@ export class MemStorage implements IStorage {
     this.fuelRequisitions = new Map();
     this.currentUserId = 1;
     this.currentRequisitionId = 1;
+    
+    // Add sample data for demonstration
+    this.addSampleData();
+  }
+  
+  private addSampleData() {
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    
+    // Sample requisitions
+    const sampleRequisitions = [
+      {
+        id: 1,
+        requester: "Maria Silva",
+        department: "logistica",
+        fuelType: "diesel",
+        quantity: "500",
+        justification: "Abastecimento da frota de caminhões para entregas da semana",
+        requiredDate: tomorrow.toISOString().split('T')[0],
+        priority: "alta",
+        status: "pending",
+        approver: null,
+        approvedDate: null,
+        rejectionReason: null,
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 2,
+        requester: "João Santos",
+        department: "manutencao",
+        fuelType: "gasolina",
+        quantity: "200",
+        justification: "Combustível para geradores durante manutenção preventiva",
+        requiredDate: now.toISOString().split('T')[0],
+        priority: "media",
+        status: "approved",
+        approver: "Ana Costa",
+        approvedDate: now.toISOString(),
+        rejectionReason: null,
+        createdAt: new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(),
+        updatedAt: now.toISOString(),
+      },
+      {
+        id: 3,
+        requester: "Carlos Oliveira",
+        department: "transporte",
+        fuelType: "etanol",
+        quantity: "300",
+        justification: "Abastecimento dos veículos administrativos",
+        requiredDate: new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString().split('T')[0],
+        priority: "baixa",
+        status: "fulfilled",
+        approver: "Ana Costa",
+        approvedDate: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+        rejectionReason: null,
+        createdAt: new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString(),
+        updatedAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
+      },
+    ];
+    
+    sampleRequisitions.forEach(req => {
+      this.fuelRequisitions.set(req.id, req as FuelRequisition);
+    });
+    
+    this.currentRequisitionId = 4;
   }
 
   async getUser(id: number): Promise<User | undefined> {

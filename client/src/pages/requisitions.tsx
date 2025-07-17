@@ -21,8 +21,8 @@ export default function Requisitions() {
   const [, setLocation] = useLocation();
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [departmentFilter, setDepartmentFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
 
   const { data: requisitions, isLoading } = useQuery<FuelRequisition[]>({
     queryKey: ["/api/fuel-requisitions"],
@@ -34,8 +34,8 @@ export default function Requisitions() {
       req.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
       req.fuelType.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = !statusFilter || req.status === statusFilter;
-    const matchesDepartment = !departmentFilter || req.department === departmentFilter;
+    const matchesStatus = !statusFilter || statusFilter === "all" || req.status === statusFilter;
+    const matchesDepartment = !departmentFilter || departmentFilter === "all" || req.department === departmentFilter;
     
     return matchesSearch && matchesStatus && matchesDepartment;
   }) || [];
@@ -101,7 +101,7 @@ export default function Requisitions() {
                   <SelectValue placeholder="Filtrar por status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="pending">Pendente</SelectItem>
                   <SelectItem value="approved">Aprovada</SelectItem>
                   <SelectItem value="rejected">Rejeitada</SelectItem>
@@ -114,7 +114,7 @@ export default function Requisitions() {
                   <SelectValue placeholder="Filtrar por departamento" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os departamentos</SelectItem>
+                  <SelectItem value="all">Todos os departamentos</SelectItem>
                   <SelectItem value="logistica">Logística</SelectItem>
                   <SelectItem value="manutencao">Manutenção</SelectItem>
                   <SelectItem value="transporte">Transporte</SelectItem>
@@ -126,8 +126,8 @@ export default function Requisitions() {
                 variant="outline"
                 onClick={() => {
                   setSearchTerm("");
-                  setStatusFilter("");
-                  setDepartmentFilter("");
+                  setStatusFilter("all");
+                  setDepartmentFilter("all");
                 }}
               >
                 Limpar Filtros
