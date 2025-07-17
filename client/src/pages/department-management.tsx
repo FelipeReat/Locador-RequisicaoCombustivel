@@ -239,7 +239,7 @@ export default function DepartmentManagement() {
                           <FormLabel>{t("department_name")} *</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder={t("enter_department_name")}
+                              placeholder={t("enter-department-name")}
                               {...field}
                             />
                           </FormControl>
@@ -256,7 +256,7 @@ export default function DepartmentManagement() {
                           <FormLabel>{t("description")}</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder={t("enter_department_description")}
+                              placeholder={t("enter-department-description")}
                               {...field}
                               rows={3}
                             />
@@ -428,8 +428,8 @@ export default function DepartmentManagement() {
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">
                   {searchTerm
-                    ? t("try_adjusting_search")
-                    : t("start_creating_new_department")}
+                    ? t("try-adjusting-search")
+                    : t("start-creating-new-department")}
                 </p>
               </CardContent>
             </Card>

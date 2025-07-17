@@ -65,21 +65,21 @@ export default function Sidebar() {
         <Link href="/user-management">
           <div className={`sidebar-link ${isActive("/user-management") ? "active" : ""}`}>
             <Users className="mr-3 h-4 w-4" />
-            Usuários
+            {t('users')}
           </div>
         </Link>
 
         <Link href="/department-management">
           <div className={`sidebar-link ${isActive("/department-management") ? "active" : ""}`}>
             <Building className="mr-3 h-4 w-4" />
-            Departamentos
+            {t('departments')}
           </div>
         </Link>
 
         <Link href="/fleet-management">
           <div className={`sidebar-link ${isActive("/fleet-management") ? "active" : ""}`}>
             <Car className="mr-3 h-4 w-4" />
-            Frota
+            {t('fleet')}
           </div>
         </Link>
 

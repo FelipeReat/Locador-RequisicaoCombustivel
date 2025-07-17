@@ -445,6 +445,15 @@ const translations: Record<Language, Record<string, string>> = {
     'department-updated-success': 'Departamento atualizado com sucesso',
     'error-creating-department': 'Erro ao criar departamento',
     'error-updating-department': 'Erro ao atualizar departamento',
+    'try-adjusting-search': 'Tente ajustar sua busca',
+    'start-creating-new-department': 'Comece criando um novo departamento',
+    'enter-department-name': 'Digite o nome do departamento',
+    'enter-department-description': 'Digite a descrição do departamento',
+    
+    // Navegação do Menu
+    'users': 'Usuários',
+    'departments': 'Departamentos',
+    'fleet': 'Frota',
     
     // Dicas de segurança
     'security-tip-1': 'Use uma senha com pelo menos 6 caracteres',
@@ -888,6 +897,15 @@ const translations: Record<Language, Record<string, string>> = {
     'department-updated-success': 'Department updated successfully',
     'error-creating-department': 'Error creating department',
     'error-updating-department': 'Error updating department',
+    'try-adjusting-search': 'Try adjusting your search',
+    'start-creating-new-department': 'Start by creating a new department',
+    'enter-department-name': 'Enter department name',
+    'enter-department-description': 'Enter department description',
+    
+    // Navigation Menu
+    'users': 'Users',
+    'departments': 'Departments',
+    'fleet': 'Fleet',
     
     // Security tips
     'security-tip-1': 'Use a password with at least 6 characters',
@@ -1331,6 +1349,15 @@ const translations: Record<Language, Record<string, string>> = {
     'department-updated-success': 'Departamento actualizado exitosamente',
     'error-creating-department': 'Error al crear departamento',
     'error-updating-department': 'Error al actualizar departamento',
+    'try-adjusting-search': 'Intente ajustar su búsqueda',
+    'start-creating-new-department': 'Comience creando un nuevo departamento',
+    'enter-department-name': 'Ingrese el nombre del departamento',
+    'enter-department-description': 'Ingrese la descripción del departamento',
+    
+    // Navegación del Menú
+    'users': 'Usuarios',
+    'departments': 'Departamentos',
+    'fleet': 'Flota',
     
     // Consejos de seguridad
     'security-tip-1': 'Use una contraseña con al menos 6 caracteres',
