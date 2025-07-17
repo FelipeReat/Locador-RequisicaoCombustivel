@@ -88,7 +88,7 @@ export default function DepartmentManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/departments"] });
       toast({
         title: t("success"),
-        description: "Departamento criado com sucesso",
+        description: t("department_created_successfully"),
       });
       setIsDialogOpen(false);
       form.reset();
@@ -96,7 +96,7 @@ export default function DepartmentManagement() {
     onError: (error) => {
       toast({
         title: t("error"),
-        description: error.message || "Erro ao criar departamento",
+        description: error.message || t("error_creating_department"),
         variant: "destructive",
       });
     },
@@ -117,7 +117,7 @@ export default function DepartmentManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/departments"] });
       toast({
         title: t("success"),
-        description: "Departamento atualizado com sucesso",
+        description: t("department_updated_successfully"),
       });
       setIsDialogOpen(false);
       setEditingDepartment(null);
@@ -126,7 +126,7 @@ export default function DepartmentManagement() {
     onError: (error) => {
       toast({
         title: t("error"),
-        description: error.message || "Erro ao atualizar departamento",
+        description: error.message || t("error_updating_department"),
         variant: "destructive",
       });
     },
@@ -165,9 +165,9 @@ export default function DepartmentManagement() {
     ) || [];
 
   const getManagerName = (managerId: number | null) => {
-    if (!managerId) return "Sem gerente";
+    if (!managerId) return t("no_manager");
     const manager = users?.find((u) => u.id === managerId);
-    return manager?.fullName || "Gerente não encontrado";
+    return manager?.fullName || t("manager_not_found");
   };
 
   const getDepartmentEmployeeCount = (departmentId: number) => {
@@ -179,14 +179,14 @@ export default function DepartmentManagement() {
   };
 
   if (departmentsLoading) {
-    return <LoadingSpinner message="Carregando departamentos..." />;
+    return <LoadingSpinner message={t("loading_departments")} />;
   }
 
   return (
     <>
       <Header
-        title="Gestão de Departamentos"
-        subtitle="Gerencie os departamentos da empresa"
+        title={t("department_management")}
+        subtitle={t("manage_company_departments")}
       />
 
       <main className="flex-1 p-6">
@@ -197,7 +197,7 @@ export default function DepartmentManagement() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Buscar departamentos..."
+                  placeholder={t("search_departments")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-64"
@@ -209,20 +209,20 @@ export default function DepartmentManagement() {
               <DialogTrigger asChild>
                 <Button onClick={handleNew}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Novo Departamento
+                  {t("new_department")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>
                     {editingDepartment
-                      ? "Editar Departamento"
-                      : "Novo Departamento"}
+                      ? t("edit_department")
+                      : t("new_department")}
                   </DialogTitle>
                   <DialogDescription>
                     {editingDepartment
-                      ? "Atualize as informações do departamento"
-                      : "Adicione um novo departamento"}
+                      ? t("update_department_info")
+                      : t("add_new_department")}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -236,10 +236,10 @@ export default function DepartmentManagement() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome do departamento *</FormLabel>
+                          <FormLabel>{t("department_name")} *</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Digite o nome do departamento"
+                              placeholder={t("enter_department_name")}
                               {...field}
                             />
                           </FormControl>
@@ -253,10 +253,10 @@ export default function DepartmentManagement() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Descrição</FormLabel>
+                          <FormLabel>{t("description")}</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Digite uma descrição para o departamento"
+                              placeholder={t("enter_department_description")}
                               {...field}
                               rows={3}
                             />
@@ -272,7 +272,7 @@ export default function DepartmentManagement() {
                         name="managerId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Gerente</FormLabel>
+                            <FormLabel>{t("manager")}</FormLabel>
                             <Select
                               onValueChange={(value) =>
                                 field.onChange(Number(value))
@@ -281,11 +281,11 @@ export default function DepartmentManagement() {
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Selecione um gerente" />
+                                  <SelectValue placeholder={t("select_manager")} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="0">Sem gerente</SelectItem>
+                                <SelectItem value="0">{t("no_manager")}</SelectItem>
                                 {users
                                   ?.filter((u) => u.active === "true")
                                   .map((user) => (
@@ -308,7 +308,7 @@ export default function DepartmentManagement() {
                         name="budget"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Orçamento (R$)</FormLabel>
+                            <FormLabel>{t("budget")} (R$)</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
@@ -329,7 +329,7 @@ export default function DepartmentManagement() {
                         variant="outline"
                         onClick={() => setIsDialogOpen(false)}
                       >
-                        Cancelar
+                        {t("cancel")}
                       </Button>
                       <Button
                         type="submit"
@@ -338,7 +338,7 @@ export default function DepartmentManagement() {
                           updateDepartment.isPending
                         }
                       >
-                        {editingDepartment ? "Atualizar" : "Criar"}
+                        {editingDepartment ? t("update") : t("create")}
                       </Button>
                     </div>
                   </form>
@@ -378,9 +378,9 @@ export default function DepartmentManagement() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-gray-500" />
+                    <Users className="h-4 w-4 text-gray-500" />
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      <strong>Gerente:</strong>{" "}
+                      <strong>{t("manager")}:</strong>{" "}
                       {getManagerName(department.managerId)}
                     </span>
                   </div>
@@ -388,7 +388,7 @@ export default function DepartmentManagement() {
                   <div className="flex items-center space-x-2">
                     <Users className="h-4 w-4 text-gray-500" />
                     <span className="text-sm text-gray-700 dark:text-gray-300">
-                      <strong>Funcionários:</strong>{" "}
+                      <strong>{t("employees")}:</strong>{" "}
                       {getDepartmentEmployeeCount(department.id)}
                     </span>
                   </div>
@@ -397,7 +397,7 @@ export default function DepartmentManagement() {
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-gray-500" />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        <strong>Orçamento:</strong> R${" "}
+                        <strong>{t("budget")}:</strong> R${" "}
                         {parseFloat(department.budget).toLocaleString("pt-BR", {
                           minimumFractionDigits: 2,
                         })}
@@ -411,7 +411,7 @@ export default function DepartmentManagement() {
                         department.active === "true" ? "default" : "secondary"
                       }
                     >
-                      {department.active === "true" ? "Ativo" : "Inativo"}
+                      {department.active === "true" ? t("active") : t("inactive")}
                     </Badge>
                   </div>
                 </CardContent>
@@ -424,12 +424,12 @@ export default function DepartmentManagement() {
               <CardContent className="p-12 text-center">
                 <Building className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  Nenhum departamento encontrado
+                  {t("no_departments_found")}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">
                   {searchTerm
-                    ? "Tente ajustar sua busca"
-                    : "Comece criando um novo departamento"}
+                    ? t("try_adjusting_search")
+                    : t("start_creating_new_department")}
                 </p>
               </CardContent>
             </Card>

@@ -80,7 +80,7 @@ export default function UserManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: t("success"),
-        description: "Usuário criado com sucesso",
+        description: t("user-created-success"),
       });
       setIsDialogOpen(false);
       form.reset();
@@ -88,7 +88,7 @@ export default function UserManagement() {
     onError: (error) => {
       toast({
         title: t("error"),
-        description: error.message || "Erro ao criar usuário",
+        description: error.message || t("error-creating-user"),
         variant: "destructive",
       });
     },
@@ -103,7 +103,7 @@ export default function UserManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: t("success"),
-        description: "Usuário atualizado com sucesso",
+        description: t("user-updated-success"),
       });
       setIsDialogOpen(false);
       setEditingUser(null);
@@ -112,7 +112,7 @@ export default function UserManagement() {
     onError: (error) => {
       toast({
         title: t("error"),
-        description: error.message || "Erro ao atualizar usuário",
+        description: error.message || t("error-updating-user"),
         variant: "destructive",
       });
     },
@@ -127,13 +127,13 @@ export default function UserManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: t("success"),
-        description: "Status do usuário alterado com sucesso",
+        description: t("user-status-changed"),
       });
     },
     onError: (error) => {
       toast({
         title: t("error"),
-        description: error.message || "Erro ao alterar status",
+        description: error.message || t("error-changing-user-status"),
         variant: "destructive",
       });
     },
@@ -177,9 +177,9 @@ export default function UserManagement() {
 
   const getRoleLabel = (role: string) => {
     const labels = {
-      admin: "Administrador",
-      manager: "Gerente", 
-      employee: "Funcionário",
+      admin: t("administrator"),
+      manager: t("manager"), 
+      employee: t("employee"),
     };
     return labels[role as keyof typeof labels] || role;
   };
@@ -194,20 +194,20 @@ export default function UserManagement() {
   };
 
   const getDepartmentName = (departmentId: number | null) => {
-    if (!departmentId) return "Sem departamento";
+    if (!departmentId) return t("no-department");
     const dept = departments?.find(d => d.id === departmentId);
-    return dept?.name || "Departamento não encontrado";
+    return dept?.name || t("department-not-found");
   };
 
   if (usersLoading) {
-    return <LoadingSpinner message="Carregando usuários..." />;
+    return <LoadingSpinner message={t("loading-users")} />;
   }
 
   return (
     <>
       <Header 
-        title="Gestão de Usuários" 
-        subtitle="Gerencie funcionários e suas permissões no sistema" 
+        title={t('user-management')} 
+        subtitle={t('manage-employees-permissions')} 
       />
 
       <main className="flex-1 p-6">
@@ -218,7 +218,7 @@ export default function UserManagement() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Buscar usuários..."
+                  placeholder={t('search-users')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-64"
@@ -230,16 +230,16 @@ export default function UserManagement() {
               <DialogTrigger asChild>
                 <Button onClick={handleNew}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Novo Usuário
+                  {t('new-user')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingUser ? "Editar Usuário" : "Novo Usuário"}
+                    {editingUser ? t('edit-user') : t('new-user')}
                   </DialogTitle>
                   <DialogDescription>
-                    {editingUser ? "Atualize as informações do usuário" : "Adicione um novo usuário ao sistema"}
+                    {editingUser ? t('update-user-info') : t('add-new-user')}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -251,9 +251,9 @@ export default function UserManagement() {
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nome de usuário *</FormLabel>
+                            <FormLabel>{t('username')} *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Digite o nome de usuário" {...field} />
+                              <Input placeholder={t('username')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -265,9 +265,9 @@ export default function UserManagement() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{editingUser ? "Nova senha (deixe vazio para manter)" : "Senha *"}</FormLabel>
+                            <FormLabel>{editingUser ? t('new-password-optional') : t('password') + ' *'}</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="Digite a senha" {...field} />
+                              <Input type="password" placeholder={t('password')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -280,9 +280,9 @@ export default function UserManagement() {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nome completo *</FormLabel>
+                          <FormLabel>{t('full-name')} *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Digite o nome completo" {...field} />
+                            <Input placeholder={t('full-name')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -295,9 +295,9 @@ export default function UserManagement() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t('email')}</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Digite o email" {...field} />
+                              <Input type="email" placeholder={t('email')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -309,9 +309,9 @@ export default function UserManagement() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Telefone</FormLabel>
+                            <FormLabel>{t('phone')}</FormLabel>
                             <FormControl>
-                              <Input placeholder="Digite o telefone" {...field} />
+                              <Input placeholder={t('phone')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -325,11 +325,11 @@ export default function UserManagement() {
                         name="departmentId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Departamento *</FormLabel>
+                            <FormLabel>{t('department')} *</FormLabel>
                             <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Selecione" />
+                                  <SelectValue placeholder={t('select-option')} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -350,9 +350,9 @@ export default function UserManagement() {
                         name="position"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cargo *</FormLabel>
+                            <FormLabel>{t('position')} *</FormLabel>
                             <FormControl>
-                              <Input placeholder="Digite o cargo" {...field} />
+                              <Input placeholder={t('position')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -364,17 +364,17 @@ export default function UserManagement() {
                         name="role"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Perfil *</FormLabel>
+                            <FormLabel>{t('role')} *</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Selecione" />
+                                  <SelectValue placeholder={t('select-option')} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="employee">Funcionário</SelectItem>
-                                <SelectItem value="manager">Gerente</SelectItem>
-                                <SelectItem value="admin">Administrador</SelectItem>
+                                <SelectItem value="employee">{t('employee')}</SelectItem>
+                                <SelectItem value="manager">{t('manager')}</SelectItem>
+                                <SelectItem value="admin">{t('administrator')}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -388,7 +388,7 @@ export default function UserManagement() {
                       name="hireDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Data de contratação</FormLabel>
+                          <FormLabel>{t('hire-date')}</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -399,10 +399,10 @@ export default function UserManagement() {
 
                     <div className="flex justify-end space-x-2">
                       <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancelar
+                        {t('cancel')}
                       </Button>
                       <Button type="submit" disabled={createUser.isPending || updateUser.isPending}>
-                        {editingUser ? "Atualizar" : "Criar"}
+                        {editingUser ? t('update') : t('create')}
                       </Button>
                     </div>
                   </form>
@@ -433,7 +433,7 @@ export default function UserManagement() {
                             {getDepartmentName(user.departmentId)}
                           </Badge>
                           <Badge variant={user.active === "true" ? "default" : "secondary"} className="text-xs">
-                            {user.active === "true" ? "Ativo" : "Inativo"}
+                            {user.active === "true" ? t('active') : t('inactive')}
                           </Badge>
                         </div>
                       </div>
@@ -441,9 +441,9 @@ export default function UserManagement() {
 
                     <div className="flex items-center space-x-2">
                       <div className="text-right text-sm text-gray-600 dark:text-gray-300 mr-4">
-                        <p><strong>Email:</strong> {user.email || "Não informado"}</p>
-                        <p><strong>Cargo:</strong> {user.position || "Não informado"}</p>
-                        <p><strong>Telefone:</strong> {user.phone || "Não informado"}</p>
+                        <p><strong>{t('email')}:</strong> {user.email || t('not-informed')}</p>
+                        <p><strong>{t('position')}:</strong> {user.position || t('not-informed')}</p>
+                        <p><strong>{t('phone')}:</strong> {user.phone || t('not-informed')}</p>
                       </div>
                       
                       <Button
@@ -479,9 +479,9 @@ export default function UserManagement() {
             <Card>
               <CardContent className="p-12 text-center">
                 <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Nenhum usuário encontrado</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{t('no-users-found')}</h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  {searchTerm ? "Tente ajustar sua busca" : "Comece criando um novo usuário"}
+                  {searchTerm ? t('adjust-search') : t('start-creating-user')}
                 </p>
               </CardContent>
             </Card>
