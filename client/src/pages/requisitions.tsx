@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Eye, Edit, Search, Filter } from "lucide-react";
 import { useLocation } from "wouter";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function Requisitions() {
   const [, setLocation] = useLocation();
@@ -23,6 +24,7 @@ export default function Requisitions() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const { t } = useLanguage();
 
   const { data: requisitions, isLoading } = useQuery<FuelRequisition[]>({
     queryKey: ["/api/fuel-requisitions"],
@@ -46,33 +48,34 @@ export default function Requisitions() {
 
   const getDepartmentLabel = (department: string) => {
     const labels = {
-      logistica: "Logística",
-      manutencao: "Manutenção",
-      transporte: "Transporte",
-      operacoes: "Operações",
+      logistica: t('logistics'),
+      manutencao: t('maintenance'),
+      transporte: t('transport'),
+      operacoes: t('operations'),
+      administracao: t('administration'),
     };
     return labels[department as keyof typeof labels] || department;
   };
 
   const getFuelTypeLabel = (fuelType: string) => {
     const labels = {
-      gasolina: "Gasolina",
-      etanol: "Etanol",
-      diesel: "Diesel",
-      diesel_s10: "Diesel S10",
+      gasolina: t('gasoline'),
+      etanol: t('ethanol'),
+      diesel: t('diesel'),
+      diesel_s10: t('diesel-s10'),
     };
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
 
   if (isLoading) {
-    return <LoadingSpinner message="Carregando requisições..." />;
+    return <LoadingSpinner message={t('loading-data')} />;
   }
 
   return (
     <>
       <Header 
-        title="Requisições" 
-        subtitle="Gerenciar todas as requisições de combustível" 
+        title={t('requisitions')} 
+        subtitle={t('manage-all-fuel-requisitions')} 
       />
       
       <main className="flex-1 p-6">
@@ -81,7 +84,7 @@ export default function Requisitions() {
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
               <Filter className="mr-2 h-5 w-5" />
-              Filtros
+              {t('filters')}
             </h3>
           </div>
           <div className="p-6">
@@ -89,7 +92,7 @@ export default function Requisitions() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Buscar requisições..."
+                  placeholder={t('search-requisitions')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -98,27 +101,28 @@ export default function Requisitions() {
               
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por status" />
+                  <SelectValue placeholder={t('filter-by-status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="approved">Aprovada</SelectItem>
-                  <SelectItem value="rejected">Rejeitada</SelectItem>
-                  <SelectItem value="fulfilled">Cumprida</SelectItem>
+                  <SelectItem value="all">{t('all-statuses')}</SelectItem>
+                  <SelectItem value="pending">{t('pending')}</SelectItem>
+                  <SelectItem value="approved">{t('approved')}</SelectItem>
+                  <SelectItem value="rejected">{t('rejected')}</SelectItem>
+                  <SelectItem value="fulfilled">{t('fulfilled')}</SelectItem>
                 </SelectContent>
               </Select>
               
               <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por departamento" />
+                  <SelectValue placeholder={t('filter-by-department')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os departamentos</SelectItem>
-                  <SelectItem value="logistica">Logística</SelectItem>
-                  <SelectItem value="manutencao">Manutenção</SelectItem>
-                  <SelectItem value="transporte">Transporte</SelectItem>
-                  <SelectItem value="operacoes">Operações</SelectItem>
+                  <SelectItem value="all">{t('all-departments')}</SelectItem>
+                  <SelectItem value="logistica">{t('logistics')}</SelectItem>
+                  <SelectItem value="manutencao">{t('maintenance')}</SelectItem>
+                  <SelectItem value="transporte">{t('transport')}</SelectItem>
+                  <SelectItem value="operacoes">{t('operations')}</SelectItem>
+                  <SelectItem value="administracao">{t('administration')}</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -130,7 +134,7 @@ export default function Requisitions() {
                   setDepartmentFilter("all");
                 }}
               >
-                Limpar Filtros
+                {t('clear-filters')}
               </Button>
             </div>
           </div>
@@ -141,10 +145,10 @@ export default function Requisitions() {
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                Requisições ({filteredRequisitions.length})
+                {t('requisitions')} ({filteredRequisitions.length})
               </h3>
               <Button onClick={() => setLocation("/new-requisition")}>
-                Nova Requisição
+                {t('new-requisition')}
               </Button>
             </div>
           </div>
@@ -157,25 +161,25 @@ export default function Requisitions() {
                     ID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Solicitante
+                    {t('requester')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Departamento
+                    {t('department')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Combustível
+                    {t('fuel-type')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Quantidade
+                    {t('quantity')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Status
+                    {t('status')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Data
+                    {t('date')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Ações
+                    {t('actions')}
                   </th>
                 </tr>
               </thead>
@@ -183,9 +187,9 @@ export default function Requisitions() {
                 {filteredRequisitions.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                      {searchTerm || statusFilter || departmentFilter
-                        ? "Nenhuma requisição encontrada com os filtros aplicados"
-                        : "Nenhuma requisição encontrada"}
+                      {searchTerm || statusFilter !== "all" || departmentFilter !== "all"
+                        ? t('no-results-with-filters')
+                        : t('no-results')}
                     </td>
                   </tr>
                 ) : (

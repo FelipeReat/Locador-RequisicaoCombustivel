@@ -40,33 +40,34 @@ export default function Dashboard() {
 
   const getDepartmentLabel = (department: string) => {
     const labels = {
-      logistica: "Logística",
-      manutencao: "Manutenção",
-      transporte: "Transporte",
-      operacoes: "Operações",
+      logistica: t('logistics'),
+      manutencao: t('maintenance'),
+      transporte: t('transport'),
+      operacoes: t('operations'),
+      administracao: t('administration'),
     };
     return labels[department as keyof typeof labels] || department;
   };
 
   const getFuelTypeLabel = (fuelType: string) => {
     const labels = {
-      gasolina: "Gasolina",
-      etanol: "Etanol",
-      diesel: "Diesel",
-      diesel_s10: "Diesel S10",
+      gasolina: t('gasoline'),
+      etanol: t('ethanol'),
+      diesel: t('diesel'),
+      diesel_s10: t('diesel-s10'),
     };
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
 
   if (statsLoading || requisitionsLoading) {
-    return <LoadingSpinner message="Carregando dashboard..." />;
+    return <LoadingSpinner message={t('loading-dashboard')} />;
   }
 
   return (
     <>
       <Header 
-        title="Dashboard" 
-        subtitle="Visão geral das requisições de combustível" 
+        title={t('dashboard')} 
+        subtitle={t('fuel-requisitions-overview')} 
       />
 
       <main className="flex-1 p-6">
@@ -78,7 +79,7 @@ export default function Dashboard() {
                 <ClipboardList className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">Total Requisições</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t('total-requests')}</p>
                 <p className="text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.totalRequests || 0}
                 </p>
@@ -92,7 +93,7 @@ export default function Dashboard() {
                 <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">Pendentes</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t('pending-requests')}</p>
                 <p className="text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.pendingRequests || 0}
                 </p>
@@ -106,7 +107,7 @@ export default function Dashboard() {
                 <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">Aprovadas</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t('approved-requests')}</p>
                 <p className="text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.approvedRequests || 0}
                 </p>
@@ -120,7 +121,7 @@ export default function Dashboard() {
                 <Fuel className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">Litros Consumidos</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t('consumed-liters')}</p>
                 <p className="text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.totalLiters?.toLocaleString("pt-BR") || 0}
                 </p>
@@ -132,7 +133,7 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Ações Rápidas</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{t('quick-actions')}</h3>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -142,7 +143,7 @@ export default function Dashboard() {
                 variant="outline"
               >
                 <Plus className="mr-3 h-5 w-5" />
-                Nova Requisição
+                {t('new-requisition')}
               </Button>
 
               <Button
@@ -151,7 +152,7 @@ export default function Dashboard() {
                 variant="outline"
               >
                 <Clock className="mr-3 h-5 w-5" />
-                Aprovar Pendentes
+                {t('approve-pending')}
               </Button>
 
               <Button
@@ -160,7 +161,7 @@ export default function Dashboard() {
                 variant="outline"
               >
                 <BarChart3 className="mr-3 h-5 w-5" />
-                Gerar Relatório
+                {t('generate-report')}
               </Button>
             </div>
           </div>
@@ -170,13 +171,13 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Requisições Recentes</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{t('recent-requisitions')}</h3>
               <Button
                 variant="link"
                 onClick={() => setLocation("/requisitions")}
                 className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
               >
-                Ver todas
+                {t('view-all')}
               </Button>
             </div>
           </div>
@@ -189,25 +190,25 @@ export default function Dashboard() {
                     ID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Solicitante
+                    {t('requester')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Departamento
+                    {t('department')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Combustível
+                    {t('fuel-type')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Quantidade
+                    {t('quantity')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Status
+                    {t('status')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Data
+                    {t('date')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Ações
+                    {t('actions')}
                   </th>
                 </tr>
               </thead>
@@ -215,7 +216,7 @@ export default function Dashboard() {
                 {recentRequisitions.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                      Nenhuma requisição encontrada
+                      {t('no-results')}
                     </td>
                   </tr>
                 ) : (

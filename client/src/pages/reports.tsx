@@ -25,8 +25,11 @@ import {
 import { Download, FileText, TrendingUp, Calendar, BarChart3 } from "lucide-react";
 import type { FuelRequisition } from "@shared/schema";
 
+import { useLanguage } from "@/contexts/language-context";
+
 export default function Reports() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showMonthlyAnalysis, setShowMonthlyAnalysis] = useState(false);
@@ -124,20 +127,21 @@ export default function Reports() {
 
   const getDepartmentLabel = (department: string) => {
     const labels = {
-      logistica: "Logística",
-      manutencao: "Manutenção",
-      transporte: "Transporte",
-      operacoes: "Operações",
+      logistica: t('logistics'),
+      manutencao: t('maintenance'),
+      transporte: t('transport'),
+      operacoes: t('operations'),
+      administracao: t('administration'),
     };
     return labels[department as keyof typeof labels] || department;
   };
 
   const getFuelTypeLabel = (fuelType: string) => {
     const labels = {
-      gasolina: "Gasolina",
-      etanol: "Etanol",
-      diesel: "Diesel",
-      diesel_s10: "Diesel S10",
+      gasolina: t('gasoline'),
+      etanol: t('ethanol'),
+      diesel: t('diesel'),
+      diesel_s10: t('diesel-s10'),
     };
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
@@ -193,14 +197,14 @@ export default function Reports() {
   const monthlyTrendData = generateMonthlyTrend();
 
   if (statsLoading || departmentLoading || fuelTypeLoading || requisitionsLoading) {
-    return <LoadingSpinner message="Carregando relatórios..." />;
+    return <LoadingSpinner message={t('loading-reports')} />;
   }
 
   return (
     <>
       <Header 
-        title="Relatórios" 
-        subtitle="Análise e estatísticas de consumo de combustível" 
+        title={t('reports')} 
+        subtitle={t('fuel-consumption-analysis')} 
       />
       
       <main className="flex-1 p-6">

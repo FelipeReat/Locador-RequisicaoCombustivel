@@ -161,8 +161,8 @@ export default function Settings() {
   return (
     <>
       <Header 
-        title="Configurações" 
-        subtitle="Gerencie seu perfil e preferências do sistema" 
+        title={t('settings')} 
+        subtitle={t('manage-profile-preferences')} 
       />
 
       <main className="flex-1 p-6">
@@ -228,9 +228,9 @@ export default function Settings() {
                             name="fullName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Nome Completo *</FormLabel>
+                                <FormLabel>{t('full-name')} *</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Seu nome completo" {...field} />
+                                  <Input placeholder={t('enter-full-name')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -242,9 +242,9 @@ export default function Settings() {
                             name="email"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel>{t('email')}</FormLabel>
                                 <FormControl>
-                                  <Input type="email" placeholder="seu@email.com" {...field} />
+                                  <Input type="email" placeholder={t('enter-email')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -256,19 +256,19 @@ export default function Settings() {
                             name="department"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Departamento *</FormLabel>
+                                <FormLabel>{t('department')} *</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Selecione um departamento" />
+                                      <SelectValue placeholder={t('select-department')} />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    <SelectItem value="administracao">Administração</SelectItem>
-                                    <SelectItem value="logistica">Logística</SelectItem>
-                                    <SelectItem value="manutencao">Manutenção</SelectItem>
-                                    <SelectItem value="transporte">Transporte</SelectItem>
-                                    <SelectItem value="operacoes">Operações</SelectItem>
+                                    <SelectItem value="administracao">{t('administration')}</SelectItem>
+                                    <SelectItem value="logistica">{t('logistics')}</SelectItem>
+                                    <SelectItem value="manutencao">{t('maintenance')}</SelectItem>
+                                    <SelectItem value="transporte">{t('transport')}</SelectItem>
+                                    <SelectItem value="operacoes">{t('operations')}</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -281,9 +281,9 @@ export default function Settings() {
                             name="phone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Telefone</FormLabel>
+                                <FormLabel>{t('phone')}</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="(11) 99999-9999" {...field} />
+                                  <Input placeholder={t('enter-phone')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -295,9 +295,9 @@ export default function Settings() {
                             name="position"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Cargo</FormLabel>
+                                <FormLabel>{t('position')}</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Seu cargo na empresa" {...field} />
+                                  <Input placeholder={t('enter-position')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -309,7 +309,7 @@ export default function Settings() {
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
                             <Save className="mr-2 h-4 w-4" />
-                            Salvar Alterações
+                            {t('save-changes')}
                           </Button>
                         </form>
                       </Form>
@@ -320,21 +320,21 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Informações da Conta</CardTitle>
-                  <CardDescription>Detalhes sobre sua conta no sistema</CardDescription>
+                  <CardTitle>{t('account-info')}</CardTitle>
+                  <CardDescription>{t('account-details')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label className="text-sm font-medium text-gray-500">Nome de Usuário</Label>
+                      <Label className="text-sm font-medium text-gray-500">{t('username')}</Label>
                       <p className="text-gray-900 mt-1">{user?.username}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-500">Conta Criada</Label>
+                      <Label className="text-sm font-medium text-gray-500">{t('account-created')}</Label>
                       <p className="text-gray-900 mt-1">{user?.createdAt ? formatDate(user.createdAt) : "N/A"}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-500">Última Atualização</Label>
+                      <Label className="text-sm font-medium text-gray-500">{t('last-updated')}</Label>
                       <p className="text-gray-900 mt-1">{user?.updatedAt ? formatDate(user.updatedAt) : "N/A"}</p>
                     </div>
                   </div>
