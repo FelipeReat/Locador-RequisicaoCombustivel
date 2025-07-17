@@ -26,11 +26,10 @@ export default function Sidebar() {
   return (
     <div className="w-64 bg-white dark:bg-gray-800 shadow-lg">
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-xl font-bold text-primary flex items-center">
+        <h1 className="text-xl font-bold text-primary flex items-center justify-center">
           <Fuel className="mr-2" />
           {t('system-name')}
         </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{t('fuel-control-system')}</p>
       </div>
 
       <nav className="mt-6">
