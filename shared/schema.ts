@@ -42,7 +42,12 @@ export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, 
     message: "Quantidade deve ser maior que 0",
   }),
   justification: z.string().min(10, "Justificativa deve ter pelo menos 10 caracteres"),
-  requiredDate: z.string().min(1, "Data necessária é obrigatória"),
+  requiredDate: z.string().min(1, "Data necessária é obrigatória").refine((val) => {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    return dateRegex.test(val);
+  }, {
+    message: "Data deve estar no formato YYYY-MM-DD",
+  }),
   priority: z.enum(["baixa", "media", "alta", "urgente"]).default("media"),
 }).omit({
   id: true,
