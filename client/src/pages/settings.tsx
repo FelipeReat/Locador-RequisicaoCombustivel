@@ -164,7 +164,7 @@ export default function Settings() {
         title="Configurações" 
         subtitle="Gerencie seu perfil e preferências do sistema" 
       />
-      
+
       <main className="flex-1 p-6">
         <div className="max-w-6xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -180,10 +180,10 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <UserIcon className="mr-2 h-5 w-5" />
-                    Informações do Perfil
+                    {t('personal-info')}
                   </CardTitle>
                   <CardDescription>
-                    Atualize suas informações pessoais e de contato
+                    {t('contact-info')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

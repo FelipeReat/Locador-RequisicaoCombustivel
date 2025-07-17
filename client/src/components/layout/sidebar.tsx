@@ -29,7 +29,7 @@ export default function Sidebar() {
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{t('fuel-control-system')}</p>
       </div>
-      
+
       <nav className="mt-6">
         <Link href="/dashboard">
           <div className={`sidebar-link ${isActive("/dashboard") ? "active" : ""}`}>
@@ -37,28 +37,28 @@ export default function Sidebar() {
             {t('dashboard')}
           </div>
         </Link>
-        
+
         <Link href="/requisitions">
           <div className={`sidebar-link ${isActive("/requisitions") ? "active" : ""}`}>
             <ClipboardList className="mr-3 h-4 w-4" />
             {t('requisitions')}
           </div>
         </Link>
-        
+
         <Link href="/new-requisition">
           <div className={`sidebar-link ${isActive("/new-requisition") ? "active" : ""}`}>
             <Plus className="mr-3 h-4 w-4" />
             {t('new-requisition')}
           </div>
         </Link>
-        
+
         <Link href="/reports">
           <div className={`sidebar-link ${isActive("/reports") ? "active" : ""}`}>
             <BarChart3 className="mr-3 h-4 w-4" />
             {t('reports')}
           </div>
         </Link>
-        
+
         <Link href="/settings">
           <div className={`sidebar-link ${isActive("/settings") ? "active" : ""}`}>
             <Settings className="mr-3 h-4 w-4" />

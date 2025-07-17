@@ -17,10 +17,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
+  const { t } = useLanguage();
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/fuel-requisitions/stats/overview"],
@@ -66,7 +68,7 @@ export default function Dashboard() {
         title="Dashboard" 
         subtitle="Visão geral das requisições de combustível" 
       />
-      
+
       <main className="flex-1 p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -83,7 +85,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <div className="bg-yellow-100 dark:bg-yellow-900 rounded-full p-3">
@@ -97,7 +99,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <div className="bg-green-100 dark:bg-green-900 rounded-full p-3">
@@ -111,7 +113,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <div className="bg-red-100 dark:bg-red-900 rounded-full p-3">
@@ -142,7 +144,7 @@ export default function Dashboard() {
                 <Plus className="mr-3 h-5 w-5" />
                 Nova Requisição
               </Button>
-              
+
               <Button
                 onClick={() => setLocation("/requisitions?filter=pending")}
                 className="flex items-center justify-center p-4 bg-yellow-50 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-800 border-none"
@@ -151,7 +153,7 @@ export default function Dashboard() {
                 <Clock className="mr-3 h-5 w-5" />
                 Aprovar Pendentes
               </Button>
-              
+
               <Button
                 onClick={() => setLocation("/reports")}
                 className="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 border-none"
@@ -178,7 +180,7 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700">
