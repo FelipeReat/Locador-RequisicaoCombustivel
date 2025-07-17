@@ -43,10 +43,12 @@ export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, 
   }),
   justification: z.string().min(10, "Justificativa deve ter pelo menos 10 caracteres"),
   requiredDate: z.string().min(1, "Data necessária é obrigatória").refine((val) => {
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    return dateRegex.test(val);
+    const date = new Date(val);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date >= today && date.getFullYear() >= 1900 && date.getFullYear() <= 2099;
   }, {
-    message: "Data deve estar no formato YYYY-MM-DD",
+    message: "Data deve ser válida e não pode ser no passado",
   }),
   priority: z.enum(["baixa", "media", "alta", "urgente"]).default("media"),
 }).omit({

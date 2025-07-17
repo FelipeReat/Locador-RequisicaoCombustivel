@@ -188,42 +188,6 @@ export default function RequisitionForm({ onSuccess }: RequisitionFormProps) {
                     {...field} 
                     min={new Date().toISOString().split('T')[0]}
                     max="2099-12-31"
-                    onKeyDown={(e) => {
-                      // Allow navigation keys, backspace, delete, tab
-                      if (
-                        ['ArrowLeft', 'ArrowRight', 'Backspace', 'Delete', 'Tab'].includes(e.key) ||
-                        (e.ctrlKey && ['a', 'c', 'v', 'x'].includes(e.key))
-                      ) {
-                        return;
-                      }
-                      
-                      // For other keys, prevent if it would make the year exceed 4 digits
-                      const input = e.target as HTMLInputElement;
-                      const value = input.value;
-                      const cursorPosition = input.selectionStart || 0;
-                      
-                      // Check if we're in the year part (first 4 characters)
-                      if (cursorPosition < 4) {
-                        // Allow only numbers in year part
-                        if (!/\d/.test(e.key)) {
-                          e.preventDefault();
-                        }
-                      }
-                    }}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Validate year format (YYYY-MM-DD)
-                      if (value.length >= 4) {
-                        const year = value.substring(0, 4);
-                        if (year.length === 4 && /^\d{4}$/.test(year)) {
-                          const yearNum = parseInt(year);
-                          if (yearNum < 1900 || yearNum > 2099) {
-                            return; // Don't update if year is out of range
-                          }
-                        }
-                      }
-                      field.onChange(e);
-                    }}
                   />
                 </FormControl>
                 <FormMessage />
