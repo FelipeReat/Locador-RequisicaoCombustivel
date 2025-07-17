@@ -6,7 +6,10 @@ import {
   ClipboardList, 
   Plus, 
   BarChart3, 
-  Settings 
+  Settings,
+  Users,
+  Building,
+  Car
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -56,6 +59,27 @@ export default function Sidebar() {
           <div className={`sidebar-link ${isActive("/reports") ? "active" : ""}`}>
             <BarChart3 className="mr-3 h-4 w-4" />
             {t('reports')}
+          </div>
+        </Link>
+
+        <Link href="/user-management">
+          <div className={`sidebar-link ${isActive("/user-management") ? "active" : ""}`}>
+            <Users className="mr-3 h-4 w-4" />
+            Usuários
+          </div>
+        </Link>
+
+        <Link href="/department-management">
+          <div className={`sidebar-link ${isActive("/department-management") ? "active" : ""}`}>
+            <Building className="mr-3 h-4 w-4" />
+            Departamentos
+          </div>
+        </Link>
+
+        <Link href="/fleet-management">
+          <div className={`sidebar-link ${isActive("/fleet-management") ? "active" : ""}`}>
+            <Car className="mr-3 h-4 w-4" />
+            Frota
           </div>
         </Link>
 

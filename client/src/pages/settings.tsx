@@ -326,16 +326,16 @@ export default function Settings() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label className="text-sm font-medium text-gray-500">{t('username')}</Label>
-                      <p className="text-gray-900 mt-1">{user?.username}</p>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('username')}</Label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{user?.username}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-500">{t('account-created')}</Label>
-                      <p className="text-gray-900 mt-1">{user?.createdAt ? formatDate(user.createdAt) : "N/A"}</p>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('account-created')}</Label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{user?.createdAt ? formatDate(user.createdAt) : "N/A"}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-500">{t('last-updated')}</Label>
-                      <p className="text-gray-900 mt-1">{user?.updatedAt ? formatDate(user.updatedAt) : "N/A"}</p>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('last-updated')}</Label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{user?.updatedAt ? formatDate(user.updatedAt) : "N/A"}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -596,15 +596,15 @@ export default function Settings() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{t('version-label')}:</span>
-                      <span className="text-sm font-medium">1.0.0</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">1.0.0</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{t('last-update-label')}:</span>
-                      <span className="text-sm font-medium">Janeiro 2025</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Janeiro 2025</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{t('developed-by-label')}:</span>
-                      <span className="text-sm font-medium">{t('fuelcontrol-team')}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('fuelcontrol-team')}</span>
                     </div>
                   </div>
                 </CardContent>

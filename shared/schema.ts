@@ -8,24 +8,55 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   email: text("email"),
   fullName: text("full_name"),
-  department: text("department"),
+  departmentId: integer("department_id"),
   phone: text("phone"),
   position: text("position"),
+  role: text("role").notNull().default("employee"),
+  active: text("active").notNull().default("true"),
+  hireDate: text("hire_date"),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export const departments = pgTable("departments", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  managerId: integer("manager_id"),
+  budget: decimal("budget"),
+  active: text("active").notNull().default("true"),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export const vehicles = pgTable("vehicles", {
+  id: serial("id").primaryKey(),
+  plate: text("plate").notNull().unique(),
+  model: text("model").notNull(),
+  brand: text("brand").notNull(),
+  year: integer("year").notNull(),
+  fuelType: text("fuel_type").notNull(),
+  departmentId: integer("department_id").notNull(),
+  mileage: decimal("mileage").default("0"),
+  status: text("status").notNull().default("active"),
+  lastMaintenance: text("last_maintenance"),
+  nextMaintenance: text("next_maintenance"),
   createdAt: text("created_at").notNull().default("now()"),
   updatedAt: text("updated_at").notNull().default("now()"),
 });
 
 export const fuelRequisitions = pgTable("fuel_requisitions", {
   id: serial("id").primaryKey(),
-  requester: text("requester").notNull(),
-  department: text("department").notNull(),
+  requesterId: integer("requester_id").notNull(),
+  departmentId: integer("department_id").notNull(),
+  vehicleId: integer("vehicle_id"),
   fuelType: text("fuel_type").notNull(),
   quantity: decimal("quantity").notNull(),
   justification: text("justification").notNull(),
   requiredDate: text("required_date").notNull(),
   priority: text("priority").notNull().default("media"),
   status: text("status").notNull().default("pending"),
-  approver: text("approver"),
+  approverId: integer("approver_id"),
   approvedDate: text("approved_date"),
   rejectionReason: text("rejection_reason"),
   createdAt: text("created_at").notNull().default("now()"),
@@ -62,11 +93,60 @@ export const changePasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, {
-  requester: z.string().min(1, "Nome do solicitante é obrigatório"),
-  department: z.enum(["logistica", "manutencao", "transporte", "operacoes"], {
-    errorMap: () => ({ message: "Departamento inválido" }),
+export const insertDepartmentSchema = createInsertSchema(departments, {
+  name: z.string().min(1, "Nome é obrigatório"),
+  description: z.string().optional(),
+  managerId: z.number().optional(),
+  budget: z.string().refine((val) => parseFloat(val) >= 0, {
+    message: "Orçamento deve ser maior ou igual a 0",
+  }).optional(),
+}).omit({
+  id: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertVehicleSchema = createInsertSchema(vehicles, {
+  plate: z.string().min(1, "Placa é obrigatória"),
+  model: z.string().min(1, "Modelo é obrigatório"),
+  brand: z.string().min(1, "Marca é obrigatória"),
+  year: z.number().min(1900, "Ano inválido").max(new Date().getFullYear() + 1, "Ano inválido"),
+  fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
+    errorMap: () => ({ message: "Tipo de combustível inválido" }),
   }),
+  departmentId: z.number().min(1, "Departamento é obrigatório"),
+  mileage: z.string().refine((val) => parseFloat(val) >= 0, {
+    message: "Quilometragem deve ser maior ou igual a 0",
+  }).optional(),
+}).omit({
+  id: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserManagementSchema = createInsertSchema(users, {
+  username: z.string().min(3, "Nome de usuário deve ter pelo menos 3 caracteres"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  email: z.string().email("Email inválido").optional(),
+  fullName: z.string().min(1, "Nome completo é obrigatório"),
+  departmentId: z.number().min(1, "Departamento é obrigatório"),
+  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional(),
+  position: z.string().min(1, "Cargo é obrigatório"),
+  role: z.enum(["admin", "manager", "employee"]).default("employee"),
+  hireDate: z.string().optional(),
+}).omit({
+  id: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, {
+  requesterId: z.number().min(1, "Solicitante é obrigatório"),
+  departmentId: z.number().min(1, "Departamento é obrigatório"),
+  vehicleId: z.number().optional(),
   fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
     errorMap: () => ({ message: "Tipo de combustível inválido" }),
   }),
@@ -86,7 +166,7 @@ export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, 
 }).omit({
   id: true,
   status: true,
-  approver: true,
+  approverId: true,
   approvedDate: true,
   rejectionReason: true,
   createdAt: true,
@@ -103,6 +183,11 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
+export type InsertUserManagement = z.infer<typeof insertUserManagementSchema>;
+export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
+export type Department = typeof departments.$inferSelect;
+export type InsertVehicle = z.infer<typeof insertVehicleSchema>;
+export type Vehicle = typeof vehicles.$inferSelect;
 export type InsertFuelRequisition = z.infer<typeof insertFuelRequisitionSchema>;
 export type FuelRequisition = typeof fuelRequisitions.$inferSelect;
 export type UpdateFuelRequisitionStatus = z.infer<typeof updateFuelRequisitionStatusSchema>;
