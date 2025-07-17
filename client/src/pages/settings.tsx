@@ -5,6 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
 import { updateUserProfileSchema, changePasswordSchema, type User, type UpdateUserProfile, type ChangePassword } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/contexts/theme-context";
+import { useLanguage } from "@/contexts/language-context";
+import { useNotifications } from "@/contexts/notification-context";
 import Header from "@/components/layout/header";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
@@ -47,6 +50,9 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("profile");
+  const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
+  const { settings: notificationSettings, updateSetting } = useNotifications();
 
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user/profile"],
@@ -163,10 +169,10 @@ export default function Settings() {
         <div className="max-w-6xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="profile">Perfil</TabsTrigger>
-              <TabsTrigger value="security">Segurança</TabsTrigger>
-              <TabsTrigger value="notifications">Notificações</TabsTrigger>
-              <TabsTrigger value="system">Sistema</TabsTrigger>
+              <TabsTrigger value="profile">{t('profile')}</TabsTrigger>
+              <TabsTrigger value="security">{t('security')}</TabsTrigger>
+              <TabsTrigger value="notifications">{t('notifications')}</TabsTrigger>
+              <TabsTrigger value="system">{t('system')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6">
@@ -428,7 +434,7 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Bell className="mr-2 h-5 w-5" />
-                    Preferências de Notificações
+                    {t('notification-settings')}
                   </CardTitle>
                   <CardDescription>
                     Configure como e quando você deseja receber notificações
@@ -438,34 +444,58 @@ export default function Settings() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Novas Requisições</h4>
-                        <p className="text-sm text-gray-600">Receba notificações quando uma nova requisição for criada</p>
+                        <h4 className="font-medium">{t('new-requisitions')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Receba notificações quando uma nova requisição for criada</p>
                       </div>
-                      <Button variant="outline" size="sm">Ativado</Button>
+                      <Button 
+                        variant={notificationSettings.newRequisitions ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => updateSetting('newRequisitions', !notificationSettings.newRequisitions)}
+                      >
+                        {notificationSettings.newRequisitions ? t('enabled') : t('disabled')}
+                      </Button>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Aprovações Pendentes</h4>
-                        <p className="text-sm text-gray-600">Notificações sobre requisições aguardando aprovação</p>
+                        <h4 className="font-medium">{t('pending-approvals')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Notificações sobre requisições aguardando aprovação</p>
                       </div>
-                      <Button variant="outline" size="sm">Ativado</Button>
+                      <Button 
+                        variant={notificationSettings.pendingApprovals ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => updateSetting('pendingApprovals', !notificationSettings.pendingApprovals)}
+                      >
+                        {notificationSettings.pendingApprovals ? t('enabled') : t('disabled')}
+                      </Button>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Status de Requisições</h4>
-                        <p className="text-sm text-gray-600">Atualizações sobre o status das suas requisições</p>
+                        <h4 className="font-medium">{t('requisition-status')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Atualizações sobre o status das suas requisições</p>
                       </div>
-                      <Button variant="outline" size="sm">Ativado</Button>
+                      <Button 
+                        variant={notificationSettings.requisitionStatus ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => updateSetting('requisitionStatus', !notificationSettings.requisitionStatus)}
+                      >
+                        {notificationSettings.requisitionStatus ? t('enabled') : t('disabled')}
+                      </Button>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Relatórios Mensais</h4>
-                        <p className="text-sm text-gray-600">Resumo mensal do consumo de combustível</p>
+                        <h4 className="font-medium">{t('monthly-reports')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Resumo mensal do consumo de combustível</p>
                       </div>
-                      <Button variant="outline" size="sm">Desativado</Button>
+                      <Button 
+                        variant={notificationSettings.monthlyReports ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => updateSetting('monthlyReports', !notificationSettings.monthlyReports)}
+                      >
+                        {notificationSettings.monthlyReports ? t('enabled') : t('disabled')}
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -487,27 +517,27 @@ export default function Settings() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Tema</h4>
-                        <p className="text-sm text-gray-600">Escolha entre tema claro ou escuro</p>
+                        <h4 className="font-medium">{t('theme')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Escolha entre tema claro ou escuro</p>
                       </div>
-                      <Select defaultValue="light">
+                      <Select value={theme} onValueChange={setTheme}>
                         <SelectTrigger className="w-32">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="light">Claro</SelectItem>
-                          <SelectItem value="dark">Escuro</SelectItem>
-                          <SelectItem value="system">Sistema</SelectItem>
+                          <SelectItem value="light">{t('light')}</SelectItem>
+                          <SelectItem value="dark">{t('dark')}</SelectItem>
+                          <SelectItem value="system">{t('system-theme')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">Idioma</h4>
-                        <p className="text-sm text-gray-600">Idioma da interface do sistema</p>
+                        <h4 className="font-medium">{t('language')}</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Idioma da interface do sistema</p>
                       </div>
-                      <Select defaultValue="pt-BR">
+                      <Select value={language} onValueChange={setLanguage}>
                         <SelectTrigger className="w-32">
                           <SelectValue />
                         </SelectTrigger>
