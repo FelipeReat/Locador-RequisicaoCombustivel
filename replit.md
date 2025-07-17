@@ -1,8 +1,8 @@
-# FuelControl System
+# Sistema Controle de Abastecimento
 
 ## Overview
 
-FuelControl is a comprehensive fuel requisition management system built with a modern full-stack architecture. The application allows users to create, track, and manage fuel requisitions with features for approval workflows, analytics, and reporting. The system is designed for corporate fuel management with departments like logistics, maintenance, transport, and operations.
+O Controle de Abastecimento é um sistema abrangente de gerenciamento de requisições de combustível construído com uma arquitetura full-stack moderna. A aplicação permite aos usuários criar, rastrear e gerenciar requisições de combustível com recursos para fluxos de aprovação, análises e relatórios. O sistema é projetado para gerenciamento corporativo de combustível com departamentos como logística, manutenção, transporte e operações.
 
 ## User Preferences
 

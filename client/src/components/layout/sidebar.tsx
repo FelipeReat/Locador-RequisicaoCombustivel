@@ -28,7 +28,7 @@ export default function Sidebar() {
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-xl font-bold text-primary flex items-center">
           <Fuel className="mr-2" />
-          FuelControl
+          {t('system-name')}
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{t('fuel-control-system')}</p>
       </div>

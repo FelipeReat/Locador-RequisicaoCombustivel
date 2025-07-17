@@ -54,6 +54,7 @@ const translations: Record<Language, Record<string, string>> = {
     'cancelled': 'Cancelado',
     
     // Sistema
+    'system-name': 'Controle de Abastecimento',
     'fuel-control-system': 'Sistema de Controle de Combustível',
     'profile': 'Perfil',
     'security': 'Segurança',
@@ -350,11 +351,11 @@ const translations: Record<Language, Record<string, string>> = {
     'items-per-page-label': 'Itens por Página',
     'items-displayed-tables': 'Número de itens exibidos nas tabelas',
     'about-system-title': 'Sobre o Sistema',
-    'about-fuelcontrol': 'Informações sobre o FuelControl',
+    'about-fuelcontrol': 'Informações sobre o Controle de Abastecimento',
     'version-label': 'Versão',
     'last-update-label': 'Última Atualização',
     'developed-by-label': 'Desenvolvido por',
-    'fuelcontrol-team': 'Equipe FuelControl',
+    'fuelcontrol-team': 'Equipe Controle de Abastecimento',
     
     // Gestão de Frotas
     'fleet-management': 'Gestão de Frota',
@@ -530,6 +531,7 @@ const translations: Record<Language, Record<string, string>> = {
     'cancelled': 'Cancelled',
     
     // System
+    'system-name': 'Fuel Control',
     'fuel-control-system': 'Fuel Control System',
     'profile': 'Profile',
     'security': 'Security',
@@ -826,11 +828,11 @@ const translations: Record<Language, Record<string, string>> = {
     'items-per-page-label': 'Items per Page',
     'items-displayed-tables': 'Number of items displayed in tables',
     'about-system-title': 'About System',
-    'about-fuelcontrol': 'Information about FuelControl',
+    'about-fuelcontrol': 'Information about Fuel Control',
     'version-label': 'Version',
     'last-update-label': 'Last Update',
     'developed-by-label': 'Developed by',
-    'fuelcontrol-team': 'FuelControl Team',
+    'fuelcontrol-team': 'Fuel Control Team',
     
     // Fleet Management
     'fleet-management': 'Fleet Management',
@@ -982,6 +984,7 @@ const translations: Record<Language, Record<string, string>> = {
     'cancelled': 'Cancelado',
     
     // Sistema
+    'system-name': 'Control de Combustible',
     'fuel-control-system': 'Sistema de Control de Combustible',
     'profile': 'Perfil',
     'security': 'Seguridad',
@@ -1278,11 +1281,11 @@ const translations: Record<Language, Record<string, string>> = {
     'items-per-page-label': 'Elementos por Página',
     'items-displayed-tables': 'Número de elementos mostrados en las tablas',
     'about-system-title': 'Acerca del Sistema',
-    'about-fuelcontrol': 'Información sobre FuelControl',
+    'about-fuelcontrol': 'Información sobre Control de Combustible',
     'version-label': 'Versión',
     'last-update-label': 'Última Actualización',
     'developed-by-label': 'Desarrollado por',
-    'fuelcontrol-team': 'Equipo FuelControl',
+    'fuelcontrol-team': 'Equipo Control de Combustible',
     
     // Gestión de Flota
     'fleet-management': 'Gestión de Flota',
