@@ -1,12 +1,30 @@
-import { users, fuelRequisitions, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus } from "@shared/schema";
+import { users, fuelRequisitions, departments, vehicles, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Department, type InsertDepartment, type Vehicle, type InsertVehicle, type InsertUserManagement } from "@shared/schema";
 
 export interface IStorage {
+  // Users
   getUser(id: number): Promise<User | undefined>;
+  getUsers(): Promise<User[]>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<InsertUserManagement>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   updateUserProfile(id: number, profile: UpdateUserProfile): Promise<User | undefined>;
   changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean>;
   getCurrentUser(): Promise<User | undefined>;
+  
+  // Departments
+  getDepartments(): Promise<Department[]>;
+  getDepartment(id: number): Promise<Department | undefined>;
+  createDepartment(department: InsertDepartment): Promise<Department>;
+  updateDepartment(id: number, updates: Partial<InsertDepartment>): Promise<Department | undefined>;
+  deleteDepartment(id: number): Promise<boolean>;
+  
+  // Vehicles
+  getVehicles(): Promise<Vehicle[]>;
+  getVehicle(id: number): Promise<Vehicle | undefined>;
+  createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
+  updateVehicle(id: number, updates: Partial<InsertVehicle>): Promise<Vehicle | undefined>;
+  deleteVehicle(id: number): Promise<boolean>;
   
   // Fuel Requisitions
   getFuelRequisitions(): Promise<FuelRequisition[]>;
@@ -31,14 +49,22 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
+  private departments: Map<number, Department>;
+  private vehicles: Map<number, Vehicle>;
   private fuelRequisitions: Map<number, FuelRequisition>;
   private currentUserId: number;
+  private currentDepartmentId: number;
+  private currentVehicleId: number;
   private currentRequisitionId: number;
 
   constructor() {
     this.users = new Map();
+    this.departments = new Map();
+    this.vehicles = new Map();
     this.fuelRequisitions = new Map();
     this.currentUserId = 1;
+    this.currentDepartmentId = 1;
+    this.currentVehicleId = 1;
     this.currentRequisitionId = 1;
     
     // Add sample data for demonstration
@@ -50,6 +76,43 @@ export class MemStorage implements IStorage {
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     
+    // Sample departments
+    const sampleDepartments: Department[] = [
+      {
+        id: 1,
+        name: "Administração",
+        description: "Departamento administrativo",
+        managerId: 1,
+        budget: "50000.00",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 2,
+        name: "Logística",
+        description: "Departamento de logística e transporte",
+        managerId: null,
+        budget: "75000.00",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 3,
+        name: "Manutenção",
+        description: "Departamento de manutenção de veículos",
+        managerId: null,
+        budget: "30000.00",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      }
+    ];
+
+    sampleDepartments.forEach(dept => this.departments.set(dept.id, dept));
+    this.currentDepartmentId = 4;
+
     // Sample user
     const sampleUser: User = {
       id: 1,
@@ -57,15 +120,55 @@ export class MemStorage implements IStorage {
       password: "123456",
       email: "joao.silva@empresa.com",
       fullName: "João Silva",
-      department: "administracao",
+      departmentId: 1,
       phone: "(11) 99999-9999",
       position: "Gerente de Operações",
+      role: "admin",
+      active: "true",
+      hireDate: yesterday.toISOString(),
       createdAt: yesterday.toISOString(),
       updatedAt: yesterday.toISOString(),
     };
     
     this.users.set(1, sampleUser);
     this.currentUserId = 2;
+
+    // Sample vehicles
+    const sampleVehicles: Vehicle[] = [
+      {
+        id: 1,
+        plate: "ABC-1234",
+        model: "Sprinter",
+        brand: "Mercedes",
+        year: 2020,
+        fuelType: "diesel",
+        departmentId: 2,
+        mileage: "50000",
+        status: "active",
+        lastMaintenance: yesterday.toISOString(),
+        nextMaintenance: null,
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 2,
+        plate: "XYZ-5678",
+        model: "HB20",
+        brand: "Hyundai",
+        year: 2019,
+        fuelType: "gasolina",
+        departmentId: 1,
+        mileage: "30000",
+        status: "active",
+        lastMaintenance: yesterday.toISOString(),
+        nextMaintenance: null,
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      }
+    ];
+
+    sampleVehicles.forEach(vehicle => this.vehicles.set(vehicle.id, vehicle));
+    this.currentVehicleId = 3;
     
     // Sample requisitions
     const sampleRequisitions = [
@@ -144,9 +247,12 @@ export class MemStorage implements IStorage {
       id,
       email: null,
       fullName: null,
-      department: null,
+      departmentId: null,
       phone: null,
       position: null,
+      role: "employee",
+      active: "true",
+      hireDate: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -184,6 +290,105 @@ export class MemStorage implements IStorage {
     // In a real app, this would get the current authenticated user
     // For demo purposes, return the sample user
     return this.users.get(1);
+  }
+
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async updateUser(id: number, updates: Partial<InsertUserManagement>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updatedUser = {
+      ...user,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    return this.users.delete(id);
+  }
+
+  // Department methods
+  async getDepartments(): Promise<Department[]> {
+    return Array.from(this.departments.values());
+  }
+
+  async getDepartment(id: number): Promise<Department | undefined> {
+    return this.departments.get(id);
+  }
+
+  async createDepartment(departmentData: InsertDepartment): Promise<Department> {
+    const department: Department = {
+      id: this.currentDepartmentId++,
+      ...departmentData,
+      active: "true",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.departments.set(department.id, department);
+    return department;
+  }
+
+  async updateDepartment(id: number, updates: Partial<InsertDepartment>): Promise<Department | undefined> {
+    const department = this.departments.get(id);
+    if (!department) return undefined;
+
+    const updatedDepartment = {
+      ...department,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.departments.set(id, updatedDepartment);
+    return updatedDepartment;
+  }
+
+  async deleteDepartment(id: number): Promise<boolean> {
+    return this.departments.delete(id);
+  }
+
+  // Vehicle methods
+  async getVehicles(): Promise<Vehicle[]> {
+    return Array.from(this.vehicles.values());
+  }
+
+  async getVehicle(id: number): Promise<Vehicle | undefined> {
+    return this.vehicles.get(id);
+  }
+
+  async createVehicle(vehicleData: InsertVehicle): Promise<Vehicle> {
+    const vehicle: Vehicle = {
+      id: this.currentVehicleId++,
+      ...vehicleData,
+      status: "active",
+      lastMaintenance: null,
+      nextMaintenance: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.vehicles.set(vehicle.id, vehicle);
+    return vehicle;
+  }
+
+  async updateVehicle(id: number, updates: Partial<InsertVehicle>): Promise<Vehicle | undefined> {
+    const vehicle = this.vehicles.get(id);
+    if (!vehicle) return undefined;
+
+    const updatedVehicle = {
+      ...vehicle,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.vehicles.set(id, updatedVehicle);
+    return updatedVehicle;
+  }
+
+  async deleteVehicle(id: number): Promise<boolean> {
+    return this.vehicles.delete(id);
   }
 
   async getFuelRequisitions(): Promise<FuelRequisition[]> {
