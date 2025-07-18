@@ -22,6 +22,7 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>({
+    requesterId: 1, // Using ID 1 for demo
     supplierId: undefined,
     client: "BBM Serviços",
     responsavel: "",
@@ -99,6 +100,7 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
     
     const submissionData = {
       ...formData,
+      requesterId: formData.requesterId || 1,
       tanqueCheio: isTanqueCheio ? "true" : "false",
       quantity: isTanqueCheio ? undefined : formData.quantity,
     };
