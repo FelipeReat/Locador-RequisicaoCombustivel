@@ -8,7 +8,8 @@ import {
   BarChart3, 
   Settings,
   Users,
-  Car
+  Car,
+  Building2
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -71,6 +72,13 @@ export default function Sidebar() {
           <div className={`sidebar-link ${isActive("/fleet-management") ? "active" : ""}`}>
             <Car className="mr-3 h-4 w-4" />
             {t('fleet')}
+          </div>
+        </Link>
+
+        <Link href="/suppliers">
+          <div className={`sidebar-link ${isActive("/suppliers") ? "active" : ""}`}>
+            <Building2 className="mr-3 h-4 w-4" />
+            Fornecedores
           </div>
         </Link>
 

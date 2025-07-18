@@ -15,6 +15,7 @@ import FleetManagement from "@/pages/fleet-management";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
+import Suppliers from "@/pages/suppliers";
 
 function Router() {
   return (
@@ -29,6 +30,7 @@ function Router() {
           <Route path="/reports" component={Reports} />
           <Route path="/user-management" component={UserManagement} />
           <Route path="/fleet-management" component={FleetManagement} />
+          <Route path="/suppliers" component={Suppliers} />
           <Route path="/settings" component={Settings} />
           <Route component={NotFound} />
         </Switch>
