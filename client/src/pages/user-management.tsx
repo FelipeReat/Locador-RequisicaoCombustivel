@@ -1,18 +1,34 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
-import { insertUserManagementSchema, type User, type InsertUserManagement, type Department } from "@shared/schema";
+import {
+  insertUserManagementSchema,
+  type User,
+  type InsertUserManagement,
+} from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import Header from "@/components/layout/header";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -29,15 +45,15 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { 
-  Users, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Users,
+  Plus,
+  Edit,
+  Trash2,
   Search,
   UserCheck,
   UserX,
-  Shield
+  Shield,
 } from "lucide-react";
 
 export default function UserManagement() {
@@ -52,10 +68,6 @@ export default function UserManagement() {
     queryKey: ["/api/users"],
   });
 
-  const { data: departments } = useQuery<Department[]>({
-    queryKey: ["/api/departments"],
-  });
-
   const form = useForm<InsertUserManagement>({
     resolver: zodResolver(insertUserManagementSchema),
     defaultValues: {
@@ -63,7 +75,6 @@ export default function UserManagement() {
       password: "",
       email: "",
       fullName: "",
-      departmentId: 0,
       phone: "",
       position: "",
       role: "employee",
@@ -95,7 +106,13 @@ export default function UserManagement() {
   });
 
   const updateUser = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertUserManagement> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<InsertUserManagement>;
+    }) => {
       const response = await apiRequest("PUT", `/api/users/${id}`, data);
       return response.json();
     },
@@ -120,7 +137,11 @@ export default function UserManagement() {
 
   const toggleUserStatus = useMutation({
     mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
-      const response = await apiRequest("PATCH", `/api/users/${id}/status`, { active: active.toString() });
+      const response = await apiRequest(
+        "PATCH",
+        `/api/users/${id}/status`,
+        { active: active.toString() }
+      );
       return response.json();
     },
     onSuccess: () => {
@@ -154,7 +175,6 @@ export default function UserManagement() {
       password: "",
       email: user.email || "",
       fullName: user.fullName || "",
-      departmentId: user.departmentId || 0,
       phone: user.phone || "",
       position: user.position || "",
       role: user.role as "admin" | "manager" | "employee",
@@ -169,16 +189,18 @@ export default function UserManagement() {
     setIsDialogOpen(true);
   };
 
-  const filteredUsers = users?.filter(user =>
-    user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredUsers =
+    users?.filter(
+      (user) =>
+        user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   const getRoleLabel = (role: string) => {
     const labels = {
       admin: t("administrator"),
-      manager: t("manager"), 
+      manager: t("manager"),
       employee: t("employee"),
     };
     return labels[role as keyof typeof labels] || role;
@@ -193,21 +215,15 @@ export default function UserManagement() {
     return variants[role as keyof typeof variants] || "secondary";
   };
 
-  const getDepartmentName = (departmentId: number | null) => {
-    if (!departmentId) return t("no-department");
-    const dept = departments?.find(d => d.id === departmentId);
-    return dept?.name || t("department-not-found");
-  };
-
   if (usersLoading) {
     return <LoadingSpinner message={t("loading-users")} />;
   }
 
   return (
     <>
-      <Header 
-        title={t('user-management')} 
-        subtitle={t('manage-employees-permissions')} 
+      <Header
+        title={t("user-management")}
+        subtitle={t("manage-employees-permissions")}
       />
 
       <main className="flex-1 p-6">
@@ -218,42 +234,45 @@ export default function UserManagement() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder={t('search-users')}
+                  placeholder={t("search-users")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-64"
                 />
               </div>
             </div>
-            
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={handleNew}>
                   <Plus className="mr-2 h-4 w-4" />
-                  {t('new-user')}
+                  {t("new-user")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingUser ? t('edit-user') : t('new-user')}
+                    {editingUser ? t("edit-user") : t("new-user")}
                   </DialogTitle>
                   <DialogDescription>
-                    {editingUser ? t('update-user-info') : t('add-new-user')}
+                    {editingUser ? t("update-user-info") : t("add-new-user")}
                   </DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                  >
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('username')} *</FormLabel>
+                            <FormLabel>{t("username")} *</FormLabel>
                             <FormControl>
-                              <Input placeholder={t('username')} {...field} />
+                              <Input placeholder={t("username")} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -265,9 +284,17 @@ export default function UserManagement() {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{editingUser ? t('new-password-optional') : t('password') + ' *'}</FormLabel>
+                            <FormLabel>
+                              {editingUser
+                                ? t("new-password-optional")
+                                : t("password") + " *"}
+                            </FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder={t('password')} {...field} />
+                              <Input
+                                type="password"
+                                placeholder={t("password")}
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -280,9 +307,9 @@ export default function UserManagement() {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('full-name')} *</FormLabel>
+                          <FormLabel>{t("full-name")} *</FormLabel>
                           <FormControl>
-                            <Input placeholder={t('full-name')} {...field} />
+                            <Input placeholder={t("full-name")} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -295,9 +322,13 @@ export default function UserManagement() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('email')}</FormLabel>
+                            <FormLabel>{t("email")}</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder={t('email')} {...field} />
+                              <Input
+                                type="email"
+                                placeholder={t("email")}
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -309,9 +340,9 @@ export default function UserManagement() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('phone')}</FormLabel>
+                            <FormLabel>{t("phone")}</FormLabel>
                             <FormControl>
-                              <Input placeholder={t('phone')} {...field} />
+                              <Input placeholder={t("phone")} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -322,37 +353,12 @@ export default function UserManagement() {
                     <div className="grid grid-cols-3 gap-4">
                       <FormField
                         control={form.control}
-                        name="departmentId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('department')} *</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('select-option')} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {departments?.map((dept) => (
-                                  <SelectItem key={dept.id} value={dept.id.toString()}>
-                                    {dept.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
                         name="position"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('position')} *</FormLabel>
+                            <FormLabel>{t("position")} *</FormLabel>
                             <FormControl>
-                              <Input placeholder={t('position')} {...field} />
+                              <Input placeholder={t("position")} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -364,17 +370,17 @@ export default function UserManagement() {
                         name="role"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('role')} *</FormLabel>
+                            <FormLabel>{t("role")} *</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder={t('select-option')} />
+                                  <SelectValue placeholder={t("select-option")} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="employee">{t('employee')}</SelectItem>
-                                <SelectItem value="manager">{t('manager')}</SelectItem>
-                                <SelectItem value="admin">{t('administrator')}</SelectItem>
+                                <SelectItem value="employee">{t("employee")}</SelectItem>
+                                <SelectItem value="manager">{t("manager")}</SelectItem>
+                                <SelectItem value="admin">{t("administrator")}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -388,7 +394,7 @@ export default function UserManagement() {
                       name="hireDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('hire-date')}</FormLabel>
+                          <FormLabel>{t("hire-date")}</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -398,11 +404,18 @@ export default function UserManagement() {
                     />
 
                     <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        {t('cancel')}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsDialogOpen(false)}
+                      >
+                        {t("cancel")}
                       </Button>
-                      <Button type="submit" disabled={createUser.isPending || updateUser.isPending}>
-                        {editingUser ? t('update') : t('create')}
+                      <Button
+                        type="submit"
+                        disabled={createUser.isPending || updateUser.isPending}
+                      >
+                        {editingUser ? t("update") : t("create")}
                       </Button>
                     </div>
                   </form>
@@ -422,18 +435,25 @@ export default function UserManagement() {
                         <Users className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{user.fullName}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">@{user.username}</p>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                          {user.fullName}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          @{user.username}
+                        </p>
                         <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+                          <Badge
+                            variant={getRoleBadgeVariant(user.role)}
+                            className="text-xs"
+                          >
                             <Shield className="w-3 h-3 mr-1" />
                             {getRoleLabel(user.role)}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {getDepartmentName(user.departmentId)}
-                          </Badge>
-                          <Badge variant={user.active === "true" ? "default" : "secondary"} className="text-xs">
-                            {user.active === "true" ? t('active') : t('inactive')}
+                          <Badge
+                            variant={user.active === "true" ? "default" : "secondary"}
+                            className="text-xs"
+                          >
+                            {user.active === "true" ? t("active") : t("inactive")}
                           </Badge>
                         </div>
                       </div>
@@ -441,18 +461,26 @@ export default function UserManagement() {
 
                     <div className="flex items-center space-x-2">
                       <div className="text-right text-sm text-gray-600 dark:text-gray-300 mr-4">
-                        <p><strong>{t('email')}:</strong> {user.email || t('not-informed')}</p>
-                        <p><strong>{t('position')}:</strong> {user.position || t('not-informed')}</p>
-                        <p><strong>{t('phone')}:</strong> {user.phone || t('not-informed')}</p>
+                        <p>
+                          <strong>{t("email")}:</strong> {user.email || t("not-informed")}
+                        </p>
+                        <p>
+                          <strong>{t("position")}:</strong> {user.position || t("not-informed")}
+                        </p>
+                        <p>
+                          <strong>{t("phone")}:</strong> {user.phone || t("not-informed")}
+                        </p>
                       </div>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => toggleUserStatus.mutate({ 
-                          id: user.id, 
-                          active: user.active !== "true" 
-                        })}
+                        onClick={() =>
+                          toggleUserStatus.mutate({
+                            id: user.id,
+                            active: user.active !== "true",
+                          })
+                        }
                       >
                         {user.active === "true" ? (
                           <UserX className="h-4 w-4" />
@@ -460,7 +488,7 @@ export default function UserManagement() {
                           <UserCheck className="h-4 w-4" />
                         )}
                       </Button>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -479,9 +507,11 @@ export default function UserManagement() {
             <Card>
               <CardContent className="p-12 text-center">
                 <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{t('no-users-found')}</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  {t("no-users-found")}
+                </h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  {searchTerm ? t('adjust-search') : t('start-creating-user')}
+                  {searchTerm ? t("adjust-search") : t("start-creating-user")}
                 </p>
               </CardContent>
             </Card>

@@ -251,30 +251,7 @@ export default function Settings() {
                             )}
                           />
 
-                          <FormField
-                            control={profileForm.control}
-                            name="department"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('department')} *</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder={t('select-department')} />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="administracao">{t('administration')}</SelectItem>
-                                    <SelectItem value="logistica">{t('logistics')}</SelectItem>
-                                    <SelectItem value="manutencao">{t('maintenance')}</SelectItem>
-                                    <SelectItem value="transporte">{t('transport')}</SelectItem>
-                                    <SelectItem value="operacoes">{t('operations')}</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          
 
                           <FormField
                             control={profileForm.control}

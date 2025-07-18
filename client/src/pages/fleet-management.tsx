@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
-import { insertVehicleSchema, type Vehicle, type InsertVehicle, type Department } from "@shared/schema";
+import { insertVehicleSchema, type Vehicle, type InsertVehicle } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import Header from "@/components/layout/header";
@@ -202,9 +201,9 @@ export default function FleetManagement() {
     const matchesSearch = vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesDepartment = departmentFilter === "all" || vehicle.departmentId.toString() === departmentFilter;
-    
+
     return matchesSearch && matchesDepartment;
   }) || [];
 
@@ -233,7 +232,7 @@ export default function FleetManagement() {
                   className="pl-10 w-64"
                 />
               </div>
-              
+
               <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder={t('filter-by-department')} />
@@ -248,7 +247,7 @@ export default function FleetManagement() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={handleNew}>
@@ -451,7 +450,7 @@ export default function FleetManagement() {
                       <strong>{t('fuel')}:</strong> {getFuelTypeLabel(vehicle.fuelType)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Gauge className="h-4 w-4 text-gray-500" />
                     <span className="text-sm text-gray-700 dark:text-gray-300">

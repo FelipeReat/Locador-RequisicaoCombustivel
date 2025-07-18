@@ -18,17 +18,6 @@ export const users = pgTable("users", {
   updatedAt: text("updated_at").notNull().default("now()"),
 });
 
-export const departments = pgTable("departments", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  description: text("description"),
-  managerId: integer("manager_id"),
-  budget: decimal("budget"),
-  active: text("active").notNull().default("true"),
-  createdAt: text("created_at").notNull().default("now()"),
-  updatedAt: text("updated_at").notNull().default("now()"),
-});
-
 export const vehicles = pgTable("vehicles", {
   id: serial("id").primaryKey(),
   plate: text("plate").notNull().unique(),
@@ -36,7 +25,6 @@ export const vehicles = pgTable("vehicles", {
   brand: text("brand").notNull(),
   year: integer("year").notNull(),
   fuelType: text("fuel_type").notNull(),
-  departmentId: integer("department_id").notNull(),
   mileage: decimal("mileage").default("0"),
   status: text("status").notNull().default("active"),
   lastMaintenance: text("last_maintenance"),
@@ -91,18 +79,6 @@ export const insertUserManagementSchema = createInsertSchema(users, {
   updatedAt: true,
 });
 
-export const insertDepartmentSchema = createInsertSchema(departments, {
-  name: z.string().min(1, "Nome é obrigatório"),
-  description: z.string().optional(),
-  managerId: z.number().optional(),
-  budget: z.string().optional(),
-}).omit({
-  id: true,
-  active: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -119,15 +95,11 @@ export const suppliers = pgTable("suppliers", {
 export const updateUserProfileSchema = createInsertSchema(users, {
   email: z.string().email("Email inválido").optional(),
   fullName: z.string().min(1, "Nome completo é obrigatório"),
-  department: z.enum(["logistica", "manutencao", "transporte", "operacoes", "administracao"], {
-    errorMap: () => ({ message: "Departamento inválido" }),
-  }),
   phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional(),
   position: z.string().min(1, "Cargo é obrigatório").optional(),
 }).pick({
   email: true,
   fullName: true,
-  department: true,
   phone: true,
   position: true,
 });
@@ -213,8 +185,6 @@ export type User = typeof users.$inferSelect;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
 export type InsertUserManagement = z.infer<typeof insertUserManagementSchema>;
-export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
-export type Department = typeof departments.$inferSelect;
 export type InsertVehicle = z.infer<typeof insertVehicleSchema>;
 export type Vehicle = typeof vehicles.$inferSelect;
 export type InsertFuelRequisition = z.infer<typeof insertFuelRequisitionSchema>;
