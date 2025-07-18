@@ -168,13 +168,13 @@ export default function RequisitionDetailsModal({
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Solicitante</Label>
-              <p className="text-gray-900 mt-1">{requisition.requester}</p>
+              <Label className="text-sm font-medium text-gray-500">Responsável</Label>
+              <p className="text-gray-900 mt-1">{requisition.responsavel}</p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Departamento</Label>
-              <p className="text-gray-900 mt-1">{getDepartmentLabel(requisition.department)}</p>
+              <Label className="text-sm font-medium text-gray-500">Cliente</Label>
+              <p className="text-gray-900 mt-1">{requisition.client}</p>
             </div>
 
             <div>

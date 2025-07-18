@@ -32,12 +32,13 @@ export default function Requisitions() {
 
   const filteredRequisitions = requisitions?.filter((req) => {
     const matchesSearch = 
-      (req.requester || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (req.department || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (req.responsavel || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (req.client || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (req.fuelType || "").toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = !statusFilter || statusFilter === "all" || req.status === statusFilter;
-    const matchesDepartment = !departmentFilter || departmentFilter === "all" || req.department === departmentFilter;
+    // Note: Department filtering disabled for now since we don't have department field in new schema
+    const matchesDepartment = departmentFilter === "all";
     
     return matchesSearch && matchesStatus && matchesDepartment;
   }) || [];
@@ -161,10 +162,10 @@ export default function Requisitions() {
                     ID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('requester')}
+                    RESPONSÁVEL
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('department')}
+                    CLIENTE
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     {t('fuel-type')}
@@ -199,10 +200,10 @@ export default function Requisitions() {
                         #REQ{String(requisition.id).padStart(3, "0")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {requisition.requester || "-"}
+                        {requisition.responsavel || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {getDepartmentLabel(requisition.department || "")}
+                        {requisition.client || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {getFuelTypeLabel(requisition.fuelType || "")}
