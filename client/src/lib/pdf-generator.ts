@@ -322,7 +322,11 @@ export class PDFGenerator {
   }
 
   generatePurchaseOrderPDF(requisition: any) {
-    this.doc = new jsPDF();
+    this.doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
     this.currentY = 20;
 
     // Função para criar uma via do documento
@@ -430,7 +434,7 @@ export class PDFGenerator {
       this.currentY += 8;
 
       // Linha separadora
-      this.doc.line(20, this.currentY, 160, this.currentY);
+      this.doc.line(20, this.currentY, 200, this.currentY);
       this.currentY += 5;
 
       // Dados da tabela com informações reais
@@ -454,7 +458,7 @@ export class PDFGenerator {
       this.currentY += 10;
 
       // Linha separadora
-      this.doc.line(20, this.currentY, 160, this.currentY);
+      this.doc.line(20, this.currentY, 200, this.currentY);
       this.currentY += 10;
 
       // Justificativa
@@ -462,7 +466,7 @@ export class PDFGenerator {
       this.doc.text('JUSTIFICATIVA:', 20, this.currentY);
       this.currentY += 5;
       this.doc.setFont('helvetica', 'normal');
-      const justificationLines = this.doc.splitTextToSize(requisition.justification, 150);
+      const justificationLines = this.doc.splitTextToSize(requisition.justification, 250);
       justificationLines.forEach((line: string) => {
         this.doc.text(line, 20, this.currentY);
         this.currentY += 5;
