@@ -32,9 +32,9 @@ export default function Requisitions() {
 
   const filteredRequisitions = requisitions?.filter((req) => {
     const matchesSearch = 
-      req.requester.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.fuelType.toLowerCase().includes(searchTerm.toLowerCase());
+      (req.requester || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (req.department || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (req.fuelType || "").toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = !statusFilter || statusFilter === "all" || req.status === statusFilter;
     const matchesDepartment = !departmentFilter || departmentFilter === "all" || req.department === departmentFilter;
@@ -199,16 +199,16 @@ export default function Requisitions() {
                         #REQ{String(requisition.id).padStart(3, "0")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {requisition.requester}
+                        {requisition.requester || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {getDepartmentLabel(requisition.department)}
+                        {getDepartmentLabel(requisition.department || "")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {getFuelTypeLabel(requisition.fuelType)}
+                        {getFuelTypeLabel(requisition.fuelType || "")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {requisition.quantity}L
+                        {requisition.quantity || "0"}L
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={requisition.status as any} />
