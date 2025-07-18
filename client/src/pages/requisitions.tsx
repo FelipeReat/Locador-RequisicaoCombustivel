@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { type FuelRequisition } from "@shared/schema";
+import { type FuelRequisition, type Supplier } from "@shared/schema";
 import Header from "@/components/layout/header";
 import StatusBadge from "@/components/requisition/status-badge";
 import RequisitionDetailsModal from "@/components/requisition/requisition-details-modal";
@@ -30,6 +30,10 @@ export default function Requisitions() {
     queryKey: ["/api/fuel-requisitions"],
   });
 
+  const { data: suppliers, isLoading: suppliersLoading } = useQuery<Supplier[]>({
+    queryKey: ["/api/suppliers"],
+  });
+
   const filteredRequisitions = requisitions?.filter((req) => {
     const matchesSearch = 
       (req.responsavel || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,15 +51,9 @@ export default function Requisitions() {
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
-  const getDepartmentLabel = (department: string) => {
-    const labels = {
-      logistica: t('logistics'),
-      manutencao: t('maintenance'),
-      transporte: t('transport'),
-      operacoes: t('operations'),
-      administracao: t('administration'),
-    };
-    return labels[department as keyof typeof labels] || department;
+  const getSupplierName = (supplierId: number) => {
+    const supplier = suppliers?.find(s => s.id === supplierId);
+    return supplier?.name || "-";
   };
 
   const getFuelTypeLabel = (fuelType: string) => {
@@ -68,7 +66,7 @@ export default function Requisitions() {
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
 
-  if (isLoading) {
+  if (isLoading || suppliersLoading) {
     return <LoadingSpinner message={t('loading-data')} />;
   }
 
@@ -89,7 +87,7 @@ export default function Requisitions() {
             </h3>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -113,26 +111,13 @@ export default function Requisitions() {
                 </SelectContent>
               </Select>
               
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('filter-by-department')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('all-departments')}</SelectItem>
-                  <SelectItem value="logistica">{t('logistics')}</SelectItem>
-                  <SelectItem value="manutencao">{t('maintenance')}</SelectItem>
-                  <SelectItem value="transporte">{t('transport')}</SelectItem>
-                  <SelectItem value="operacoes">{t('operations')}</SelectItem>
-                  <SelectItem value="administracao">{t('administration')}</SelectItem>
-                </SelectContent>
-              </Select>
+
               
               <Button
                 variant="outline"
                 onClick={() => {
                   setSearchTerm("");
                   setStatusFilter("all");
-                  setDepartmentFilter("all");
                 }}
               >
                 {t('clear-filters')}
@@ -165,7 +150,7 @@ export default function Requisitions() {
                     RESPONSÁVEL
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    CLIENTE
+                    FORNECEDOR
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     {t('fuel-type')}
@@ -203,7 +188,7 @@ export default function Requisitions() {
                         {requisition.responsavel || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {requisition.client || "-"}
+                        {getSupplierName(requisition.supplierId)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {getFuelTypeLabel(requisition.fuelType || "")}

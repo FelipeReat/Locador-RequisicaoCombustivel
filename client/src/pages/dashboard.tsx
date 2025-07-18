@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { type FuelRequisition } from "@shared/schema";
+import { type FuelRequisition, type Supplier } from "@shared/schema";
 import Header from "@/components/layout/header";
 import StatusBadge from "@/components/requisition/status-badge";
 import RequisitionDetailsModal from "@/components/requisition/requisition-details-modal";
@@ -32,21 +32,19 @@ export default function Dashboard() {
     queryKey: ["/api/fuel-requisitions"],
   });
 
+  const { data: suppliers, isLoading: suppliersLoading } = useQuery<Supplier[]>({
+    queryKey: ["/api/suppliers"],
+  });
+
   const recentRequisitions = requisitions?.slice(0, 5) || [];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
-  const getDepartmentLabel = (department: string) => {
-    const labels = {
-      logistica: t('logistics'),
-      manutencao: t('maintenance'),
-      transporte: t('transport'),
-      operacoes: t('operations'),
-      administracao: t('administration'),
-    };
-    return labels[department as keyof typeof labels] || department;
+  const getSupplierName = (supplierId: number) => {
+    const supplier = suppliers?.find(s => s.id === supplierId);
+    return supplier?.name || "-";
   };
 
   const getFuelTypeLabel = (fuelType: string) => {
@@ -59,7 +57,7 @@ export default function Dashboard() {
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
 
-  if (statsLoading || requisitionsLoading) {
+  if (statsLoading || requisitionsLoading || suppliersLoading) {
     return <LoadingSpinner message={t('loading-dashboard')} />;
   }
 
@@ -190,10 +188,10 @@ export default function Dashboard() {
                     ID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('requester')}
+                    RESPONSÁVEL
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('department')}
+                    FORNECEDOR
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     {t('fuel-type')}
@@ -226,10 +224,10 @@ export default function Dashboard() {
                         #REQ{String(requisition.id).padStart(3, "0")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                        {requisition.requester}
+                        {requisition.responsavel || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                        {getDepartmentLabel(requisition.department)}
+                        {getSupplierName(requisition.supplierId)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
                         {getFuelTypeLabel(requisition.fuelType)}

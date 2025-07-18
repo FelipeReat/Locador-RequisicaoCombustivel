@@ -10,6 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**July 18, 2025 - Project Migration and Schema Fixes**
+- Successfully migrated project from Replit Agent to Replit environment
+- Fixed critical schema mismatch where requisition forms showed blank fields
+- Updated UI components to use new backend schema structure (responsável/cliente instead of requester/department)
+- Replaced department field with supplier field that correctly displays supplier names from suppliers table
+- Fixed duplicate language translation keys in language-context.tsx
+- Corrected table displays in both dashboard and requisitions pages to show proper data
+- Updated sample data structure to match new schema requirements
+- Removed department filtering as it's no longer part of the data model
+- All requisitions now correctly display: responsável, supplier name, fuel type, quantity, and status
+
 **July 17, 2025 - PDF Generation and Theme Improvements**
 - Fixed dark theme inconsistencies across all pages (new-requisition, dashboard, reports, requisitions)
 - Implemented automatic PDF generation for each new requisition created
