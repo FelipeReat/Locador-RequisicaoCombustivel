@@ -93,13 +93,10 @@ export const changePasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export const insertDepartmentSchema = createInsertSchema(departments, {
+export const insertSupplierSchema = createInsertSchema(suppliers, {
   name: z.string().min(1, "Nome é obrigatório"),
-  description: z.string().optional(),
-  managerId: z.number().optional(),
-  budget: z.string().refine((val) => parseFloat(val) >= 0, {
-    message: "Orçamento deve ser maior ou igual a 0",
-  }).optional(),
+  cnpj: z.string().min(14, "CNPJ é obrigatório"),
+  responsavel: z.string().min(1, "Responsável é obrigatório"),
 }).omit({
   id: true,
   active: true,
@@ -115,7 +112,6 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
   fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
     errorMap: () => ({ message: "Tipo de combustível inválido" }),
   }),
-  departmentId: z.number().min(1, "Departamento é obrigatório"),
   mileage: z.string().refine((val) => parseFloat(val) >= 0, {
     message: "Quilometragem deve ser maior ou igual a 0",
   }).optional(),
@@ -126,43 +122,27 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
   updatedAt: true,
 });
 
-export const insertUserManagementSchema = createInsertSchema(users, {
-  username: z.string().min(3, "Nome de usuário deve ter pelo menos 3 caracteres"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  email: z.string().email("Email inválido").optional(),
-  fullName: z.string().min(1, "Nome completo é obrigatório"),
-  departmentId: z.number().min(1, "Departamento é obrigatório"),
-  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional(),
-  position: z.string().min(1, "Cargo é obrigatório"),
-  role: z.enum(["admin", "manager", "employee"]).default("employee"),
-  hireDate: z.string().optional(),
-}).omit({
-  id: true,
-  active: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, {
-  requesterId: z.number().min(1, "Solicitante é obrigatório"),
-  departmentId: z.number().min(1, "Departamento é obrigatório"),
-  vehicleId: z.number().optional(),
+  supplierId: z.number().min(1, "Fornecedor é obrigatório"),
+  client: z.string().min(1, "Cliente é obrigatório"),
+  responsavel: z.string().min(1, "Responsável é obrigatório"),
+  vehicleId: z.number().min(1, "Veículo é obrigatório"),
+  kmAtual: z.string().refine((val) => parseFloat(val) >= 0, {
+    message: "KM atual deve ser maior ou igual a 0",
+  }),
+  kmAnterior: z.string().refine((val) => parseFloat(val) >= 0, {
+    message: "KM anterior deve ser maior ou igual a 0",
+  }),
+  kmRodado: z.string().refine((val) => parseFloat(val) >= 0, {
+    message: "KM rodado deve ser maior ou igual a 0",
+  }),
+  tanqueCheio: z.enum(["true", "false"]).default("false"),
   fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
     errorMap: () => ({ message: "Tipo de combustível inválido" }),
   }),
-  quantity: z.string().refine((val) => parseFloat(val) > 0, {
-    message: "Quantidade deve ser maior que 0",
+  quantity: z.string().optional().refine((val) => !val || parseFloat(val) > 0, {
+    message: "Quantidade deve ser maior que 0 quando especificada",
   }),
-  justification: z.string().min(10, "Justificativa deve ter pelo menos 10 caracteres"),
-  requiredDate: z.string().min(1, "Data necessária é obrigatória").refine((val) => {
-    const date = new Date(val);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return date >= today && date.getFullYear() >= 1900 && date.getFullYear() <= 2099;
-  }, {
-    message: "Data deve ser válida e não pode ser no passado",
-  }),
-  priority: z.enum(["baixa", "media", "alta", "urgente"]).default("media"),
 }).omit({
   id: true,
   status: true,

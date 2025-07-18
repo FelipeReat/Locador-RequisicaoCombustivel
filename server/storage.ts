@@ -11,21 +11,21 @@ export interface IStorage {
   updateUserProfile(id: number, profile: UpdateUserProfile): Promise<User | undefined>;
   changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean>;
   getCurrentUser(): Promise<User | undefined>;
-  
+
   // Departments
   getDepartments(): Promise<Department[]>;
   getDepartment(id: number): Promise<Department | undefined>;
   createDepartment(department: InsertDepartment): Promise<Department>;
   updateDepartment(id: number, updates: Partial<InsertDepartment>): Promise<Department | undefined>;
   deleteDepartment(id: number): Promise<boolean>;
-  
+
   // Vehicles
   getVehicles(): Promise<Vehicle[]>;
   getVehicle(id: number): Promise<Vehicle | undefined>;
   createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
   updateVehicle(id: number, updates: Partial<InsertVehicle>): Promise<Vehicle | undefined>;
   deleteVehicle(id: number): Promise<boolean>;
-  
+
   // Fuel Requisitions
   getFuelRequisitions(): Promise<FuelRequisition[]>;
   getFuelRequisition(id: number): Promise<FuelRequisition | undefined>;
@@ -33,7 +33,7 @@ export interface IStorage {
   updateFuelRequisition(id: number, updates: Partial<FuelRequisition>): Promise<FuelRequisition | undefined>;
   updateFuelRequisitionStatus(id: number, statusUpdate: UpdateFuelRequisitionStatus): Promise<FuelRequisition | undefined>;
   deleteFuelRequisition(id: number): Promise<boolean>;
-  
+
   // Analytics
   getRequisitionStats(): Promise<{
     totalRequests: number;
@@ -42,76 +42,64 @@ export interface IStorage {
     rejectedRequests: number;
     totalLiters: number;
   }>;
-  
+
   getRequisitionsByDepartment(): Promise<{ department: string; count: number; totalLiters: number }[]>;
   getRequisitionsByFuelType(): Promise<{ fuelType: string; count: number; totalLiters: number }[]>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
-  private departments: Map<number, Department>;
-  private vehicles: Map<number, Vehicle>;
   private fuelRequisitions: Map<number, FuelRequisition>;
+  private suppliers: Map<number, Supplier>;
+  private vehicles: Map<number, Vehicle>;
   private currentUserId: number;
-  private currentDepartmentId: number;
-  private currentVehicleId: number;
   private currentRequisitionId: number;
+  private currentSupplierId: number;
+  private currentVehicleId: number;
 
   constructor() {
     this.users = new Map();
-    this.departments = new Map();
-    this.vehicles = new Map();
     this.fuelRequisitions = new Map();
+    this.suppliers = new Map();
+    this.vehicles = new Map();
     this.currentUserId = 1;
-    this.currentDepartmentId = 1;
-    this.currentVehicleId = 1;
     this.currentRequisitionId = 1;
-    
+    this.currentSupplierId = 1;
+    this.currentVehicleId = 1;
+
     // Add sample data for demonstration
     this.addSampleData();
   }
-  
+
   private addSampleData() {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    
-    // Sample departments
-    const sampleDepartments: Department[] = [
+
+    // Sample suppliers
+    const sampleSuppliers = [
       {
         id: 1,
-        name: "Administração",
-        description: "Departamento administrativo",
-        managerId: 1,
-        budget: "50000.00",
+        name: "Posto Ipiranga Centro",
+        cnpj: "12.345.678/0001-90",
+        responsavel: "João Silva",
         active: "true",
         createdAt: yesterday.toISOString(),
         updatedAt: yesterday.toISOString(),
       },
       {
         id: 2,
-        name: "Logística",
-        description: "Departamento de logística e transporte",
-        managerId: null,
-        budget: "75000.00",
+        name: "Posto Shell Zona Sul",
+        cnpj: "98.765.432/0001-10",
+        responsavel: "Maria Santos",
         active: "true",
         createdAt: yesterday.toISOString(),
         updatedAt: yesterday.toISOString(),
       },
-      {
-        id: 3,
-        name: "Manutenção",
-        description: "Departamento de manutenção de veículos",
-        managerId: null,
-        budget: "30000.00",
-        active: "true",
-        createdAt: yesterday.toISOString(),
-        updatedAt: yesterday.toISOString(),
-      }
     ];
 
-    sampleDepartments.forEach(dept => this.departments.set(dept.id, dept));
-    this.currentDepartmentId = 4;
+    sampleSuppliers.forEach(supplier => this.suppliers.set(supplier.id, supplier));
+    this.currentSupplierId = 3;
 
     // Sample user
     const sampleUser: User = {
@@ -129,12 +117,12 @@ export class MemStorage implements IStorage {
       createdAt: yesterday.toISOString(),
       updatedAt: yesterday.toISOString(),
     };
-    
+
     this.users.set(1, sampleUser);
     this.currentUserId = 2;
 
     // Sample vehicles
-    const sampleVehicles: Vehicle[] = [
+    const sampleVehicles = [
       {
         id: 1,
         plate: "ABC-1234",
@@ -142,7 +130,6 @@ export class MemStorage implements IStorage {
         brand: "Mercedes",
         year: 2020,
         fuelType: "diesel",
-        departmentId: 2,
         mileage: "50000",
         status: "active",
         lastMaintenance: yesterday.toISOString(),
@@ -157,7 +144,6 @@ export class MemStorage implements IStorage {
         brand: "Hyundai",
         year: 2019,
         fuelType: "gasolina",
-        departmentId: 1,
         mileage: "30000",
         status: "active",
         lastMaintenance: yesterday.toISOString(),
@@ -169,7 +155,7 @@ export class MemStorage implements IStorage {
 
     sampleVehicles.forEach(vehicle => this.vehicles.set(vehicle.id, vehicle));
     this.currentVehicleId = 3;
-    
+
     // Sample requisitions
     const sampleRequisitions = [
       {
@@ -221,11 +207,11 @@ export class MemStorage implements IStorage {
         updatedAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
       },
     ];
-    
+
     sampleRequisitions.forEach(req => {
       this.fuelRequisitions.set(req.id, req as FuelRequisition);
     });
-    
+
     this.currentRequisitionId = 4;
   }
 
@@ -313,42 +299,43 @@ export class MemStorage implements IStorage {
     return this.users.delete(id);
   }
 
-  // Department methods
-  async getDepartments(): Promise<Department[]> {
-    return Array.from(this.departments.values());
+  async getSuppliers(): Promise<Supplier[]> {
+    return Array.from(this.suppliers.values());
   }
 
-  async getDepartment(id: number): Promise<Department | undefined> {
-    return this.departments.get(id);
+  async getSupplier(id: number): Promise<Supplier | undefined> {
+    return this.suppliers.get(id);
   }
 
-  async createDepartment(departmentData: InsertDepartment): Promise<Department> {
-    const department: Department = {
-      id: this.currentDepartmentId++,
-      ...departmentData,
+  async createSupplier(insertSupplier: InsertSupplier): Promise<Supplier> {
+    const id = this.currentSupplierId++;
+    const now = new Date().toISOString();
+    const supplier: Supplier = {
+      ...insertSupplier,
+      id,
       active: "true",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
-    this.departments.set(department.id, department);
-    return department;
+    this.suppliers.set(id, supplier);
+    return supplier;
   }
 
-  async updateDepartment(id: number, updates: Partial<InsertDepartment>): Promise<Department | undefined> {
-    const department = this.departments.get(id);
-    if (!department) return undefined;
+  async updateSupplier(id: number, updates: Partial<Supplier>): Promise<Supplier | undefined> {
+    const supplier = this.suppliers.get(id);
+    if (!supplier) return undefined;
 
-    const updatedDepartment = {
-      ...department,
+    const updatedSupplier = {
+      ...supplier,
       ...updates,
       updatedAt: new Date().toISOString(),
     };
-    this.departments.set(id, updatedDepartment);
-    return updatedDepartment;
+    this.suppliers.set(id, updatedSupplier);
+    return updatedSupplier;
   }
 
-  async deleteDepartment(id: number): Promise<boolean> {
-    return this.departments.delete(id);
+  async deleteSupplier(id: number): Promise<boolean> {
+    return this.suppliers.delete(id);
   }
 
   // Vehicle methods
@@ -470,7 +457,7 @@ export class MemStorage implements IStorage {
     totalLiters: number;
   }> {
     const requisitions = Array.from(this.fuelRequisitions.values());
-    
+
     return {
       totalRequests: requisitions.length,
       pendingRequests: requisitions.filter(r => r.status === "pending").length,

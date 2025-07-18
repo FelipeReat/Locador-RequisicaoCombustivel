@@ -1,266 +1,267 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { insertFuelRequisitionSchema, type InsertFuelRequisition, type FuelRequisition } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
-import { useLanguage } from "@/contexts/language-context";
-import { PDFGenerator } from "@/lib/pdf-generator";
+
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Loader2, FileText, Download } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { InsertFuelRequisition, Supplier, Vehicle } from "@shared/schema";
 
 interface RequisitionFormProps {
   onSuccess?: () => void;
-  requisition?: FuelRequisition;
+  initialData?: Partial<InsertFuelRequisition>;
 }
 
-export default function RequisitionForm({ onSuccess, requisition }: RequisitionFormProps) {
+export default function RequisitionForm({ onSuccess, initialData }: RequisitionFormProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { t } = useLanguage();
+  const queryClient = useQueryClient();
 
-  const form = useForm<InsertFuelRequisition>({
-    resolver: zodResolver(insertFuelRequisitionSchema),
-    defaultValues: {
-      requester: "",
-      department: undefined,
-      fuelType: undefined,
-      quantity: "",
-      justification: "",
-      requiredDate: "",
-      priority: "media",
+  const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>({
+    supplierId: undefined,
+    client: "BBM Serviços",
+    responsavel: "",
+    vehicleId: undefined,
+    kmAtual: "",
+    kmAnterior: "",
+    kmRodado: "",
+    tanqueCheio: "false",
+    quantity: "",
+    fuelType: "diesel",
+    ...initialData,
+  });
+
+  const [isTanqueCheio, setIsTanqueCheio] = useState(false);
+
+  // Fetch suppliers
+  const { data: suppliers = [] } = useQuery<Supplier[]>({
+    queryKey: ["suppliers"],
+    queryFn: async () => {
+      const response = await fetch("/api/suppliers");
+      if (!response.ok) throw new Error("Failed to fetch suppliers");
+      return response.json();
     },
   });
 
-  const createRequisition = useMutation({
-    mutationFn: async (data: InsertFuelRequisition) => {
-      const response = await apiRequest("POST", "/api/fuel-requisitions", data);
+  // Fetch vehicles
+  const { data: vehicles = [] } = useQuery<Vehicle[]>({
+    queryKey: ["vehicles"],
+    queryFn: async () => {
+      const response = await fetch("/api/vehicles");
+      if (!response.ok) throw new Error("Failed to fetch vehicles");
       return response.json();
     },
-    onSuccess: (newRequisition: FuelRequisition) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
-      toast({
-        title: t("success"),
-        description: t("requisition-created-success"),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertFuelRequisition) => {
+      const response = await fetch("/api/fuel-requisitions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
-      
-      // Gerar PDF automaticamente
-      setTimeout(() => {
-        generatePDF(newRequisition);
-      }, 1000);
-      
-      form.reset();
+      if (!response.ok) throw new Error("Failed to create requisition");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fuel-requisitions"] });
+      toast({
+        title: t('requisition-created-success'),
+        description: "A requisição foi criada com sucesso.",
+      });
       onSuccess?.();
     },
     onError: (error) => {
       toast({
-        title: t("error"),
-        description: error.message || t("operation-failed"),
+        title: t('operation-error'),
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: InsertFuelRequisition) => {
-    createRequisition.mutate(data);
+  // Calculate km rodado when km atual or km anterior changes
+  useEffect(() => {
+    if (formData.kmAtual && formData.kmAnterior) {
+      const atual = parseFloat(formData.kmAtual);
+      const anterior = parseFloat(formData.kmAnterior);
+      const rodado = atual - anterior;
+      setFormData(prev => ({ ...prev, kmRodado: rodado.toString() }));
+    }
+  }, [formData.kmAtual, formData.kmAnterior]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const submissionData = {
+      ...formData,
+      tanqueCheio: isTanqueCheio ? "true" : "false",
+      quantity: isTanqueCheio ? undefined : formData.quantity,
+    };
+
+    createMutation.mutate(submissionData as InsertFuelRequisition);
   };
 
-  const generatePDF = (req: FuelRequisition) => {
-    try {
-      const pdfGenerator = new PDFGenerator();
-      pdfGenerator.generateRequisitionPDF(req);
-      pdfGenerator.save(`requisicao-${String(req.id).padStart(4, '0')}.pdf`);
-      
-      toast({
-        title: t("pdf-generated-success"),
-        description: t("requisition-document-downloaded"),
-      });
-    } catch (error) {
-      toast({
-        title: t("error"),
-        description: t("pdf-generation-error"),
-        variant: "destructive",
-      });
-    }
+  const handleInputChange = (field: keyof InsertFuelRequisition, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="requester"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('requester-label')} *</FormLabel>
-                <FormControl>
-                  <Input placeholder={t('requester-placeholder')} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Fornecedor */}
+        <div className="space-y-2">
+          <Label htmlFor="supplierId">Fornecedor *</Label>
+          <Select 
+            value={formData.supplierId?.toString()} 
+            onValueChange={(value) => handleInputChange("supplierId", parseInt(value))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um fornecedor" />
+            </SelectTrigger>
+            <SelectContent>
+              {suppliers.map((supplier) => (
+                <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                  {supplier.name} - {supplier.cnpj} ({supplier.responsavel})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('department-label')} *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('select-department-placeholder')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="logistica">{t('logistics')}</SelectItem>
-                    <SelectItem value="manutencao">{t('maintenance')}</SelectItem>
-                    <SelectItem value="transporte">{t('transport')}</SelectItem>
-                    <SelectItem value="operacoes">{t('operations')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+        {/* Cliente */}
+        <div className="space-y-2">
+          <Label htmlFor="client">Cliente *</Label>
+          <Input
+            id="client"
+            value={formData.client}
+            onChange={(e) => handleInputChange("client", e.target.value)}
+            placeholder="Nome do cliente"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="fuelType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('fuel-type-label')} *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('select-fuel-type')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="gasolina">{t('gasoline')}</SelectItem>
-                    <SelectItem value="etanol">{t('ethanol')}</SelectItem>
-                    <SelectItem value="diesel">{t('diesel')}</SelectItem>
-                    <SelectItem value="diesel_s10">{t('diesel-s10')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="quantity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('quantity-liters')} *</FormLabel>
-                <FormControl>
-                  <Input type="number" min="1" placeholder={t('quantity-placeholder')} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+        {/* Responsável */}
+        <div className="space-y-2">
+          <Label htmlFor="responsavel">Responsável *</Label>
+          <Input
+            id="responsavel"
+            value={formData.responsavel}
+            onChange={(e) => handleInputChange("responsavel", e.target.value)}
+            placeholder="Nome do responsável"
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="justification"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('justification-label-form')} *</FormLabel>
-              <FormControl>
-                <Textarea
-                  rows={4}
-                  placeholder={t('justification-placeholder')}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        {/* Veículo */}
+        <div className="space-y-2">
+          <Label htmlFor="vehicleId">Veículo *</Label>
+          <Select 
+            value={formData.vehicleId?.toString()} 
+            onValueChange={(value) => handleInputChange("vehicleId", parseInt(value))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um veículo" />
+            </SelectTrigger>
+            <SelectContent>
+              {vehicles.map((vehicle) => (
+                <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
+                  {vehicle.plate} - {vehicle.brand} {vehicle.model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* KM Atual */}
+        <div className="space-y-2">
+          <Label htmlFor="kmAtual">KM Atual *</Label>
+          <Input
+            id="kmAtual"
+            type="number"
+            value={formData.kmAtual}
+            onChange={(e) => handleInputChange("kmAtual", e.target.value)}
+            placeholder="Ex: 15500"
+          />
+        </div>
+
+        {/* KM Anterior */}
+        <div className="space-y-2">
+          <Label htmlFor="kmAnterior">KM Anterior *</Label>
+          <Input
+            id="kmAnterior"
+            type="number"
+            value={formData.kmAnterior}
+            onChange={(e) => handleInputChange("kmAnterior", e.target.value)}
+            placeholder="Ex: 15000"
+          />
+        </div>
+
+        {/* KM Rodado (calculado automaticamente) */}
+        <div className="space-y-2">
+          <Label htmlFor="kmRodado">KM Rodado</Label>
+          <Input
+            id="kmRodado"
+            value={formData.kmRodado}
+            disabled
+            placeholder="Calculado automaticamente"
+          />
+        </div>
+
+        {/* Tipo de Combustível */}
+        <div className="space-y-2">
+          <Label htmlFor="fuelType">Tipo de Combustível *</Label>
+          <Select 
+            value={formData.fuelType} 
+            onValueChange={(value) => handleInputChange("fuelType", value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gasolina">Gasolina</SelectItem>
+              <SelectItem value="etanol">Etanol</SelectItem>
+              <SelectItem value="diesel">Diesel</SelectItem>
+              <SelectItem value="diesel_s10">Diesel S10</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Tanque Cheio */}
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id="tanqueCheio"
+          checked={isTanqueCheio}
+          onCheckedChange={(checked) => setIsTanqueCheio(!!checked)}
         />
+        <Label htmlFor="tanqueCheio">Tanque Cheio?</Label>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="requiredDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('needed-date-form')} *</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="date" 
-                    {...field} 
-                    min={new Date().toISOString().split('T')[0]}
-                    max="2099-12-31"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="priority"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('priority-form')}</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="baixa">{t('low')}</SelectItem>
-                    <SelectItem value="media">{t('medium-priority')}</SelectItem>
-                    <SelectItem value="alta">{t('high')}</SelectItem>
-                    <SelectItem value="urgente">{t('urgent')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+      {/* Quantidade (só aparece se não for tanque cheio) */}
+      {!isTanqueCheio && (
+        <div className="space-y-2">
+          <Label htmlFor="quantity">Quantidade (Litros) *</Label>
+          <Input
+            id="quantity"
+            type="number"
+            step="0.01"
+            value={formData.quantity}
+            onChange={(e) => handleInputChange("quantity", e.target.value)}
+            placeholder="Ex: 150.5"
           />
         </div>
+      )}
 
-        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-          <Button type="button" variant="outline" onClick={() => form.reset()}>
-            {t('cancel')}
-          </Button>
-          <Button type="submit" disabled={createRequisition.isPending}>
-            {createRequisition.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            {t('create-requisition')}
-          </Button>
-        </div>
-      </form>
-    </Form>
+      <Button 
+        type="submit" 
+        className="w-full" 
+        disabled={createMutation.isPending}
+      >
+        {createMutation.isPending ? "Criando..." : "Criar Requisição"}
+      </Button>
+    </form>
   );
 }

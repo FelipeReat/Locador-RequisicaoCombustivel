@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertDepartmentSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema } from "@shared/schema";
+import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
@@ -184,77 +184,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Department routes
-  app.get("/api/departments", async (req, res) => {
+  // Supplier routes
+  app.get("/api/suppliers", async (req, res) => {
     try {
-      const departments = await storage.getDepartments();
-      res.json(departments);
+      const suppliers = await storage.getSuppliers();
+      res.json(suppliers);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao buscar departamentos" });
+      res.status(500).json({ message: "Erro ao buscar fornecedores" });
     }
   });
 
-  app.get("/api/departments/:id", async (req, res) => {
+  app.get("/api/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const department = await storage.getDepartment(id);
+      const supplier = await storage.getSupplier(id);
       
-      if (!department) {
-        return res.status(404).json({ message: "Departamento não encontrado" });
+      if (!supplier) {
+        return res.status(404).json({ message: "Fornecedor não encontrado" });
       }
       
-      res.json(department);
+      res.json(supplier);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao buscar departamento" });
+      res.status(500).json({ message: "Erro ao buscar fornecedor" });
     }
   });
 
-  app.post("/api/departments", async (req, res) => {
+  app.post("/api/suppliers", async (req, res) => {
     try {
-      const validatedData = insertDepartmentSchema.parse(req.body);
-      const department = await storage.createDepartment(validatedData);
-      res.status(201).json(department);
+      const validatedData = insertSupplierSchema.parse(req.body);
+      const supplier = await storage.createSupplier(validatedData);
+      res.status(201).json(supplier);
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
-        res.status(500).json({ message: "Erro ao criar departamento" });
+        res.status(500).json({ message: "Erro ao criar fornecedor" });
       }
     }
   });
 
-  app.put("/api/departments/:id", async (req, res) => {
+  app.put("/api/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const validatedData = insertDepartmentSchema.partial().parse(req.body);
-      const department = await storage.updateDepartment(id, validatedData);
+      const validatedData = insertSupplierSchema.partial().parse(req.body);
+      const supplier = await storage.updateSupplier(id, validatedData);
       
-      if (!department) {
-        return res.status(404).json({ message: "Departamento não encontrado" });
+      if (!supplier) {
+        return res.status(404).json({ message: "Fornecedor não encontrado" });
       }
       
-      res.json(department);
+      res.json(supplier);
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
-        res.status(500).json({ message: "Erro ao atualizar departamento" });
+        res.status(500).json({ message: "Erro ao atualizar fornecedor" });
       }
     }
   });
 
-  app.delete("/api/departments/:id", async (req, res) => {
+  app.delete("/api/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteDepartment(id);
+      const deleted = await storage.deleteSupplier(id);
       
       if (!deleted) {
-        return res.status(404).json({ message: "Departamento não encontrado" });
+        return res.status(404).json({ message: "Fornecedor não encontrado" });
       }
       
-      res.json({ message: "Departamento excluído com sucesso" });
+      res.json({ message: "Fornecedor excluído com sucesso" });
     } catch (error) {
-      res.status(500).json({ message: "Erro ao excluir departamento" });
+      res.status(500).json({ message: "Erro ao excluir fornecedor" });
     }
   });
 

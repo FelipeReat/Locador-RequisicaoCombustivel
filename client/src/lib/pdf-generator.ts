@@ -518,4 +518,10 @@ export class PDFGenerator {
   save(filename: string): void {
     this.doc.save(filename);
   }
+
+  private getSupplierLabel(supplierId: number): string {
+    // Este método deveria buscar os dados do fornecedor
+    // Por enquanto retorna um placeholder
+    return `Fornecedor #${supplierId}`;
+  }
 }
