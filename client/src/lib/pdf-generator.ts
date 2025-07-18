@@ -327,186 +327,155 @@ export class PDFGenerator {
       unit: 'mm',
       format: 'a4'
     });
-    this.currentY = 20;
 
     // Função para criar uma via do documento
-    const createVia = (viaTitle: string) => {
+    const createVia = (viaTitle: string, startX: number) => {
+      let currentY = 10;
+      const maxWidth = 130; // Largura máxima para cada via
+
       // Cabeçalho
-      this.doc.setFontSize(16);
+      this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('REQUISIÇÃO PARA ABASTECIMENTO COM COMBUSTÍVEIS', 20, this.currentY);
-      this.currentY += 15;
+      this.doc.text('REQUISIÇÃO PARA ABASTECIMENTO COM COMBUSTÍVEIS', startX, currentY);
+      currentY += 8;
 
-      this.doc.setFontSize(12);
-      this.doc.text(viaTitle, 20, this.currentY);
-      this.currentY += 15;
+      this.doc.setFontSize(8);
+      this.doc.text(viaTitle, startX, currentY);
+      currentY += 10;
 
-      // Informações da requisição com dados reais
-      this.doc.setFontSize(10);
+      // Box da requisição
+      this.doc.rect(startX, currentY, maxWidth, 12);
+      this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('REQUISIÇÃO | ID | EMISSÃO', 20, this.currentY);
-      this.currentY += 5;
+      this.doc.text('REQUISIÇÃO | ID | EMISSÃO', startX + 2, currentY + 4);
       this.doc.setFont('helvetica', 'normal');
       const dataEmissao = new Date(requisition.createdAt).toLocaleDateString('pt-BR');
       const horaEmissao = new Date(requisition.createdAt).toLocaleTimeString('pt-BR');
-      this.doc.text(`REQ${String(requisition.id).padStart(3, '0')} | ${dataEmissao} | ${horaEmissao}`, 20, this.currentY);
-      this.currentY += 15;
+      this.doc.text(`${String(requisition.id).padStart(3, '0')} | ${dataEmissao} | ${horaEmissao}`, startX + 2, currentY + 8);
+      currentY += 15;
 
-      // Fornecedor (dados fixos da empresa)
+      // Box do Fornecedor
+      this.doc.rect(startX, currentY, maxWidth, 28);
+      this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('FORNECEDOR', 20, this.currentY);
-      this.currentY += 5;
+      this.doc.text('FORNECEDOR', startX + 2, currentY + 4);
       this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(6);
 
       const fornecedorInfo = [
-        'CPF/CNPJ: 22.222.444/0001-30',
-        'Nome Empresarial: D DA C SAMPAIO COMERCIO',
-        'DE COMBUSTIVEIS LTDA',
+        'CPF/CNPJ: 22.272.444/0001-30',
+        'Nome Empresarial: D DA C SAMPAIO COMERCIO DE COMBUSTIVEIS LTDA',
         'Contato: CARLOS',
-        'Telefone: (92) 9883-8218',
-        'Celular: (92) 98838-2180',
+        'Telefone: (92) 9883-8218  Celular: (92) 98838-2180',
         'E-Mail: csilva@blomaq.com.br'
       ];
 
+      let lineY = currentY + 7;
       fornecedorInfo.forEach(info => {
-        this.doc.text(info, 20, this.currentY);
-        this.currentY += 5;
+        this.doc.text(info, startX + 2, lineY);
+        lineY += 4;
       });
-      this.currentY += 10;
+      currentY += 30;
 
-      // Cliente (dados da empresa)
+      // Box do Cliente
+      this.doc.rect(startX, currentY, maxWidth, 28);
+      this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('CLIENTE', 20, this.currentY);
-      this.currentY += 5;
+      this.doc.text('CLIENTE', startX + 2, currentY + 4);
       this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(6);
 
       const clienteInfo = [
         'CPF/CNPJ: 13.844.973/0001-59',
-        'Nome Empresarial: BBM SERVIÇOS,',
-        'ALUGUEL DE MÁQUINAS E TECNOLOGIA LT',
-        `Contato: ${requisition.requester}`,
-        `Departamento: ${this.getDepartmentLabel(requisition.department)}`,
+        'Nome Empresarial: BBM SERVIÇOS, ALUGUEL DE MÁQUINAS E TECNOLOGIA LT',
+        `Contato: ${requisition.responsavel || requisition.requester}`,
         'Telefone: (92) 3233-0634',
         'E-Mail: csilva@blomaq.com.br'
       ];
 
+      lineY = currentY + 7;
       clienteInfo.forEach(info => {
-        this.doc.text(info, 20, this.currentY);
-        this.currentY += 5;
+        this.doc.text(info, startX + 2, lineY);
+        lineY += 4;
       });
-      this.currentY += 10;
+      currentY += 30;
 
-      // Veículo (se houver informação do veículo na requisição)
+      // Box do Veículo
+      this.doc.rect(startX, currentY, maxWidth, 20);
+      this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('VEÍCULO', 20, this.currentY);
-      this.currentY += 5;
+      this.doc.text('VEÍCULO', startX + 2, currentY + 4);
       this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(6);
 
+      // Informações do veículo com base nos novos campos
       const veiculoInfo = [
-        requisition.vehicleId ? `ID Veículo: ${requisition.vehicleId}` : 'Veículo: A ser definido',
-        `Tipo de Combustível: ${this.getFuelTypeLabel(requisition.fuelType)}`,
-        `Data Necessária: ${new Date(requisition.requiredDate).toLocaleDateString('pt-BR')}`,
-        `Prioridade: ${this.getPriorityLabel(requisition.priority)}`
+        `Placa: ${requisition.vehiclePlate || 'TAC-5179'}`,
+        `Marca/Modelo: ${requisition.vehicleModel || 'HONDA/CG 160 CARGO'}`,
+        `Cor: ${requisition.vehicleColor || 'BRANCA'}`,
+        `Hodômetro: ${requisition.kmAtual || '22.004'}`
       ];
 
+      lineY = currentY + 7;
       veiculoInfo.forEach(info => {
-        this.doc.text(info, 20, this.currentY);
-        this.currentY += 5;
+        this.doc.text(info, startX + 2, lineY);
+        lineY += 4;
       });
-      this.currentY += 10;
+      currentY += 22;
 
-      // Abastecimento com dados reais da requisição
+      // Box do Abastecimento
+      this.doc.rect(startX, currentY, maxWidth, 25);
+      this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('ABASTECIMENTO', 20, this.currentY);
-      this.currentY += 10;
+      this.doc.text('ABASTECIMENTO', startX + 2, currentY + 4);
+      currentY += 8;
 
-      // Tabela de abastecimento
-      const headers = ['Combustível', 'QTD. / L', 'R$/L', '[R$] TOTAL'];
-      const colWidths = [50, 30, 25, 35];
-      let startX = 20;
-
-      // Cabeçalho da tabela
-      this.doc.setFont('helvetica', 'bold');
-      headers.forEach((header, index) => {
-        this.doc.text(header, startX, this.currentY);
-        startX += colWidths[index];
-      });
-      this.currentY += 8;
-
-      // Linha separadora
-      this.doc.line(20, this.currentY, 200, this.currentY);
-      this.currentY += 5;
-
-      // Dados da tabela com informações reais
+      // Checkbox e tabela
+      this.doc.setFontSize(6);
       this.doc.setFont('helvetica', 'normal');
-      startX = 20;
-      const quantity = parseFloat(requisition.quantity);
+      
+      // Checkbox para tanque cheio
+      const isFullTank = requisition.tanqueCheio === 'true';
+      this.doc.rect(startX + 2, currentY, 3, 3);
+      if (isFullTank) {
+        this.doc.text('✓', startX + 2.5, currentY + 2.5);
+      }
+      this.doc.text('Tanque Cheio.', startX + 7, currentY + 2);
+      currentY += 6;
+
+      // Cabeçalho da tabela de combustível
+      const headers = ['QTD. / L', 'R$/L', '[R$] TOTAL'];
+      const colX = [startX + 40, startX + 70, startX + 100];
+      
+      headers.forEach((header, index) => {
+        this.doc.text(header, colX[index], currentY);
+      });
+      currentY += 4;
+
+      // Linha da tabela
+      const quantity = parseFloat(requisition.quantity || '9.509');
       const estimatedPrice = this.getEstimatedFuelPrice(requisition.fuelType);
       const total = quantity * estimatedPrice;
 
-      const rowData = [
-        this.getFuelTypeLabel(requisition.fuelType),
-        quantity.toFixed(3),
-        `R$ ${estimatedPrice.toFixed(2)}`,
-        `R$ ${total.toFixed(2)}`
-      ];
+      this.doc.text(quantity.toFixed(3), colX[0], currentY);
+      this.doc.text(estimatedPrice.toFixed(2), colX[1], currentY);
+      this.doc.text(total.toFixed(2), colX[2], currentY);
+      currentY += 8;
 
-      rowData.forEach((data, index) => {
-        this.doc.text(data, startX, this.currentY);
-        startX += colWidths[index];
-      });
-      this.currentY += 10;
-
-      // Linha separadora
-      this.doc.line(20, this.currentY, 200, this.currentY);
-      this.currentY += 10;
-
-      // Justificativa
-      this.doc.setFont('helvetica', 'bold');
-      this.doc.text('JUSTIFICATIVA:', 20, this.currentY);
-      this.currentY += 5;
-      this.doc.setFont('helvetica', 'normal');
-      const justificationLines = this.doc.splitTextToSize(requisition.justification, 250);
-      justificationLines.forEach((line: string) => {
-        this.doc.text(line, 20, this.currentY);
-        this.currentY += 5;
-      });
-      this.currentY += 10;
-
-      // Status e aprovação
-      if (requisition.status === 'approved' || requisition.status === 'fulfilled') {
-        this.doc.setFont('helvetica', 'bold');
-        this.doc.text('APROVAÇÃO:', 20, this.currentY);
-        this.currentY += 5;
-        this.doc.setFont('helvetica', 'normal');
-        this.doc.text(`Aprovado por: ${requisition.approver || 'N/A'}`, 20, this.currentY);
-        this.currentY += 5;
-        if (requisition.approvedDate) {
-          this.doc.text(`Data de Aprovação: ${new Date(requisition.approvedDate).toLocaleDateString('pt-BR')}`, 20, this.currentY);
-          this.currentY += 5;
-        }
-        this.currentY += 10;
-      }
-
-      // Assinatura
-      this.doc.setFont('helvetica', 'bold');
-      this.doc.text('RESPONSÁVEL PELA REQUISIÇÃO', 20, this.currentY);
-      this.currentY += 5;
-      this.doc.setFont('helvetica', 'normal');
-      this.doc.text(`Nome: ${requisition.requester}`, 20, this.currentY);
-      this.currentY += 5;
-      this.doc.text('Assinatura: ________________________', 20, this.currentY);
-      this.currentY += 5;
-      this.doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, this.currentY);
+      // Rodapé da via
+      this.doc.setFontSize(5);
+      this.doc.text('OBRIGATÓRIO ANEXAR GRAMPEADO O CUPOM FISCAL NA VIA BLOMAQ', startX, 200);
     };
 
-    // Primeira via - Fornecedor
-    createVia('1ª Via - Fornecedor');
+    // Criar as duas vias lado a lado
+    createVia('1ª Via - Fornecedor', 10);
+    
+    // Linha divisória pontilhada vertical
+    this.doc.setLineDashPattern([2, 2], 0);
+    this.doc.line(148, 10, 148, 200);
+    this.doc.setLineDashPattern([], 0);
 
-    // Segunda via - Cliente
-    this.doc.addPage();
-    this.currentY = 20;
-    createVia('2ª Via - Cliente');
+    createVia('2ª Via - Cliente', 155);
   }
 
   private getEstimatedFuelPrice(fuelType: string): number {
