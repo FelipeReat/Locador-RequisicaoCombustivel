@@ -78,7 +78,7 @@ export default function Sidebar() {
         <Link href="/suppliers">
           <div className={`sidebar-link ${isActive("/suppliers") ? "active" : ""}`}>
             <Building2 className="mr-3 h-4 w-4" />
-            Fornecedores
+            {t('suppliers')}
           </div>
         </Link>
 
