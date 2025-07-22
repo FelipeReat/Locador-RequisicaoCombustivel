@@ -156,7 +156,7 @@ export default function Suppliers() {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir este fornecedor?")) {
+    if (confirm(t('confirm-delete'))) {
       deleteMutation.mutate(id);
     }
   };
@@ -181,41 +181,41 @@ export default function Suppliers() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>;
+    return <div className="flex items-center justify-center min-h-screen">{t('loading')}</div>;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Fornecedores</h1>
-          <p className="text-muted-foreground">Gerencie os fornecedores da empresa</p>
+          <h1 className="text-3xl font-bold">{t('suppliers')}</h1>
+          <p className="text-muted-foreground">{t('supplier-management')}</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Novo Fornecedor
+              {t('new-supplier')}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Criar Novo Fornecedor</DialogTitle>
+              <DialogTitle>{t('new-supplier')}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome *</Label>
+                  <Label htmlFor="name">{t('supplier-name')} *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Nome do fornecedor"
+                    placeholder={t('supplier-name')}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cnpj">CNPJ *</Label>
+                  <Label htmlFor="cnpj">{t('supplier-cnpj')} *</Label>
                   <Input
                     id="cnpj"
                     value={formData.cnpj}
@@ -225,17 +225,17 @@ export default function Suppliers() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="responsavel">Responsável *</Label>
+                  <Label htmlFor="responsavel">{t('supplier-responsible')} *</Label>
                   <Input
                     id="responsavel"
                     value={formData.responsavel}
                     onChange={(e) => setFormData(prev => ({ ...prev, responsavel: e.target.value }))}
-                    placeholder="Nome do responsável"
+                    placeholder={t('supplier-responsible')}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('supplier-email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -245,7 +245,7 @@ export default function Suppliers() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
+                  <Label htmlFor="phone">{t('supplier-phone')}</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -254,21 +254,21 @@ export default function Suppliers() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Endereço</Label>
+                  <Label htmlFor="address">{t('supplier-address')}</Label>
                   <Input
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="Endereço completo"
+                    placeholder={t('supplier-address')}
                   />
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancelar
+                  {t('cancel')}
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Criando..." : "Criar Fornecedor"}
+                  {createMutation.isPending ? t('loading') : t('create')}
                 </Button>
               </div>
             </form>
@@ -278,14 +278,14 @@ export default function Suppliers() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Fornecedores</CardTitle>
+          <CardTitle>{t('suppliers-list')}</CardTitle>
           <CardDescription>
-            Visualize e gerencie todos os fornecedores cadastrados
+            {t('supplier-management')}
           </CardDescription>
           <div className="flex items-center space-x-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar fornecedores..."
+              placeholder={t('search-suppliers')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
@@ -297,19 +297,19 @@ export default function Suppliers() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CNPJ</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>{t('supplier-name')}</TableHead>
+                  <TableHead>{t('supplier-cnpj')}</TableHead>
+                  <TableHead>{t('supplier-responsible')}</TableHead>
+                  <TableHead>{t('supplier-email')}</TableHead>
+                  <TableHead>{t('supplier-phone')}</TableHead>
+                  <TableHead>{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      Nenhum fornecedor encontrado
+                      {t('no-suppliers')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -351,22 +351,22 @@ export default function Suppliers() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Editar Fornecedor</DialogTitle>
+            <DialogTitle>{t('edit-supplier')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleUpdate} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Nome *</Label>
+                <Label htmlFor="edit-name">{t('supplier-name')} *</Label>
                 <Input
                   id="edit-name"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Nome do fornecedor"
+                  placeholder={t('supplier-name')}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-cnpj">CNPJ *</Label>
+                <Label htmlFor="edit-cnpj">{t('supplier-cnpj')} *</Label>
                 <Input
                   id="edit-cnpj"
                   value={formData.cnpj}
@@ -376,17 +376,17 @@ export default function Suppliers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-responsavel">Responsável *</Label>
+                <Label htmlFor="edit-responsavel">{t('supplier-responsible')} *</Label>
                 <Input
                   id="edit-responsavel"
                   value={formData.responsavel}
                   onChange={(e) => setFormData(prev => ({ ...prev, responsavel: e.target.value }))}
-                  placeholder="Nome do responsável"
+                  placeholder={t('supplier-responsible')}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
+                <Label htmlFor="edit-email">{t('supplier-email')}</Label>
                 <Input
                   id="edit-email"
                   type="email"
@@ -396,7 +396,7 @@ export default function Suppliers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-phone">Telefone</Label>
+                <Label htmlFor="edit-phone">{t('supplier-phone')}</Label>
                 <Input
                   id="edit-phone"
                   value={formData.phone}
@@ -405,21 +405,21 @@ export default function Suppliers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-address">Endereço</Label>
+                <Label htmlFor="edit-address">{t('supplier-address')}</Label>
                 <Input
                   id="edit-address"
                   value={formData.address}
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="Endereço completo"
+                  placeholder={t('supplier-address')}
                 />
               </div>
             </div>
             <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancelar
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? "Atualizando..." : "Atualizar Fornecedor"}
+                {updateMutation.isPending ? t('loading') : t('update')}
               </Button>
             </div>
           </form>
