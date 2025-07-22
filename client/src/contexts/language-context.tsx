@@ -1425,7 +1425,7 @@ const translations: Record<Language, Record<string, string>> = {
     'manager-not-found': 'Gerente no encontrado',
     'no-departments-found': 'No se encontraron departamentos',
     'start-creating-department': 'Comience creando un nuevo departamento',
-    'loading-departments':Adicionando as traduções para as mensagens de exclusão de usuário nas 3 linguagens.'Cargando departamentos...',
+    'loading-departments': 'Cargando departamentos...',
     'department-created-success': 'Departamento creado exitosamente',
     'department-updated-success': 'Departamento actualizado exitosamente',
     'error-creating-department': 'Error al crear departamento',
