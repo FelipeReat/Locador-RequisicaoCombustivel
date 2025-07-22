@@ -428,7 +428,11 @@ export class MemStorage implements IStorage {
   }
 
   async deleteUser(id: number): Promise<boolean> {
-    return this.users.delete(id);
+    if (this.users.has(id)) {
+      this.users.delete(id);
+      return true;
+    }
+    return false;
   }
 
   async getSuppliers(): Promise<Supplier[]> {

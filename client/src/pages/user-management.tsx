@@ -160,6 +160,27 @@ export default function UserManagement() {
     },
   });
 
+  const deleteUser = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/users/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: t("success"),
+        description: t("user-deleted-success"),
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: t("error"),
+        description: error.message || t("error-deleting-user"),
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: InsertUserManagement) => {
     if (editingUser) {
       updateUser.mutate({ id: editingUser.id, data });
@@ -495,6 +516,19 @@ export default function UserManagement() {
                         onClick={() => handleEdit(user)}
                       >
                         <Edit className="h-4 w-4" />
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(t("confirm-delete-user"))) {
+                            deleteUser.mutate(user.id);
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

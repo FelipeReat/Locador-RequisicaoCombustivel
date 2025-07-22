@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type Language = 'pt-BR' | 'en-US' | 'es-ES';
@@ -17,7 +16,7 @@ const translations: Record<Language, Record<string, string>> = {
     'new-requisition': 'Nova Requisição',
     'reports': 'Relatórios',
     'settings': 'Configurações',
-    
+
     // Ações
     'save': 'Salvar',
     'cancel': 'Cancelar',
@@ -40,7 +39,7 @@ const translations: Record<Language, Record<string, string>> = {
     'confirm': 'Confirmar',
     'approve': 'Aprovar',
     'reject': 'Rejeitar',
-    
+
     // Estados
     'loading': 'Carregando...',
     'success': 'Sucesso',
@@ -52,7 +51,7 @@ const translations: Record<Language, Record<string, string>> = {
     'rejected': 'Rejeitado',
     'fulfilled': 'Realizado',
     'cancelled': 'Cancelado',
-    
+
     // Sistema
     'system-name': 'Controle de Abastecimento',
     'fuel-control-system': 'Sistema de Controle de Combustível',
@@ -67,7 +66,7 @@ const translations: Record<Language, Record<string, string>> = {
     'system-theme': 'Sistema',
     'enabled': 'Ativado',
     'disabled': 'Desativado',
-    
+
     // Dashboard
     'total-requests': 'Total de Requisições',
     'pending-requests': 'Requisições Pendentes',
@@ -79,7 +78,7 @@ const translations: Record<Language, Record<string, string>> = {
     'consumption-by-fuel-type': 'Consumo por Tipo de Combustível',
     'recent-activity': 'Atividade Recente',
     'quick-stats': 'Estatísticas Rápidas',
-    
+
     // Requisições
     'requisition': 'Requisição',
     'requisition-number': 'Número da Requisição',
@@ -97,26 +96,26 @@ const translations: Record<Language, Record<string, string>> = {
     'request-date': 'Data de Solicitação',
     'details': 'Detalhes',
     'actions': 'Ações',
-    
+
     // Tipos de combustível
     'gasoline': 'Gasolina',
     'ethanol': 'Etanol',
     'diesel': 'Diesel',
     'diesel-s10': 'Diesel S10',
-    
+
     // Departamentos
     'logistics': 'Logística',
     'maintenance': 'Manutenção',
     'administration': 'Administração',
     'operations': 'Operações',
     'transport': 'Transporte',
-    
+
     // Prioridades
     'low': 'Baixa',
     'medium': 'Média',
     'high': 'Alta',
     'urgent': 'Urgente',
-    
+
     // Formulários
     'required-field': 'Campo obrigatório',
     'select-option': 'Selecione uma opção',
@@ -126,7 +125,7 @@ const translations: Record<Language, Record<string, string>> = {
     'passwords-dont-match': 'Senhas não coincidem',
     'form-errors': 'Corrija os erros no formulário',
     'form-saved': 'Formulário salvo com sucesso',
-    
+
     // Relatórios
     'generate-report': 'Gerar Relatório',
     'report-period': 'Período do Relatório',
@@ -140,7 +139,7 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-reports': 'Relatórios Mensais',
     'weekly-reports': 'Relatórios Semanais',
     'annual-reports': 'Relatórios Anuais',
-    
+
     // Configurações
     'general-settings': 'Configurações Gerais',
     'user-preferences': 'Preferências do Usuário',
@@ -155,7 +154,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisition-status': 'Status de Requisições',
     'personal-info': 'Informações Pessoais',
     'contact-info': 'Informações de Contato',
-    
+
     // Usuário
     'username': 'Nome de usuário',
     'full-name': 'Nome completo',
@@ -165,7 +164,7 @@ const translations: Record<Language, Record<string, string>> = {
     'role': 'Função',
     'last-login': 'Último acesso',
     'account-created': 'Conta criada',
-    
+
     // Mensagens
     'no-data': 'Nenhum dado encontrado',
     'no-results': 'Nenhum resultado encontrado',
@@ -177,7 +176,7 @@ const translations: Record<Language, Record<string, string>> = {
     'confirm-delete': 'Tem certeza que deseja excluir?',
     'confirm-action': 'Tem certeza que deseja continuar?',
     'unsaved-changes': 'Há alterações não salvas',
-    
+
     // Paginação
     'page': 'Página',
     'of': 'de',
@@ -187,7 +186,7 @@ const translations: Record<Language, Record<string, string>> = {
     'next': 'Próximo',
     'first': 'Primeiro',
     'last': 'Último',
-    
+
     // Data e hora
     'today': 'Hoje',
     'yesterday': 'Ontem',
@@ -198,19 +197,19 @@ const translations: Record<Language, Record<string, string>> = {
     'this-year': 'Este ano',
     'date-format': 'DD/MM/AAAA',
     'time-format': 'HH:mm',
-    
+
     // Impressão
     'print-document': 'Imprimir Documento',
     'print-preview': 'Visualizar Impressão',
     'print-options': 'Opções de Impressão',
-    
+
     // Sobre
     'version': 'Versão',
     'last-update': 'Última Atualização',
     'developed-by': 'Desenvolvido por',
     'about-system': 'Sobre o Sistema',
     'system-info': 'Informações do Sistema',
-    
+
     // Traduções adicionais
     'filters': 'Filtros',
     'search-requisitions': 'Buscar requisições...',
@@ -244,7 +243,7 @@ const translations: Record<Language, Record<string, string>> = {
     'account-details': 'Detalhes sobre sua conta no sistema',
     'last-updated': 'Última Atualização',
     'manage-profile-preferences': 'Gerencie seu perfil e preferências do sistema',
-    
+
     // Modal de detalhes
     'requisition-details': 'Detalhes da Requisição',
     'request-date-label': 'Data de Solicitação',
@@ -254,12 +253,12 @@ const translations: Record<Language, Record<string, string>> = {
     'quantity-label': 'Quantidade',
     'justification-label': 'Justificativa',
     'liters': 'Litros',
-    
+
     // Status badges
     'pendente': 'Pendente',
     'aprovada': 'Aprovada',
     'cumprida': 'Cumprida',
-    
+
     // Formulário
     'requester-label': 'Solicitante',
     'requester-placeholder': 'Nome do solicitante',
@@ -275,7 +274,7 @@ const translations: Record<Language, Record<string, string>> = {
     'priority-form': 'Prioridade',
     'medium-priority': 'Média',
     'create-requisition': 'Criar Requisição',
-    
+
     // Relatórios
     'total-requisitions': 'Total de Requisições',
     'approval-rate': 'Taxa de Aprovação',
@@ -292,7 +291,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisitions-count': 'Requisições',
     'liters-count': 'Litros',
     'fuel-label': 'Combustível',
-    
+
     // Configurações - Segurança
     'change-password-title': 'Alterar Senha',
     'keep-account-secure': 'Mantenha sua conta segura com uma senha forte',
@@ -305,7 +304,7 @@ const translations: Record<Language, Record<string, string>> = {
     'change-password-button': 'Alterar Senha',
     'security-tips': 'Dicas de Segurança',
     'keep-account-always-secure': 'Mantenha sua conta sempre segura',
-    
+
     // Configurações - Notificações
     'notification-settings-title': 'Configurações de Notificação',
     'configure-notifications': 'Configure como e quando você deseja receber notificações',
@@ -317,7 +316,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisition-status-desc': 'Atualizações sobre o status das suas requisições',
     'monthly-reports-notif': 'Relatórios Mensais',
     'monthly-reports-desc': 'Resumo mensal do consumo de combustível',
-    
+
     // Mensagens de notificação/toast
     'requisition-created-success': 'Requisição criada com sucesso!',
     'requisition-updated-success': 'Requisição atualizada com sucesso!',
@@ -361,7 +360,7 @@ const translations: Record<Language, Record<string, string>> = {
     'no-requisitions-for-period': 'Não há requisições para o período selecionado',
     'pdf-generation-error': 'Erro ao gerar PDF',
     'report-generation-error': 'Erro ao gerar relatório',
-    
+
     // Configurações - Sistema
     'system-configurations': 'Configurações do Sistema',
     'customize-appearance-behavior': 'Personalize a aparência e comportamento do sistema',
@@ -379,7 +378,7 @@ const translations: Record<Language, Record<string, string>> = {
     'last-update-label': 'Última Atualização',
     'developed-by-label': 'Desenvolvido por',
     'fuelcontrol-team': 'Equipe Controle de Abastecimento',
-    
+
     // Gestão de Frotas
     'fleet-management': 'Gestão de Frota',
     'manage-company-vehicles': 'Gerencie os veículos da empresa',
@@ -411,7 +410,7 @@ const translations: Record<Language, Record<string, string>> = {
     'error-creating-vehicle': 'Erro ao criar veículo',
     'error-updating-vehicle': 'Erro ao atualizar veículo',
     'error-changing-status': 'Erro ao alterar status',
-    
+
     // Gestão de Usuários
     'user-management': 'Gestão de Usuários',
     'manage-employees-permissions': 'Gerencie funcionários e suas permissões no sistema',
@@ -445,7 +444,10 @@ const translations: Record<Language, Record<string, string>> = {
     'not-informed': 'Não informado',
     'no-department': 'Sem departamento',
     'department-not-found': 'Departamento não encontrado',
-    
+    'user-deleted-success': 'Usuário excluído com sucesso',
+    'error-deleting-user': 'Erro ao excluir usuário',
+    'confirm-delete-user': 'Tem certeza que deseja excluir este usuário?',
+
     // Gestão de Departamentos
     'department-management': 'Gestão de Departamentos',
     'department_management': 'Gestão de Departamentos',
@@ -497,12 +499,12 @@ const translations: Record<Language, Record<string, string>> = {
     'enter_department_name': 'Digite o nome do departamento',
     'enter-department-description': 'Digite a descrição do departamento',
     'enter_department_description': 'Digite a descrição do departamento',
-    
+
     // Navegação do Menu
     'users': 'Usuários',
     'departments': 'Departamentos',
     'fleet': 'Frota',
-    
+
     // Dicas de segurança
     'security-tip-1': 'Use uma senha com pelo menos 6 caracteres',
     'security-tip-2': 'Inclua letras maiúsculas, minúsculas e números',
@@ -517,7 +519,7 @@ const translations: Record<Language, Record<string, string>> = {
     'new-requisition': 'New Requisition',
     'reports': 'Reports',
     'settings': 'Settings',
-    
+
     // Actions
     'save': 'Save',
     'cancel': 'Cancel',
@@ -540,7 +542,7 @@ const translations: Record<Language, Record<string, string>> = {
     'confirm': 'Confirm',
     'approve': 'Approve',
     'reject': 'Reject',
-    
+
     // States
     'loading': 'Loading...',
     'success': 'Success',
@@ -552,7 +554,7 @@ const translations: Record<Language, Record<string, string>> = {
     'rejected': 'Rejected',
     'fulfilled': 'Fulfilled',
     'cancelled': 'Cancelled',
-    
+
     // System
     'system-name': 'Fuel Control',
     'fuel-control-system': 'Fuel Control System',
@@ -567,7 +569,7 @@ const translations: Record<Language, Record<string, string>> = {
     'system-theme': 'System',
     'enabled': 'Enabled',
     'disabled': 'Disabled',
-    
+
     // Dashboard
     'total-requests': 'Total Requests',
     'pending-requests': 'Pending Requests',
@@ -579,7 +581,7 @@ const translations: Record<Language, Record<string, string>> = {
     'consumption-by-fuel-type': 'Consumption by Fuel Type',
     'recent-activity': 'Recent Activity',
     'quick-stats': 'Quick Stats',
-    
+
     // Requisitions
     'requisition': 'Requisition',
     'requisition-number': 'Requisition Number',
@@ -597,26 +599,26 @@ const translations: Record<Language, Record<string, string>> = {
     'request-date': 'Request Date',
     'details': 'Details',
     'actions': 'Actions',
-    
+
     // Fuel types
     'gasoline': 'Gasoline',
     'ethanol': 'Ethanol',
     'diesel': 'Diesel',
     'diesel-s10': 'Diesel S10',
-    
+
     // Departments
     'logistics': 'Logistics',
     'maintenance': 'Maintenance',
     'administration': 'Administration',
     'operations': 'Operations',
     'transport': 'Transport',
-    
+
     // Priorities
     'low': 'Low',
     'medium': 'Medium',
     'high': 'High',
     'urgent': 'Urgent',
-    
+
     // Forms
     'required-field': 'Required field',
     'select-option': 'Select an option',
@@ -626,7 +628,7 @@ const translations: Record<Language, Record<string, string>> = {
     'passwords-dont-match': 'Passwords don\'t match',
     'form-errors': 'Please fix form errors',
     'form-saved': 'Form saved successfully',
-    
+
     // Reports
     'generate-report': 'Generate Report',
     'report-period': 'Report Period',
@@ -640,7 +642,7 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-reports': 'Monthly Reports',
     'weekly-reports': 'Weekly Reports',
     'annual-reports': 'Annual Reports',
-    
+
     // Settings
     'general-settings': 'General Settings',
     'user-preferences': 'User Preferences',
@@ -655,7 +657,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisition-status': 'Requisition Status',
     'personal-info': 'Personal Information',
     'contact-info': 'Contact Information',
-    
+
     // User
     'username': 'Username',
     'full-name': 'Full name',
@@ -665,7 +667,7 @@ const translations: Record<Language, Record<string, string>> = {
     'role': 'Role',
     'last-login': 'Last login',
     'account-created': 'Account created',
-    
+
     // Messages
     'no-data': 'No data found',
     'no-results': 'No results found',
@@ -677,7 +679,7 @@ const translations: Record<Language, Record<string, string>> = {
     'confirm-delete': 'Are you sure you want to delete?',
     'confirm-action': 'Are you sure you want to continue?',
     'unsaved-changes': 'There are unsaved changes',
-    
+
     // Pagination
     'page': 'Page',
     'of': 'of',
@@ -687,7 +689,7 @@ const translations: Record<Language, Record<string, string>> = {
     'next': 'Next',
     'first': 'First',
     'last': 'Last',
-    
+
     // Date and time
     'today': 'Today',
     'yesterday': 'Yesterday',
@@ -698,19 +700,19 @@ const translations: Record<Language, Record<string, string>> = {
     'this-year': 'This year',
     'date-format': 'MM/DD/YYYY',
     'time-format': 'HH:mm',
-    
+
     // Print
     'print-document': 'Print Document',
     'print-preview': 'Print Preview',
     'print-options': 'Print Options',
-    
+
     // About
     'version': 'Version',
     'last-update': 'Last Update',
     'developed-by': 'Developed by',
     'about-system': 'About System',
     'system-info': 'System Information',
-    
+
     // Additional translations
     'filters': 'Filters',
     'search-requisitions': 'Search requisitions...',
@@ -744,7 +746,7 @@ const translations: Record<Language, Record<string, string>> = {
     'account-details': 'Details about your account in the system',
     'last-updated': 'Last Updated',
     'manage-profile-preferences': 'Manage your profile and system preferences',
-    
+
     // Modal details
     'requisition-details': 'Requisition Details',
     'request-date-label': 'Request Date',
@@ -754,12 +756,12 @@ const translations: Record<Language, Record<string, string>> = {
     'quantity-label': 'Quantity',
     'justification-label': 'Justification',
     'liters': 'Liters',
-    
+
     // Status badges
     'pendente': 'Pending',
     'aprovada': 'Approved',
     'cumprida': 'Fulfilled',
-    
+
     // Form
     'requester-label': 'Requester',
     'requester-placeholder': 'Requester name',
@@ -775,7 +777,7 @@ const translations: Record<Language, Record<string, string>> = {
     'priority-form': 'Priority',
     'medium-priority': 'Medium',
     'create-requisition': 'Create Requisition',
-    
+
     // Reports
     'total-requisitions': 'Total Requisitions',
     'approval-rate': 'Approval Rate',
@@ -792,7 +794,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisitions-count': 'Requisitions',
     'liters-count': 'Liters',
     'fuel-label': 'Fuel',
-    
+
     // Settings - Security
     'change-password-title': 'Change Password',
     'keep-account-secure': 'Keep your account secure with a strong password',
@@ -805,7 +807,7 @@ const translations: Record<Language, Record<string, string>> = {
     'change-password-button': 'Change Password',
     'security-tips': 'Security Tips',
     'keep-account-always-secure': 'Keep your account always secure',
-    
+
     // Settings - Notifications
     'notification-settings-title': 'Notification Settings',
     'configure-notifications': 'Configure how and when you want to receive notifications',
@@ -817,7 +819,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisition-status-desc': 'Updates about the status of your requisitions',
     'monthly-reports-notif': 'Monthly Reports',
     'monthly-reports-desc': 'Monthly summary of fuel consumption',
-    
+
     // Notification/toast messages
     'requisition-created-success': 'Requisition created successfully!',
     'requisition-updated-success': 'Requisition updated successfully!',
@@ -838,7 +840,10 @@ const translations: Record<Language, Record<string, string>> = {
     'no-requisitions-for-period': 'No requisitions for selected period',
     'pdf-generation-error': 'Error generating PDF',
     'report-generation-error': 'Error generating report',
-    
+    'user-deleted-success': 'User deleted successfully',
+    'error-deleting-user': 'Error deleting user',
+    'confirm-delete-user': 'Are you sure you want to delete this user?',
+
     // Settings - System
     'system-configurations': 'System Settings',
     'customize-appearance-behavior': 'Customize system appearance and behavior',
@@ -856,7 +861,7 @@ const translations: Record<Language, Record<string, string>> = {
     'last-update-label': 'Last Update',
     'developed-by-label': 'Developed by',
     'fuelcontrol-team': 'Fuel Control Team',
-    
+
     // Fleet Management
     'fleet-management': 'Fleet Management',
     'manage-company-vehicles': 'Manage company vehicles',
@@ -888,7 +893,7 @@ const translations: Record<Language, Record<string, string>> = {
     'error-creating-vehicle': 'Error creating vehicle',
     'error-updating-vehicle': 'Error updating vehicle',
     'error-changing-status': 'Error changing status',
-    
+
     // User Management
     'user-management': 'User Management',
     'manage-employees-permissions': 'Manage employees and their system permissions',
@@ -922,7 +927,7 @@ const translations: Record<Language, Record<string, string>> = {
     'not-informed': 'Not informed',
     'no-department': 'No department',
     'department-not-found': 'Department not found',
-    
+
     // Department Management
     'department-management': 'Department Management',
     'manage-company-departments': 'Manage company departments',
@@ -950,12 +955,12 @@ const translations: Record<Language, Record<string, string>> = {
     'start-creating-new-department': 'Start by creating a new department',
     'enter-department-name': 'Enter department name',
     'enter-department-description': 'Enter department description',
-    
+
     // Navigation Menu
     'users': 'Users',
     'departments': 'Departments',
     'fleet': 'Fleet',
-    
+
     // Suppliers
     'suppliers': 'Suppliers',
     'supplier': 'Supplier',
@@ -993,7 +998,7 @@ const translations: Record<Language, Record<string, string>> = {
     'new-requisition': 'Nueva Requisición',
     'reports': 'Informes',
     'settings': 'Configuraciones',
-    
+
     // Acciones
     'save': 'Guardar',
     'cancel': 'Cancelar',
@@ -1016,7 +1021,7 @@ const translations: Record<Language, Record<string, string>> = {
     'confirm': 'Confirmar',
     'approve': 'Aprobar',
     'reject': 'Rechazar',
-    
+
     // Estados
     'loading': 'Cargando...',
     'success': 'Éxito',
@@ -1028,7 +1033,7 @@ const translations: Record<Language, Record<string, string>> = {
     'rejected': 'Rechazado',
     'fulfilled': 'Realizado',
     'cancelled': 'Cancelado',
-    
+
     // Sistema
     'system-name': 'Control de Combustible',
     'fuel-control-system': 'Sistema de Control de Combustible',
@@ -1043,7 +1048,7 @@ const translations: Record<Language, Record<string, string>> = {
     'system-theme': 'Sistema',
     'enabled': 'Activado',
     'disabled': 'Desactivado',
-    
+
     // Tablero
     'total-requests': 'Total de Requisiciones',
     'pending-requests': 'Requisiciones Pendientes',
@@ -1055,7 +1060,7 @@ const translations: Record<Language, Record<string, string>> = {
     'consumption-by-fuel-type': 'Consumo por Tipo de Combustible',
     'recent-activity': 'Actividad Reciente',
     'quick-stats': 'Estadísticas Rápidas',
-    
+
     // Requisiciones
     'requisition': 'Requisición',
     'requisition-number': 'Número de Requisición',
@@ -1073,26 +1078,26 @@ const translations: Record<Language, Record<string, string>> = {
     'request-date': 'Fecha de Solicitud',
     'details': 'Detalles',
     'actions': 'Acciones',
-    
+
     // Tipos de combustible
     'gasoline': 'Gasolina',
     'ethanol': 'Etanol',
     'diesel': 'Diésel',
     'diesel-s10': 'Diésel S10',
-    
+
     // Departamentos
     'logistics': 'Logística',
     'maintenance': 'Mantenimiento',
     'administration': 'Administración',
     'operations': 'Operaciones',
     'transport': 'Transporte',
-    
+
     // Prioridades
     'low': 'Baja',
     'medium': 'Media',
     'high': 'Alta',
     'urgent': 'Urgente',
-    
+
     // Formularios
     'required-field': 'Campo requerido',
     'select-option': 'Seleccione una opción',
@@ -1102,7 +1107,7 @@ const translations: Record<Language, Record<string, string>> = {
     'passwords-dont-match': 'Las contraseñas no coinciden',
     'form-errors': 'Corrija los errores del formulario',
     'form-saved': 'Formulario guardado exitosamente',
-    
+
     // Informes
     'generate-report': 'Generar Informe',
     'report-period': 'Período del Informe',
@@ -1116,7 +1121,7 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-reports': 'Informes Mensuales',
     'weekly-reports': 'Informes Semanales',
     'annual-reports': 'Informes Anuales',
-    
+
     // Configuraciones
     'general-settings': 'Configuraciones Generales',
     'user-preferences': 'Preferencias del Usuario',
@@ -1131,7 +1136,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisition-status': 'Estado de Requisiciones',
     'personal-info': 'Información Personal',
     'contact-info': 'Información de Contacto',
-    
+
     // Usuario
     'username': 'Nombre de usuario',
     'full-name': 'Nombre completo',
@@ -1141,7 +1146,7 @@ const translations: Record<Language, Record<string, string>> = {
     'role': 'Rol',
     'last-login': 'Último acceso',
     'account-created': 'Cuenta creada',
-    
+
     // Mensajes
     'no-data': 'No se encontraron datos',
     'no-results': 'No se encontraron resultados',
@@ -1153,7 +1158,7 @@ const translations: Record<Language, Record<string, string>> = {
     'confirm-delete': '¿Está seguro que desea eliminar?',
     'confirm-action': '¿Está seguro que desea continuar?',
     'unsaved-changes': 'Hay cambios sin guardar',
-    
+
     // Paginación
     'page': 'Página',
     'of': 'de',
@@ -1163,7 +1168,7 @@ const translations: Record<Language, Record<string, string>> = {
     'next': 'Siguiente',
     'first': 'Primero',
     'last': 'Último',
-    
+
     // Fecha y hora
     'today': 'Hoy',
     'yesterday': 'Ayer',
@@ -1174,19 +1179,19 @@ const translations: Record<Language, Record<string, string>> = {
     'this-year': 'Este año',
     'date-format': 'DD/MM/AAAA',
     'time-format': 'HH:mm',
-    
+
     // Impresión
     'print-document': 'Imprimir Documento',
     'print-preview': 'Vista Previa de Impresión',
     'print-options': 'Opciones de Impresión',
-    
+
     // Acerca de
     'version': 'Versión',
     'last-update': 'Última Actualización',
     'developed-by': 'Desarrollado por',
     'about-system': 'Acerca del Sistema',
     'system-info': 'Información del Sistema',
-    
+
     // Traducciones adicionales
     'filters': 'Filtros',
     'search-requisitions': 'Buscar requisiciones...',
@@ -1220,7 +1225,7 @@ const translations: Record<Language, Record<string, string>> = {
     'account-details': 'Detalles sobre su cuenta en el sistema',
     'last-updated': 'Última Actualización',
     'manage-profile-preferences': 'Gestione su perfil y preferencias del sistema',
-    
+
     // Detalles del modal
     'requisition-details': 'Detalles de la Requisición',
     'request-date-label': 'Fecha de Solicitud',
@@ -1230,12 +1235,12 @@ const translations: Record<Language, Record<string, string>> = {
     'quantity-label': 'Cantidad',
     'justification-label': 'Justificación',
     'liters': 'Litros',
-    
+
     // Badges de estado
     'pendente': 'Pendiente',
     'aprovada': 'Aprobada',
     'cumprida': 'Cumplida',
-    
+
     // Formulario
     'requester-label': 'Solicitante',
     'requester-placeholder': 'Nombre del solicitante',
@@ -1251,7 +1256,7 @@ const translations: Record<Language, Record<string, string>> = {
     'priority-form': 'Prioridad',
     'medium-priority': 'Media',
     'create-requisition': 'Crear Requisición',
-    
+
     // Informes
     'total-requisitions': 'Total de Requisiciones',
     'approval-rate': 'Tasa de Aprobación',
@@ -1268,7 +1273,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisitions-count': 'Requisiciones',
     'liters-count': 'Litros',
     'fuel-label': 'Combustible',
-    
+
     // Configuraciones - Seguridad
     'change-password-title': 'Cambiar Contraseña',
     'keep-account-secure': 'Mantenga su cuenta segura con una contraseña fuerte',
@@ -1281,7 +1286,7 @@ const translations: Record<Language, Record<string, string>> = {
     'change-password-button': 'Cambiar Contraseña',
     'security-tips': 'Consejos de Seguridad',
     'keep-account-always-secure': 'Mantenga su cuenta siempre segura',
-    
+
     // Configuraciones - Notificaciones
     'notification-settings-title': 'Configuraciones de Notificación',
     'configure-notifications': 'Configure cómo y cuándo desea recibir notificaciones',
@@ -1293,7 +1298,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisition-status-desc': 'Actualizaciones sobre el estado de sus requisiciones',
     'monthly-reports-notif': 'Informes Mensuales',
     'monthly-reports-desc': 'Resumen mensual del consumo de combustible',
-    
+
     // Mensajes de notificación/toast
     'requisition-created-success': '¡Requisición creada con éxito!',
     'requisition-updated-success': '¡Requisición actualizada con éxito!',
@@ -1314,7 +1319,10 @@ const translations: Record<Language, Record<string, string>> = {
     'no-requisitions-for-period': 'No hay requisiciones para el período seleccionado',
     'pdf-generation-error': 'Error al generar PDF',
     'report-generation-error': 'Error al generar informe',
-    
+    'user-deleted-success': 'Usuario eliminado con éxito',
+    'error-deleting-user': 'Error al eliminar usuario',
+    'confirm-delete-user': '¿Está seguro que desea eliminar este usuario?',
+
     // Configuraciones - Sistema
     'system-configurations': 'Configuraciones del Sistema',
     'customize-appearance-behavior': 'Personalice la apariencia y comportamiento del sistema',
@@ -1332,7 +1340,7 @@ const translations: Record<Language, Record<string, string>> = {
     'last-update-label': 'Última Actualización',
     'developed-by-label': 'Desarrollado por',
     'fuelcontrol-team': 'Equipo Control de Combustible',
-    
+
     // Gestión de Flota
     'fleet-management': 'Gestión de Flota',
     'manage-company-vehicles': 'Gestione los vehículos de la empresa',
@@ -1347,7 +1355,7 @@ const translations: Record<Language, Record<string, string>> = {
     'year': 'Año',
     'brand': 'Marca',
     'model': 'Modelo',
-    'fuel': 'Combustible',
+    'fuel': 'Combustibile',
     'mileage': 'Kilometraje',
     'last-maintenance': 'Último mantenimiento',
     'es-status': 'Estado',
@@ -1364,7 +1372,7 @@ const translations: Record<Language, Record<string, string>> = {
     'error-creating-vehicle': 'Error al crear vehículo',
     'error-updating-vehicle': 'Error al actualizar vehículo',
     'error-changing-status': 'Error al cambiar estado',
-    
+
     // Gestión de Usuarios
     'user-management': 'Gestión de Usuarios',
     'manage-employees-permissions': 'Gestione empleados y sus permisos del sistema',
@@ -1398,7 +1406,7 @@ const translations: Record<Language, Record<string, string>> = {
     'not-informed': 'No informado',
     'no-department': 'Sin departamento',
     'department-not-found': 'Departamento no encontrado',
-    
+
     // Gestión de Departamentos
     'department-management': 'Gestión de Departamentos',
     'manage-company-departments': 'Gestione los departamentos de la empresa',
@@ -1417,7 +1425,7 @@ const translations: Record<Language, Record<string, string>> = {
     'manager-not-found': 'Gerente no encontrado',
     'no-departments-found': 'No se encontraron departamentos',
     'start-creating-department': 'Comience creando un nuevo departamento',
-    'loading-departments': 'Cargando departamentos...',
+    'loading-departments':Adicionando as traduções para as mensagens de exclusão de usuário nas 3 linguagens.'Cargando departamentos...',
     'department-created-success': 'Departamento creado exitosamente',
     'department-updated-success': 'Departamento actualizado exitosamente',
     'error-creating-department': 'Error al crear departamento',
@@ -1426,12 +1434,12 @@ const translations: Record<Language, Record<string, string>> = {
     'start-creating-new-department': 'Comience creando un nuevo departamento',
     'enter-department-name': 'Ingrese el nombre del departamento',
     'enter-department-description': 'Ingrese la descripción del departamento',
-    
+
     // Navegación del Menú
     'users': 'Usuarios',
     'departments': 'Departamentos',
     'fleet': 'Flota',
-    
+
     // Proveedores
     'suppliers': 'Proveedores',
     'supplier': 'Proveedor',

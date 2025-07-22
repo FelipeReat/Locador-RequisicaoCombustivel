@@ -321,7 +321,7 @@ export class PDFGenerator {
     return quantity * price;
   }
 
-  generatePurchaseOrderPDF(requisition: any) {
+  generatePurchaseOrderPDF(requisition: any, supplier?: any, vehicle?: any, requesterUser?: any) {
     this.doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
@@ -354,7 +354,7 @@ export class PDFGenerator {
       this.doc.text(`${String(requisition.id).padStart(3, '0')} | ${dataEmissao} | ${horaEmissao}`, startX + 2, currentY + 8);
       currentY += 15;
 
-      // Box do Fornecedor
+      // Box do Fornecedor (com informações dinâmicas)
       this.doc.rect(startX, currentY, maxWidth, 28);
       this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
@@ -363,11 +363,11 @@ export class PDFGenerator {
       this.doc.setFontSize(6);
 
       const fornecedorInfo = [
-        'CPF/CNPJ: 22.272.444/0001-30',
-        'Nome Empresarial: D DA C SAMPAIO COMERCIO DE COMBUSTIVEIS LTDA',
-        'Contato: CARLOS',
-        'Telefone: (92) 9883-8218  Celular: (92) 98838-2180',
-        'E-Mail: csilva@blomaq.com.br'
+        `CPF/CNPJ: ${supplier?.cnpj || '22.272.444/0001-30'}`,
+        `Nome Empresarial: ${supplier?.name || 'D DA C SAMPAIO COMERCIO DE COMBUSTIVEIS LTDA'}`,
+        `Contato: ${supplier?.responsavel || 'CARLOS'}`,
+        `Telefone: ${supplier?.phone || '(92) 9883-8218'}  Celular: ${supplier?.mobile || '(92) 98838-2180'}`,
+        `E-Mail: ${supplier?.email || 'csilva@blomaq.com.br'}`
       ];
 
       let lineY = currentY + 7;
@@ -377,7 +377,7 @@ export class PDFGenerator {
       });
       currentY += 30;
 
-      // Box do Cliente
+      // Box do Cliente (com informações dinâmicas)
       this.doc.rect(startX, currentY, maxWidth, 28);
       this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
@@ -386,11 +386,11 @@ export class PDFGenerator {
       this.doc.setFontSize(6);
 
       const clienteInfo = [
-        'CPF/CNPJ: 13.844.973/0001-59',
-        'Nome Empresarial: BBM SERVIÇOS, ALUGUEL DE MÁQUINAS E TECNOLOGIA LT',
-        `Contato: ${requisition.responsavel || requisition.requester}`,
-        'Telefone: (92) 3233-0634',
-        'E-Mail: csilva@blomaq.com.br'
+        `CPF/CNPJ: ${requisition.clientCnpj || '13.844.973/0001-59'}`,
+        `Nome Empresarial: ${requisition.client || 'BBM SERVIÇOS, ALUGUEL DE MÁQUINAS E TECNOLOGIA LT'}`,
+        `Contato: ${requesterUser?.fullName || requisition.requester || 'Não informado'}`,
+        `Telefone: ${requesterUser?.phone || '(92) 3233-0634'}`,
+        `E-Mail: ${requesterUser?.email || 'csilva@blomaq.com.br'}`
       ];
 
       lineY = currentY + 7;
@@ -400,7 +400,7 @@ export class PDFGenerator {
       });
       currentY += 30;
 
-      // Box do Veículo
+      // Box do Veículo (com informações dinâmicas)
       this.doc.rect(startX, currentY, maxWidth, 20);
       this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
@@ -408,11 +408,10 @@ export class PDFGenerator {
       this.doc.setFont('helvetica', 'normal');
       this.doc.setFontSize(6);
 
-      // Informações do veículo com base nos novos campos
       const veiculoInfo = [
-        `Placa: ${requisition.vehiclePlate || 'TAC-5179'}`,
-        `Marca/Modelo: ${requisition.vehicleModel || 'HONDA/CG 160 CARGO'}`,
-        `Cor: ${requisition.vehicleColor || 'BRANCA'}`,
+        `Placa: ${vehicle?.plate || 'TAC-5179'}`,
+        `Marca/Modelo: ${vehicle?.brand || 'HONDA'} ${vehicle?.model || 'CG 160 CARGO'}`,
+        `Cor: ${vehicle?.color || 'BRANCA'}`,
         `Hodômetro: ${requisition.kmAtual || '22.004'}`
       ];
 
@@ -423,7 +422,7 @@ export class PDFGenerator {
       });
       currentY += 22;
 
-      // Box do Abastecimento
+      // Box do Abastecimento (com informações dinâmicas)
       this.doc.rect(startX, currentY, maxWidth, 25);
       this.doc.setFontSize(7);
       this.doc.setFont('helvetica', 'bold');
@@ -453,14 +452,33 @@ export class PDFGenerator {
       currentY += 4;
 
       // Linha da tabela
-      const quantity = parseFloat(requisition.quantity || '9.509');
+      const quantity = isFullTank ? 0 : parseFloat(requisition.quantity || '0');
       const estimatedPrice = this.getEstimatedFuelPrice(requisition.fuelType);
       const total = quantity * estimatedPrice;
 
-      this.doc.text(quantity.toFixed(3), colX[0], currentY);
-      this.doc.text(estimatedPrice.toFixed(2), colX[1], currentY);
-      this.doc.text(total.toFixed(2), colX[2], currentY);
+      if (!isFullTank) {
+        this.doc.text(quantity.toFixed(3), colX[0], currentY);
+        this.doc.text(estimatedPrice.toFixed(2), colX[1], currentY);
+        this.doc.text(total.toFixed(2), colX[2], currentY);
+      } else {
+        this.doc.text('Completo', colX[0], currentY);
+        this.doc.text(estimatedPrice.toFixed(2), colX[1], currentY);
+        this.doc.text('A calcular', colX[2], currentY);
+      }
       currentY += 8;
+
+      // Campo de assinatura (adicionado no canto inferior direito)
+      this.doc.setFontSize(6);
+      this.doc.setFont('helvetica', 'normal');
+      const signatureX = startX + maxWidth - 40;
+      const signatureY = 190;
+      
+      // Linha para assinatura
+      this.doc.line(signatureX, signatureY, signatureX + 35, signatureY);
+      
+      // Texto do responsável centralizado embaixo da linha
+      this.doc.text(`${requesterUser?.fullName || requisition.requester || 'Responsável'}`, signatureX + 17.5, signatureY + 4, { align: 'center' });
+      this.doc.text('Responsável', signatureX + 17.5, signatureY + 8, { align: 'center' });
 
       // Rodapé da via
       this.doc.setFontSize(5);
