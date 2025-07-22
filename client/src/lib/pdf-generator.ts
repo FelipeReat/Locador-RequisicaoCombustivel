@@ -478,7 +478,6 @@ export class PDFGenerator {
 
       // Texto do responsável centralizado embaixo da linha
       this.doc.text(`${requesterUser?.fullName || requisition.requester || 'Responsável'}`, signatureX + 17.5, signatureY + 4, { align: 'center' });
-      this.doc.text('Responsável', signatureX + 17.5, signatureY + 8, { align: 'center' });
 
       // Rodapé da via
       this.doc.setFontSize(5);
