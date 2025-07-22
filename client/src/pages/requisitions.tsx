@@ -34,9 +34,14 @@ export default function Requisitions() {
     queryKey: ["/api/suppliers"],
   });
 
+  const { data: users = [] } = useQuery({
+    queryKey: ["/api/users"],
+  });
+
   const filteredRequisitions = requisitions?.filter((req) => {
+    const user = users.find(u => u.id === req.requesterId);
     const matchesSearch = 
-      (req.responsavel || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (req.client || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (req.fuelType || "").toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -54,6 +59,11 @@ export default function Requisitions() {
   const getSupplierName = (supplierId: number) => {
     const supplier = suppliers?.find(s => s.id === supplierId);
     return supplier?.name || "-";
+  };
+
+  const getUserName = (requesterId: number) => {
+    const user = users.find(u => u.id === requesterId);
+    return user?.fullName || "-";
   };
 
   const getFuelTypeLabel = (fuelType: string) => {
@@ -185,7 +195,7 @@ export default function Requisitions() {
                         #REQ{String(requisition.id).padStart(3, "0")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {requisition.responsavel || "-"}
+                        {getUserName(requisition.requesterId)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {getSupplierName(requisition.supplierId)}
@@ -194,7 +204,7 @@ export default function Requisitions() {
                         {getFuelTypeLabel(requisition.fuelType || "")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {requisition.quantity || "0"}L
+                        {requisition.tanqueCheio === "true" ? "Tanque Cheio" : `${requisition.quantity || "0"}L`}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={requisition.status as any} />

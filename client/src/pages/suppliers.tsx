@@ -54,14 +54,14 @@ export default function Suppliers() {
       setIsCreateDialogOpen(false);
       resetForm();
       toast({
-        title: "Sucesso",
-        description: "Fornecedor criado com sucesso!",
+        title: t("success"),
+        description: t("supplier-created"),
       });
     },
     onError: () => {
       toast({
-        title: "Erro",
-        description: "Erro ao criar fornecedor",
+        title: t("error"),
+        description: t("error-creating-supplier"),
         variant: "destructive",
       });
     },
@@ -83,14 +83,14 @@ export default function Suppliers() {
       setEditingSupplier(null);
       resetForm();
       toast({
-        title: "Sucesso",
-        description: "Fornecedor atualizado com sucesso!",
+        title: t("success"),
+        description: t("supplier-updated"),
       });
     },
     onError: () => {
       toast({
-        title: "Erro",
-        description: "Erro ao atualizar fornecedor",
+        title: t("error"),
+        description: t("error-updating-supplier"),
         variant: "destructive",
       });
     },
@@ -107,14 +107,14 @@ export default function Suppliers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       toast({
-        title: "Sucesso",
-        description: "Fornecedor excluído com sucesso!",
+        title: t("success"),
+        description: t("supplier-deleted"),
       });
     },
     onError: () => {
       toast({
-        title: "Erro",
-        description: "Erro ao excluir fornecedor",
+        title: t("error"),
+        description: t("error-deleting-supplier"),
         variant: "destructive",
       });
     },

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { InsertFuelRequisition, Supplier, Vehicle } from "@shared/schema";
+import type { InsertFuelRequisition, Supplier, Vehicle, User } from "@shared/schema";
 
 interface RequisitionFormProps {
   onSuccess?: () => void;
@@ -22,10 +22,9 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>({
-    requesterId: 1, // Using ID 1 for demo
+    requesterId: 1, // Default to first user
     supplierId: undefined,
     client: "BBM Serviços",
-    responsavel: "",
     vehicleId: undefined,
     kmAtual: "",
     kmAnterior: "",
@@ -54,6 +53,16 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
     queryFn: async () => {
       const response = await fetch("/api/vehicles");
       if (!response.ok) throw new Error("Failed to fetch vehicles");
+      return response.json();
+    },
+  });
+
+  // Fetch users
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const response = await fetch("/api/users");
+      if (!response.ok) throw new Error("Failed to fetch users");
       return response.json();
     },
   });
@@ -148,13 +157,22 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
 
         {/* Responsável */}
         <div className="space-y-2">
-          <Label htmlFor="responsavel">Responsável *</Label>
-          <Input
-            id="responsavel"
-            value={formData.responsavel}
-            onChange={(e) => handleInputChange("responsavel", e.target.value)}
-            placeholder="Nome do responsável"
-          />
+          <Label htmlFor="requesterId">Responsável *</Label>
+          <Select 
+            value={formData.requesterId?.toString()} 
+            onValueChange={(value) => handleInputChange("requesterId", parseInt(value))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id.toString()}>
+                  {user.fullName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Veículo */}
@@ -242,20 +260,27 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
         <Label htmlFor="tanqueCheio">Tanque Cheio?</Label>
       </div>
 
-      {/* Quantidade (só aparece se não for tanque cheio) */}
-      {!isTanqueCheio && (
-        <div className="space-y-2">
-          <Label htmlFor="quantity">Quantidade (Litros) *</Label>
+      {/* Quantidade de Litros */}
+      <div className="space-y-2">
+        <Label htmlFor="quantity">Quantidade (L) *</Label>
+        {isTanqueCheio ? (
+          <Input
+            id="quantity"
+            value="Tanque Cheio"
+            disabled
+            className="bg-muted"
+          />
+        ) : (
           <Input
             id="quantity"
             type="number"
-            step="0.01"
-            value={formData.quantity}
+            value={formData.quantity || ""}
             onChange={(e) => handleInputChange("quantity", e.target.value)}
-            placeholder="Ex: 150.5"
+            placeholder="Ex: 500"
+            required={!isTanqueCheio}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       <Button 
         type="submit" 

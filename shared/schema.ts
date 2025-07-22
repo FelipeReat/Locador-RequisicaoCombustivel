@@ -38,7 +38,6 @@ export const fuelRequisitions = pgTable("fuel_requisitions", {
   requesterId: integer("requester_id").notNull(),
   supplierId: integer("supplier_id").notNull(),
   client: text("client").notNull(),
-  responsavel: text("responsavel").notNull(),
   vehicleId: integer("vehicle_id").notNull(),
   kmAtual: text("km_atual").notNull(),
   kmAnterior: text("km_anterior").notNull(),
@@ -143,9 +142,9 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
 });
 
 export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, {
+  requesterId: z.number().min(1, "Responsável é obrigatório"),
   supplierId: z.number().min(1, "Fornecedor é obrigatório"),
   client: z.string().min(1, "Cliente é obrigatório"),
-  responsavel: z.string().min(1, "Responsável é obrigatório"),
   vehicleId: z.number().min(1, "Veículo é obrigatório"),
   kmAtual: z.string().refine((val) => parseFloat(val) >= 0, {
     message: "KM atual deve ser maior ou igual a 0",
