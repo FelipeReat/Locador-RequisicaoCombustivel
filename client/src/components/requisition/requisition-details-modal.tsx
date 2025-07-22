@@ -128,10 +128,17 @@ export default function RequisitionDetailsModal({
     return labels[priority as keyof typeof labels] || priority;
   };
 
-  const generatePurchasePDF = () => {
+  const generatePurchasePDF = async () => {
     try {
+      // Buscar dados do fornecedor e veículo
+      const supplierResponse = await fetch(`/api/suppliers/${requisition.supplierId}`);
+      const vehicleResponse = await fetch(`/api/vehicles/${requisition.vehicleId}`);
+      
+      const supplier = supplierResponse.ok ? await supplierResponse.json() : null;
+      const vehicle = vehicleResponse.ok ? await vehicleResponse.json() : null;
+
       const pdfGenerator = new PDFGenerator();
-      pdfGenerator.generatePurchaseOrderPDF(requisition);
+      pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle);
       pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
 
       toast({

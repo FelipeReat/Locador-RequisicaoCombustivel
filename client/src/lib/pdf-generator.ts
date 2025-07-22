@@ -409,10 +409,10 @@ export class PDFGenerator {
       this.doc.setFontSize(6);
 
       const veiculoInfo = [
-        `Placa: ${vehicle?.plate || 'TAC-5179'}`,
-        `Marca/Modelo: ${vehicle?.brand || 'HONDA'} ${vehicle?.model || 'CG 160 CARGO'}`,
-        `Cor: ${vehicle?.color || 'BRANCA'}`,
-        `Hodômetro: ${requisition.kmAtual || '22.004'}`
+        `Placa: ${vehicle?.plate || 'N/A'}`,
+        `Marca/Modelo: ${vehicle?.brand || 'N/A'} ${vehicle?.model || 'N/A'}`,
+        `Cor: ${vehicle?.color || 'N/A'}`,
+        `Hodômetro: ${requisition.kmAtual || 'N/A'}`
       ];
 
       lineY = currentY + 7;
@@ -432,7 +432,7 @@ export class PDFGenerator {
       // Checkbox e tabela
       this.doc.setFontSize(6);
       this.doc.setFont('helvetica', 'normal');
-      
+
       // Checkbox para tanque cheio
       const isFullTank = requisition.tanqueCheio === 'true';
       this.doc.rect(startX + 2, currentY, 3, 3);
@@ -445,7 +445,7 @@ export class PDFGenerator {
       // Cabeçalho da tabela de combustível
       const headers = ['QTD. / L', 'R$/L', '[R$] TOTAL'];
       const colX = [startX + 40, startX + 70, startX + 100];
-      
+
       headers.forEach((header, index) => {
         this.doc.text(header, colX[index], currentY);
       });
@@ -472,10 +472,10 @@ export class PDFGenerator {
       this.doc.setFont('helvetica', 'normal');
       const signatureX = startX + maxWidth - 40;
       const signatureY = 190;
-      
+
       // Linha para assinatura
       this.doc.line(signatureX, signatureY, signatureX + 35, signatureY);
-      
+
       // Texto do responsável centralizado embaixo da linha
       this.doc.text(`${requesterUser?.fullName || requisition.requester || 'Responsável'}`, signatureX + 17.5, signatureY + 4, { align: 'center' });
       this.doc.text('Responsável', signatureX + 17.5, signatureY + 8, { align: 'center' });
@@ -487,7 +487,7 @@ export class PDFGenerator {
 
     // Criar as duas vias lado a lado
     createVia('1ª Via - Fornecedor', 10);
-    
+
     // Linha divisória pontilhada vertical
     this.doc.setLineDashPattern([2, 2], 0);
     this.doc.line(148, 10, 148, 200);
