@@ -2,6 +2,15 @@ import { pgTable, text, serial, integer, timestamp, decimal } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const departments = pgTable("departments", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  active: text("active").notNull().default("true"),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -179,6 +188,16 @@ export const updateFuelRequisitionStatusSchema = z.object({
   rejectionReason: z.string().optional(),
 });
 
+export const insertDepartmentSchema = createInsertSchema(departments, {
+  name: z.string().min(1, "Nome é obrigatório"),
+  description: z.string().optional(),
+}).omit({
+  id: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
@@ -191,3 +210,5 @@ export type FuelRequisition = typeof fuelRequisitions.$inferSelect;
 export type UpdateFuelRequisitionStatus = z.infer<typeof updateFuelRequisitionStatusSchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type Supplier = typeof suppliers.$inferSelect;
+export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
+export type Department = typeof departments.$inferSelect;

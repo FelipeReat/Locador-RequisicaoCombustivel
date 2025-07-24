@@ -52,20 +52,24 @@ export class MemStorage implements IStorage {
   private fuelRequisitions: Map<number, FuelRequisition>;
   private suppliers: Map<number, Supplier>;
   private vehicles: Map<number, Vehicle>;
+  private departments: Map<number, Department>;
   private currentUserId: number;
   private currentRequisitionId: number;
   private currentSupplierId: number;
   private currentVehicleId: number;
+  private currentDepartmentId: number;
 
   constructor() {
     this.users = new Map();
     this.fuelRequisitions = new Map();
     this.suppliers = new Map();
     this.vehicles = new Map();
+    this.departments = new Map();
     this.currentUserId = 1;
     this.currentRequisitionId = 1;
     this.currentSupplierId = 1;
     this.currentVehicleId = 1;
+    this.currentDepartmentId = 1;
 
     // Add sample data for demonstration
     this.addSampleData();
@@ -75,6 +79,53 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    
+    // Sample departments
+    const sampleDepartments: Department[] = [
+      {
+        id: 1,
+        name: "Administrativo",
+        description: "Departamento responsável pela administração geral",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 2,
+        name: "Operacional",
+        description: "Departamento responsável pelas operações de campo",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 3,
+        name: "Financeiro",
+        description: "Departamento responsável pelas finanças da empresa",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 4,
+        name: "Recursos Humanos",
+        description: "Departamento responsável pela gestão de pessoas",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 5,
+        name: "TI",
+        description: "Departamento responsável pela tecnologia da informação",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+    ];
+    
+    sampleDepartments.forEach(department => this.departments.set(department.id, department));
+    this.currentDepartmentId = 6;
 
     // Sample suppliers
     const sampleSuppliers = [
@@ -605,6 +656,51 @@ export class MemStorage implements IStorage {
     };
   }
 
+  async getDepartments(): Promise<Department[]> {
+    return Array.from(this.departments.values());
+  }
+
+  async getDepartment(id: number): Promise<Department | undefined> {
+    return this.departments.get(id);
+  }
+
+  async createDepartment(department: InsertDepartment): Promise<Department> {
+    const id = this.currentDepartmentId++;
+    const now = new Date().toISOString();
+    const newDepartment: Department = {
+      id,
+      ...department,
+      active: "true",
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.departments.set(id, newDepartment);
+    return newDepartment;
+  }
+
+  async updateDepartment(id: number, updates: Partial<InsertDepartment>): Promise<Department | undefined> {
+    const department = this.departments.get(id);
+    if (!department) return undefined;
+
+    const updatedDepartment: Department = {
+      ...department,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.departments.set(id, updatedDepartment);
+    return updatedDepartment;
+  }
+
+  async deleteDepartment(id: number): Promise<boolean> {
+    // Verificar se existem usuários associados a este departamento
+    const usersInDepartment = Array.from(this.users.values()).filter(user => user.departmentId === id);
+    if (usersInDepartment.length > 0) {
+      throw new Error("Não é possível excluir um departamento que possui usuários associados");
+    }
+
+    return this.departments.delete(id);
+  }
+
   async getRequisitionsByDepartment(): Promise<{ department: string; count: number; totalLiters: number }[]> {
     const requisitions = Array.from(this.fuelRequisitions.values());
     const departmentMap = new Map<string, { count: number; totalLiters: number }>();
@@ -644,4 +740,10 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { DbStorage } from './DbStorage';
+
+// Exporta a implementação de armazenamento baseada em banco de dados
+export const storage = new DbStorage();
+
+// Para usar a implementação em memória, descomente a linha abaixo e comente a linha acima
+// export const storage = new MemStorage();
