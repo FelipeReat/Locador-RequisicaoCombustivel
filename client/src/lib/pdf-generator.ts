@@ -334,18 +334,18 @@ export class PDFGenerator {
       const maxWidth = 130; // Largura máxima para cada via
 
       // Cabeçalho
-      this.doc.setFontSize(9);
+      this.doc.setFontSize(11);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('REQUISIÇÃO PARA ABASTECIMENTO COM COMBUSTÍVEIS', startX, currentY);
       currentY += 8;
 
-      this.doc.setFontSize(8);
+      this.doc.setFontSize(10);
       this.doc.text(viaTitle, startX, currentY);
       currentY += 10;
 
       // Box da requisição
       this.doc.rect(startX, currentY, maxWidth, 12);
-      this.doc.setFontSize(7);
+      this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('REQUISIÇÃO | ID | EMISSÃO', startX + 2, currentY + 4);
       this.doc.setFont('helvetica', 'normal');
@@ -356,11 +356,11 @@ export class PDFGenerator {
 
       // Box do Fornecedor (com informações dinâmicas)
       this.doc.rect(startX, currentY, maxWidth, 28);
-      this.doc.setFontSize(7);
+      this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('FORNECEDOR', startX + 2, currentY + 4);
       this.doc.setFont('helvetica', 'normal');
-      this.doc.setFontSize(6);
+      this.doc.setFontSize(8);
 
       const fornecedorInfo = [
         `CPF/CNPJ: ${supplier?.cnpj || '22.272.444/0001-30'}`,
@@ -379,11 +379,11 @@ export class PDFGenerator {
 
       // Box do Cliente (com informações dinâmicas)
       this.doc.rect(startX, currentY, maxWidth, 28);
-      this.doc.setFontSize(7);
+      this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('CLIENTE', startX + 2, currentY + 4);
       this.doc.setFont('helvetica', 'normal');
-      this.doc.setFontSize(6);
+      this.doc.setFontSize(8);
 
       const clienteInfo = [
         `CPF/CNPJ: ${requisition.clientCnpj || '13.844.973/0001-59'}`,
@@ -402,11 +402,11 @@ export class PDFGenerator {
 
       // Box do Veículo (com informações dinâmicas)
       this.doc.rect(startX, currentY, maxWidth, 20);
-      this.doc.setFontSize(7);
+      this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('VEÍCULO', startX + 2, currentY + 4);
       this.doc.setFont('helvetica', 'normal');
-      this.doc.setFontSize(6);
+      this.doc.setFontSize(8);
 
       const veiculoInfo = [
         `Placa: ${vehicle?.plate || 'N/A'}`,
@@ -424,13 +424,13 @@ export class PDFGenerator {
 
       // Box do Abastecimento (com informações dinâmicas)
       this.doc.rect(startX, currentY, maxWidth, 25);
-      this.doc.setFontSize(7);
+      this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('ABASTECIMENTO', startX + 2, currentY + 4);
       currentY += 8;
 
       // Checkbox e tabela
-      this.doc.setFontSize(6);
+      this.doc.setFontSize(8);
       this.doc.setFont('helvetica', 'normal');
 
       // Checkbox para tanque cheio
@@ -468,7 +468,7 @@ export class PDFGenerator {
       currentY += 8;
 
       // Campo de assinatura (adicionado no canto inferior direito)
-      this.doc.setFontSize(6);
+      this.doc.setFontSize(8);
       this.doc.setFont('helvetica', 'normal');
       const signatureX = startX + maxWidth - 40;
       const signatureY = 190;
@@ -480,7 +480,7 @@ export class PDFGenerator {
       this.doc.text(`${requesterUser?.fullName || requisition.requester || 'Responsável'}`, signatureX + 17.5, signatureY + 4, { align: 'center' });
 
       // Rodapé da via
-      this.doc.setFontSize(5);
+      this.doc.setFontSize(7);
       this.doc.text('OBRIGATÓRIO ANEXAR GRAMPEADO O CUPOM FISCAL NA VIA BLOMAQ', startX, 200);
     };
 
