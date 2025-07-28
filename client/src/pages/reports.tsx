@@ -246,7 +246,7 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {stats?.totalLiters?.toLocaleString("pt-BR") || 0}L
+                {(stats?.totalLiters || 0).toLocaleString("pt-BR")}L
               </div>
             </CardContent>
           </Card>

@@ -404,7 +404,7 @@ export class PDFGenerator {
 
       const clienteInfo = [
         `CPF/CNPJ: ${requisition.clientCnpj || '13.844.973/0001-59'}`,
-        `Nome Empresarial: BBM SERVIÇOS, ALUGUEL DE MÁQUINAS E TECNOLOGIA LTDA`,
+        `Nome Empresarial: BBM Serviços, Aluguel de Máquinas e Tecnologia LTDA`,
         `Contato: ${requesterUser?.fullName || requisition.requester || 'Não informado'}`,
         `Telefone: ${requesterUser?.phone || '(92) 3233-0634'}`,
         `E-Mail: ${requesterUser?.email || 'csilva@blomaq.com.br'}`
@@ -454,9 +454,11 @@ export class PDFGenerator {
       const isFullTank = requisition.tanqueCheio === 'true';
       this.doc.rect(startX + 2, currentY, 3, 3);
       if (isFullTank) {
+        this.doc.setFont('helvetica', 'bold');
         this.doc.text('✓', startX + 2.5, currentY + 2.5);
+        this.doc.setFont('helvetica', 'normal');
       }
-      this.doc.text('Tanque Cheio.', startX + 7, currentY + 2);
+      this.doc.text('Tanque Cheio - CONFIRMADO', startX + 7, currentY + 2);
       currentY += 6;
 
       // Cabeçalho da tabela de combustível
