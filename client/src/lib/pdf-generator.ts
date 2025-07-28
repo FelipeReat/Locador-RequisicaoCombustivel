@@ -332,10 +332,10 @@ export class PDFGenerator {
     const addWatermark = (centerX: number) => {
       try {
         // Marca d'água apenas com texto para melhor performance
-        this.doc.setGState(this.doc.GState({ opacity: 0.1 }));
-        this.doc.setFontSize(40);
+        this.doc.setGState(this.doc.GState({ opacity: 0.05 }));
+        this.doc.setFontSize(35);
         this.doc.setFont('helvetica', 'bold');
-        this.doc.text('BLOMAQ', centerX, 120, { align: 'center' });
+        this.doc.text('BLOMAQ', centerX, 95, { align: 'center' });
         this.doc.setGState(this.doc.GState({ opacity: 1.0 }));
       } catch (error) {
         console.log('Erro ao adicionar marca d\'água:', error);
