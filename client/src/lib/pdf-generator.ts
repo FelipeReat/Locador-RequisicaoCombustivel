@@ -404,7 +404,7 @@ export class PDFGenerator {
 
       const clienteInfo = [
         `CPF/CNPJ: ${requisition.clientCnpj || '13.844.973/0001-59'}`,
-        `Nome Empresarial: ${requisition.client || 'BBM SERVIÇOS, ALUGUEL DE MÁQUINAS E TECNOLOGIA LT'}`,
+        `Nome Empresarial: BBM SERVIÇOS, ALUGUEL DE MÁQUINAS E TECNOLOGIA LTDA`,
         `Contato: ${requesterUser?.fullName || requisition.requester || 'Não informado'}`,
         `Telefone: ${requesterUser?.phone || '(92) 3233-0634'}`,
         `E-Mail: ${requesterUser?.email || 'csilva@blomaq.com.br'}`
