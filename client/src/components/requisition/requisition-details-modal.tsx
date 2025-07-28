@@ -34,8 +34,9 @@ export default function RequisitionDetailsModal({
   const { toast } = useToast();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
-  const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionInput, setShowRejectionInput] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const updateStatus = useMutation({
     mutationFn: async (data: { status: string; approver?: string; rejectionReason?: string }) => {
@@ -129,11 +130,12 @@ export default function RequisitionDetailsModal({
   };
 
   const generatePurchasePDF = async () => {
+    setIsGeneratingPDF(true);
     try {
       // Buscar dados do fornecedor e veículo
       const supplierResponse = await fetch(`/api/suppliers/${requisition.supplierId}`);
       const vehicleResponse = await fetch(`/api/vehicles/${requisition.vehicleId}`);
-      
+
       const supplier = supplierResponse.ok ? await supplierResponse.json() : null;
       const vehicle = vehicleResponse.ok ? await vehicleResponse.json() : null;
 
@@ -151,6 +153,8 @@ export default function RequisitionDetailsModal({
         description: t("pdf-generation-error"),
         variant: "destructive",
       });
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -260,7 +264,9 @@ export default function RequisitionDetailsModal({
                 variant="outline"
                 onClick={generatePurchasePDF}
                 className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                disabled={isGeneratingPDF}
               >
+                {isGeneratingPDF && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <FileText className="mr-1 h-4 w-4" />
                 Gerar Ordem de Compra
               </Button>
