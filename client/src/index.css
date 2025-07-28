@@ -23,7 +23,7 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(207, 90%, 54%);
   --radius: 0.5rem;
-  
+
   /* Custom colors for the fuel system */
   --fuel-primary: hsl(207, 90%, 54%);
   --fuel-secondary: hsl(0, 0%, 26%);
@@ -31,6 +31,9 @@
   --fuel-warning: hsl(35, 91%, 58%);
   --fuel-error: hsl(4, 90%, 58%);
   --fuel-neutral: hsl(0, 0%, 96%);
+
+  --warning: 38 92% 50%;
+  --warning-foreground: 48 96% 8%;
 }
 
 .dark {
@@ -54,6 +57,9 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
+
+  --warning: 48 96% 53%;
+  --warning-foreground: 26 83% 14%;
 }
 
 @layer base {
@@ -70,51 +76,55 @@
   .sidebar-link {
     @apply flex items-center px-6 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary transition-colors;
   }
-  
+
   .sidebar-link.active {
     @apply text-primary bg-blue-50 dark:bg-blue-900/20 border-r-2 border-primary;
   }
-  
+
   .status-badge {
     @apply px-2 py-1 text-xs font-medium rounded-full;
   }
-  
+
   .status-pending {
     @apply bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300;
   }
-  
+
   .status-approved {
     @apply bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300;
   }
-  
+
   .status-rejected {
     @apply bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300;
   }
-  
+
+    .status-maintenance {
+    @apply bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300;
+  }
+
   .status-fulfilled {
     @apply bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300;
   }
-  
+
   .stats-card {
     @apply bg-white dark:bg-gray-800 rounded-lg shadow p-6;
   }
-  
+
   .stats-icon {
     @apply p-3 rounded-full text-xl;
   }
-  
+
   .stats-icon.primary {
     @apply bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400;
   }
-  
+
   .stats-icon.warning {
     @apply bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400;
   }
-  
+
   .stats-icon.success {
     @apply bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400;
   }
-  
+
   .stats-icon.error {
     @apply bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400;
   }

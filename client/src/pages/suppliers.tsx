@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -219,9 +218,28 @@ export default function Suppliers() {
                   <Input
                     id="cnpj"
                     value={formData.cnpj}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cnpj: e.target.value }))}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      let formattedValue = value;
+
+                      if (value.length > 2) {
+                        formattedValue = value.slice(0, 2) + '.' + value.slice(2);
+                      }
+                      if (value.length > 5) {
+                        formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5);
+                      }
+                      if (value.length > 8) {
+                        formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5, 8) + '/' + value.slice(8);
+                      }
+                      if (value.length > 12) {
+                        formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5, 8) + '/' + value.slice(8, 12) + '-' + value.slice(12, 14);
+                      }
+
+                      setFormData(prev => ({ ...prev, cnpj: formattedValue }));
+                    }}
                     placeholder="00.000.000/0000-00"
                     required
+                    maxLength={18}
                   />
                 </div>
                 <div className="space-y-2">
@@ -370,9 +388,28 @@ export default function Suppliers() {
                 <Input
                   id="edit-cnpj"
                   value={formData.cnpj}
-                  onChange={(e) => setFormData(prev => ({ ...prev, cnpj: e.target.value }))}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    let formattedValue = value;
+
+                    if (value.length > 2) {
+                      formattedValue = value.slice(0, 2) + '.' + value.slice(2);
+                    }
+                    if (value.length > 5) {
+                      formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5);
+                    }
+                    if (value.length > 8) {
+                      formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5, 8) + '/' + value.slice(8);
+                    }
+                    if (value.length > 12) {
+                      formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5, 8) + '/' + value.slice(8, 12) + '-' + value.slice(12, 14);
+                    }
+
+                    setFormData(prev => ({ ...prev, cnpj: formattedValue }));
+                  }}
                   placeholder="00.000.000/0000-00"
                   required
+                  maxLength={18}
                 />
               </div>
               <div className="space-y-2">

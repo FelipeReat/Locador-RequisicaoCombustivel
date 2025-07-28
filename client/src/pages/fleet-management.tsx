@@ -44,15 +44,10 @@ export default function FleetManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   const { t } = useLanguage();
 
   const { data: vehicles, isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
-  });
-
-  const { data: departments } = useQuery<Department[]>({
-    queryKey: ["/api/departments"],
   });
 
   const form = useForm<InsertVehicle>({
@@ -63,7 +58,6 @@ export default function FleetManagement() {
       brand: "",
       year: new Date().getFullYear(),
       fuelType: "gasolina",
-      departmentId: 0,
       mileage: "0",
     },
   });
@@ -152,7 +146,6 @@ export default function FleetManagement() {
       brand: vehicle.brand,
       year: vehicle.year,
       fuelType: vehicle.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10",
-      departmentId: vehicle.departmentId,
       mileage: vehicle.mileage || "0",
     });
     setIsDialogOpen(true);
@@ -162,11 +155,6 @@ export default function FleetManagement() {
     setEditingVehicle(null);
     form.reset();
     setIsDialogOpen(true);
-  };
-
-  const getDepartmentName = (departmentId: number) => {
-    const dept = departments?.find(d => d.id === departmentId);
-    return dept?.name || t("department-not-found");
   };
 
   const getFuelTypeLabel = (fuelType: string) => {
@@ -182,7 +170,7 @@ export default function FleetManagement() {
   const getStatusBadgeVariant = (status: string) => {
     const variants = {
       active: "default",
-      maintenance: "secondary",
+      maintenance: "warning" as any,
       inactive: "destructive",
     };
     return variants[status as keyof typeof variants] || "secondary";
@@ -202,9 +190,7 @@ export default function FleetManagement() {
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesDepartment = departmentFilter === "all" || vehicle.departmentId.toString() === departmentFilter;
-
-    return matchesSearch && matchesDepartment;
+    return matchesSearch;
   }) || [];
 
   if (vehiclesLoading) {
@@ -232,20 +218,6 @@ export default function FleetManagement() {
                   className="pl-10 w-64"
                 />
               </div>
-
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder={t('filter-by-department')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('all-departments')}</SelectItem>
-                  {departments?.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -327,7 +299,7 @@ export default function FleetManagement() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="fuelType"
@@ -345,31 +317,6 @@ export default function FleetManagement() {
                                 <SelectItem value="etanol">{t('ethanol')}</SelectItem>
                                 <SelectItem value="diesel">{t('diesel')}</SelectItem>
                                 <SelectItem value="diesel_s10">{t('diesel-s10')}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="departmentId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('department')} *</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('select-option')} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {departments?.map((dept) => (
-                                  <SelectItem key={dept.id} value={dept.id.toString()}>
-                                    {dept.name}
-                                  </SelectItem>
-                                ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -458,10 +405,6 @@ export default function FleetManagement() {
                     </span>
                   </div>
 
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <strong>{t('department')}:</strong> {getDepartmentName(vehicle.departmentId)}
-                  </div>
-
                   {vehicle.lastMaintenance && (
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-gray-500" />
@@ -487,7 +430,7 @@ export default function FleetManagement() {
                 <Car className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{t('no-vehicles-found')}</h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  {searchTerm || departmentFilter !== "all" ? t('adjust-filters') : t('start-adding-vehicle')}
+                  {searchTerm ? t('adjust-filters') : t('start-adding-vehicle')}
                 </p>
               </CardContent>
             </Card>
