@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema } from "@shared/schema";
+import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
@@ -396,13 +396,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { status } = req.body;
 
-      const vehicle = await storage.updateVehicle(id, { status });
-
+      const vehicle = await storage.getVehicle(id);
       if (!vehicle) {
         return res.status(404).json({ message: "Veículo não encontrado" });
       }
 
-      res.json(vehicle);
+      const updatedVehicle = await storage.updateVehicle(id, vehicle);
+      res.json(updatedVehicle);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar status do veículo" });
     }
@@ -498,48 +498,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Companies routes
-  app.get("/api/companies", (req, res) => {
-    const companies = storage.getCompanies();
-    res.json(companies);
-  });
-
-  app.get("/api/companies/:id", (req, res) => {
-    const id = parseInt(req.params.id);
-    const company = storage.getCompanies().find(c => c.id === id);
-
-    if (!company) {
-      return res.status(404).json({ error: "Company not found" });
-    }
-
-    res.json(company);
-  });
-
-  app.post("/api/companies", (req, res) => {
+  app.get("/api/companies", async (req, res) => {
     try {
-      const company = storage.createCompany(req.body);
-      res.status(201).json(company);
+      const companies = await storage.getCompanies();
+      res.json(companies);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      res.status(500).json({ message: "Erro ao buscar empresas" });
     }
   });
 
-  app.put("/api/companies/:id", (req, res) => {
+  app.get("/api/companies/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const company = storage.updateCompany(id, req.body);
+      const company = await storage.getCompany(id);
+
+      if (!company) {
+        return res.status(404).json({ error: "Empresa não encontrada" });
+      }
+
       res.json(company);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      res.status(500).json({ message: "Erro ao buscar empresa" });
     }
   });
 
-  app.delete("/api/companies/:id", (req, res) => {
+  app.post("/api/companies", async (req, res) => {
+    try {
+      const validatedData = insertCompanySchema.parse(req.body);
+      const company = await storage.createCompany(validatedData);
+      res.status(201).json(company);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao criar empresa" });
+      }
+    }
+  });
+
+  app.put("/api/companies/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      storage.deleteCompany(id);
+      const validatedData = insertCompanySchema.partial().parse(req.body);
+      const company = await storage.updateCompany(id, validatedData);
+      
+      if (!company) {
+        return res.status(404).json({ message: "Empresa não encontrada" });
+      }
+
+      res.json(company);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao atualizar empresa" });
+      }
+    }
+  });
+
+  app.delete("/api/companies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteCompany(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Empresa não encontrada" });
+      }
+
       res.status(204).send();
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      res.status(500).json({ message: "Erro ao excluir empresa" });
     }
   });
 
