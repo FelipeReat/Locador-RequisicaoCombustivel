@@ -57,6 +57,19 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
     },
   });
 
+  // Update kmAnterior when vehicle is selected
+  useEffect(() => {
+    if (formData.vehicleId && vehicles.length > 0) {
+      const selectedVehicle = vehicles.find(v => v.id === formData.vehicleId);
+      if (selectedVehicle) {
+        setFormData(prev => ({ 
+          ...prev, 
+          kmAnterior: selectedVehicle.mileage || "0" 
+        }));
+      }
+    }
+  }, [formData.vehicleId, vehicles]);
+
   // Fetch users
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ["users"],
@@ -75,10 +88,21 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to create requisition");
+      
+      // Update vehicle mileage after creating requisition
+      if (data.vehicleId && data.kmAtual) {
+        await fetch(`/api/vehicles/${data.vehicleId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mileage: data.kmAtual }),
+        });
+      }
+      
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
       toast({
         title: t('requisition-created-success'),
         description: "A requisição foi criada com sucesso.",
@@ -220,9 +244,13 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
             id="kmAnterior"
             type="number"
             value={formData.kmAnterior}
-            onChange={(e) => handleInputChange("kmAnterior", e.target.value)}
-            placeholder="Ex: 15000"
+            disabled
+            placeholder="Carregado automaticamente do veículo"
+            className="bg-gray-100 dark:bg-gray-700"
           />
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Quilometragem atual do veículo selecionado
+          </p>
         </div>
 
         {/* KM Rodado (calculado automaticamente) */}

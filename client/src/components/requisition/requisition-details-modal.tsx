@@ -209,20 +209,21 @@ export default function RequisitionDetailsModal({
               <p className="text-gray-900 dark:text-white mt-1">{formatDateTime(requisition.createdAt)}</p>
             </div>
 
-            <div>
-              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Data Necessária</Label>
-              <p className="text-gray-900 dark:text-white mt-1">{formatDate(requisition.requiredDate)}</p>
-            </div>
+            {requisition.pricePerLiter && (
+              <div>
+                <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Valor Total do Combustível</Label>
+                <p className="text-gray-900 dark:text-white mt-1 font-semibold text-lg">
+                  R$ {((parseFloat(requisition.quantity || "0") * parseFloat(requisition.pricePerLiter)) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            )}
 
-            <div>
-              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Prioridade</Label>
-              <p className="text-gray-900 dark:text-white mt-1">{getPriorityLabel(requisition.priority)}</p>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Aprovador</Label>
-              <p className="text-gray-900 dark:text-white mt-1">{requisition.approver || "-"}</p>
-            </div>
+            {requisition.fiscalCoupon && (
+              <div>
+                <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Cupom Fiscal</Label>
+                <p className="text-gray-900 dark:text-white mt-1">{requisition.fiscalCoupon}</p>
+              </div>
+            )}
 
             {requisition.approvedDate && (
               <div>
@@ -233,12 +234,7 @@ export default function RequisitionDetailsModal({
           </div>
         </div>
 
-        <div className="mt-6">
-          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Justificativa</Label>
-          <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-2">
-            {requisition.justification}
-          </p>
-        </div>
+
 
         {requisition.rejectionReason && (
           <div className="mt-4">

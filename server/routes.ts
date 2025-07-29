@@ -401,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Veículo não encontrado" });
       }
 
-      const updatedVehicle = await storage.updateVehicle(id, vehicle);
+      const updatedVehicle = await storage.updateVehicle(id, { status });
       res.json(updatedVehicle);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar status do veículo" });

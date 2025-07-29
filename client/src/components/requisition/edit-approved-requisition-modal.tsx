@@ -30,16 +30,18 @@ export function EditApprovedRequisitionModal({
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState("");
   const [pricePerLiter, setPricePerLiter] = useState("");
+  const [fiscalCoupon, setFiscalCoupon] = useState("");
 
   useEffect(() => {
     if (requisition) {
       setQuantity(requisition.quantity || "");
       setPricePerLiter(requisition.pricePerLiter || "");
+      setFiscalCoupon(requisition.fiscalCoupon || "");
     }
   }, [requisition]);
 
   const updateRequisition = useMutation({
-    mutationFn: async (data: { quantity: string; pricePerLiter: string }) => {
+    mutationFn: async (data: { quantity: string; pricePerLiter: string; fiscalCoupon: string }) => {
       const response = await apiRequest(
         "PUT",
         `/api/fuel-requisitions/${requisition?.id}`,
@@ -108,6 +110,7 @@ export function EditApprovedRequisitionModal({
     updateRequisition.mutate({
       quantity: quantityNum.toString(),
       pricePerLiter: priceNum.toString(),
+      fiscalCoupon,
     });
   };
 
@@ -166,6 +169,21 @@ export function EditApprovedRequisitionModal({
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Valor pago por litro de combustível
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Cupom da Nota Fiscal
+            </Label>
+            <Input
+              value={fiscalCoupon}
+              onChange={(e) => setFiscalCoupon(e.target.value)}
+              placeholder="Ex: 123456789"
+              className="w-full"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Número do cupom fiscal para controle
             </p>
           </div>
 
