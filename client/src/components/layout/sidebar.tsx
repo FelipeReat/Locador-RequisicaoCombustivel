@@ -9,7 +9,7 @@ import {
   Settings,
   Users,
   Car,
-  Building2
+  Building2, Building
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -79,6 +79,13 @@ export default function Sidebar() {
           <div className={`sidebar-link ${isActive("/suppliers") ? "active" : ""}`}>
             <Building2 className="mr-3 h-4 w-4" />
             {t('suppliers')}
+          </div>
+        </Link>
+
+        <Link href="/companies">
+          <div className={`sidebar-link ${isActive("/companies") ? "active" : ""}`}>
+            <Building className="mr-3 h-4 w-4" />
+            Empresas
           </div>
         </Link>
 

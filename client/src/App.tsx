@@ -16,6 +16,12 @@ import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import Suppliers from "@/pages/suppliers";
+import Companies from "@/pages/companies";
+import FleetManagement from "@/pages/fleet-management";
+import Reports from "@/pages/reports";
+import Settings from "@/pages/settings";
+import UserManagement from "@/pages/user-management";
+import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
@@ -31,7 +37,11 @@ function Router() {
           <Route path="/user-management" component={UserManagement} />
           <Route path="/fleet-management" component={FleetManagement} />
           <Route path="/suppliers" component={Suppliers} />
+          <Route path="/companies" component={Companies} />
+          <Route path="/fleet-management" component={FleetManagement} />
+          <Route path="/reports" component={Reports} />
           <Route path="/settings" component={Settings} />
+          <Route path="/user-management" component={UserManagement} />
           <Route component={NotFound} />
         </Switch>
       </div>

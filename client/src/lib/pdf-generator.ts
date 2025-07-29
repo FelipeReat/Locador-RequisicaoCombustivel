@@ -406,16 +406,38 @@ export class PDFGenerator {
       this.doc.setFont('helvetica', 'normal');
       this.doc.setFontSize(8);
 
-      const clienteInfo = [
-        `CPF/CNPJ: ${requisition.clientCnpj || '13.844.973/0001-59'}`,
-        `Nome Empresarial: BBM Serviços, Aluguel de Máquinas e Tecnologia LTDA`,
-        `Contato: ${requesterUser?.fullName || requisition.requester || 'Não informado'}`,
-        `Telefone: ${requesterUser?.phone || '(92) 3233-0634'}`
-      ];
-
-      // Adicionar email apenas se o usuário tiver email
-      if (requesterUser?.email) {
-        clienteInfo.push(`E-Mail: ${requesterUser.email}`);
+      // Informações específicas baseadas no cliente
+      let clienteInfo: string[] = [];
+      
+      if (requisition.client === "BBM Serviços" || requisition.client === "BBM serviços") {
+        clienteInfo = [
+          `CPF/CNPJ: 13.844.973/0001-59`,
+          `Nome Empresarial: BBM Serviços, Aluguel de Máquinas e Tecnologia LTDA`,
+          `Contato: Bruno Rodrigues Derzi`,
+          `Telefone: (92) 3233-0634`,
+          `Email: bruno.derzi@blomaq.com.br`
+        ];
+      } else if (requisition.client === "J.B Andaimes") {
+        clienteInfo = [
+          `CPF/CNPJ: 09.518.795/0001-07`,
+          `Nome Empresarial: J. B. ANDAIMES - LOCADORA DE EQUIPAMENTOS PARA CONSTRUCAO CIVIL LTDA`,
+          `Contato: Bruno Rodrigues Derzi`,
+          `Telefone: (92) 3233-0634`,
+          `Email: bruno.derzi@blomaq.com.br`
+        ];
+      } else {
+        // Fallback para outros clientes
+        clienteInfo = [
+          `CPF/CNPJ: ${requisition.clientCnpj || 'Não informado'}`,
+          `Nome Empresarial: ${requisition.client}`,
+          `Contato: ${requesterUser?.fullName || requisition.requester || 'Não informado'}`,
+          `Telefone: ${requesterUser?.phone || 'Não informado'}`
+        ];
+        
+        // Adicionar email apenas se o usuário tiver email
+        if (requesterUser?.email) {
+          clienteInfo.push(`E-Mail: ${requesterUser.email}`);
+        }
       }
 
       lineY = currentY + 7;

@@ -21,11 +21,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = updateUserProfileSchema.parse(req.body);
       const user = await storage.updateUserProfile(1, validatedData); // Using ID 1 for demo
-      
+
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
-      
+
       res.json(user);
     } catch (error) {
       if (error instanceof Error) {
@@ -40,11 +40,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = changePasswordSchema.parse(req.body);
       const success = await storage.changePassword(1, validatedData.currentPassword, validatedData.newPassword);
-      
+
       if (!success) {
         return res.status(400).json({ message: "Senha atual incorreta" });
       }
-      
+
       res.json({ message: "Senha alterada com sucesso" });
     } catch (error) {
       if (error instanceof Error) {
@@ -70,11 +70,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const requisition = await storage.getFuelRequisition(id);
-      
+
       if (!requisition) {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
-      
+
       res.json(requisition);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar requisição" });
@@ -102,11 +102,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertFuelRequisitionSchema.partial().parse(req.body);
       const requisition = await storage.updateFuelRequisition(id, validatedData);
-      
+
       if (!requisition) {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
-      
+
       res.json(requisition);
     } catch (error) {
       if (error instanceof Error) {
@@ -123,11 +123,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = updateFuelRequisitionStatusSchema.parse(req.body);
       const requisition = await storage.updateFuelRequisitionStatus(id, validatedData);
-      
+
       if (!requisition) {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
-      
+
       res.json(requisition);
     } catch (error) {
       if (error instanceof Error) {
@@ -143,11 +143,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteFuelRequisition(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
-      
+
       res.json({ message: "Requisição excluída com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir requisição" });
@@ -198,11 +198,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const supplier = await storage.getSupplier(id);
-      
+
       if (!supplier) {
         return res.status(404).json({ message: "Fornecedor não encontrado" });
       }
-      
+
       res.json(supplier);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar fornecedor" });
@@ -228,11 +228,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertSupplierSchema.partial().parse(req.body);
       const supplier = await storage.updateSupplier(id, validatedData);
-      
+
       if (!supplier) {
         return res.status(404).json({ message: "Fornecedor não encontrado" });
       }
-      
+
       res.json(supplier);
     } catch (error) {
       if (error instanceof Error) {
@@ -247,11 +247,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteSupplier(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Fornecedor não encontrado" });
       }
-      
+
       res.json({ message: "Fornecedor excluído com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir fornecedor" });
@@ -272,11 +272,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const user = await storage.getUser(id);
-      
+
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
-      
+
       res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar usuário" });
@@ -302,11 +302,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertUserManagementSchema.partial().parse(req.body);
       const user = await storage.updateUser(id, validatedData);
-      
+
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
-      
+
       res.json(user);
     } catch (error) {
       if (error instanceof Error) {
@@ -321,11 +321,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteUser(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
-      
+
       res.json({ message: "Usuário excluído com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir usuário" });
@@ -346,11 +346,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const vehicle = await storage.getVehicle(id);
-      
+
       if (!vehicle) {
         return res.status(404).json({ message: "Veículo não encontrado" });
       }
-      
+
       res.json(vehicle);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar veículo" });
@@ -376,11 +376,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertVehicleSchema.partial().parse(req.body);
       const vehicle = await storage.updateVehicle(id, validatedData);
-      
+
       if (!vehicle) {
         return res.status(404).json({ message: "Veículo não encontrado" });
       }
-      
+
       res.json(vehicle);
     } catch (error) {
       if (error instanceof Error) {
@@ -395,13 +395,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
-      
+
       const vehicle = await storage.updateVehicle(id, { status });
-      
+
       if (!vehicle) {
         return res.status(404).json({ message: "Veículo não encontrado" });
       }
-      
+
       res.json(vehicle);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar status do veículo" });
@@ -412,14 +412,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteVehicle(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Veículo não encontrado" });
       }
-      
+
       res.json({ message: "Veículo excluído com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir veículo" });
+    }
+  });
+
+  // Suppliers routes
+  app.get("/api/suppliers", async (req, res) => {
+    try {
+      const suppliers = await storage.getSuppliers();
+      res.json(suppliers);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar fornecedores" });
+    }
+  });
+
+  app.get("/api/suppliers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const supplier = await storage.getSupplier(id);
+
+      if (!supplier) {
+        return res.status(404).json({ message: "Fornecedor não encontrado" });
+      }
+
+      res.json(supplier);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar fornecedor" });
+    }
+  });
+
+  app.post("/api/suppliers", async (req, res) => {
+    try {
+      const validatedData = insertSupplierSchema.parse(req.body);
+      const supplier = await storage.createSupplier(validatedData);
+      res.status(201).json(supplier);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao criar fornecedor" });
+      }
+    }
+  });
+
+  app.put("/api/suppliers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertSupplierSchema.partial().parse(req.body);
+      const supplier = await storage.updateSupplier(id, validatedData);
+
+      if (!supplier) {
+        return res.status(404).json({ message: "Fornecedor não encontrado" });
+      }
+
+      res.json(supplier);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao atualizar fornecedor" });
+      }
+    }
+  });
+
+  app.delete("/api/suppliers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteSupplier(id);
+
+      if (!deleted) {
+        return res.status(404).json({ message: "Fornecedor não encontrado" });
+      }
+
+      res.json({ message: "Fornecedor excluído com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir fornecedor" });
+    }
+  });
+
+  // Companies routes
+  app.get("/api/companies", (req, res) => {
+    const companies = storage.getCompanies();
+    res.json(companies);
+  });
+
+  app.get("/api/companies/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const company = storage.getCompanies().find(c => c.id === id);
+
+    if (!company) {
+      return res.status(404).json({ error: "Company not found" });
+    }
+
+    res.json(company);
+  });
+
+  app.post("/api/companies", (req, res) => {
+    try {
+      const company = storage.createCompany(req.body);
+      res.status(201).json(company);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/companies/:id", (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const company = storage.updateCompany(id, req.body);
+      res.json(company);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/companies/:id", (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      storage.deleteCompany(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
   });
 
