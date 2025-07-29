@@ -17,11 +17,6 @@ import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import Suppliers from "@/pages/suppliers";
 import Companies from "@/pages/companies";
-import FleetManagement from "@/pages/fleet-management";
-import Reports from "@/pages/reports";
-import Settings from "@/pages/settings";
-import UserManagement from "@/pages/user-management";
-import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
