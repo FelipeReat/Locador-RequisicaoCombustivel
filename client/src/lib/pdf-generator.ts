@@ -441,8 +441,15 @@ export class PDFGenerator {
       }
 
       lineY = currentY + 7;
-      clienteInfo.forEach(info => {
-        this.doc.text(info, startX + 2, lineY);
+      clienteInfo.forEach((info, index) => {
+        // Usar fonte menor especificamente para o nome empresarial da J.B Andaimes
+        if (requisition.client === "J.B Andaimes" && info.includes("Nome Empresarial:")) {
+          this.doc.setFontSize(7); // Fonte menor para o nome longo
+          this.doc.text(info, startX + 2, lineY);
+          this.doc.setFontSize(8); // Voltar ao tamanho normal
+        } else {
+          this.doc.text(info, startX + 2, lineY);
+        }
         lineY += 4;
       });
       currentY += 30;
