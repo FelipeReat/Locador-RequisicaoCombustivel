@@ -383,9 +383,13 @@ export class PDFGenerator {
         `CPF/CNPJ: ${supplier?.cnpj || '22.272.444/0001-30'}`,
         `Nome Empresarial: ${supplier?.name || 'D DA C SAMPAIO COMERCIO DE COMBUSTIVEIS LTDA'}`,
         `Contato: ${supplier?.responsavel || 'CARLOS'}`,
-        `Telefone: ${supplier?.phone || '(92) 9883-8218'}  Celular: ${supplier?.mobile || '(92) 98838-2180'}`,
-        `E-Mail: ${supplier?.email || 'csilva@blomaq.com.br'}`
+        `Telefone: ${supplier?.phone || '(92) 9883-8218'}  Celular: ${supplier?.mobile || '(92) 98838-2180'}`
       ];
+
+      // Adicionar email apenas se o fornecedor tiver email
+      if (supplier?.email) {
+        fornecedorInfo.push(`E-Mail: ${supplier.email}`);
+      }
 
       let lineY = currentY + 7;
       fornecedorInfo.forEach(info => {
@@ -406,9 +410,13 @@ export class PDFGenerator {
         `CPF/CNPJ: ${requisition.clientCnpj || '13.844.973/0001-59'}`,
         `Nome Empresarial: BBM Serviços, Aluguel de Máquinas e Tecnologia LTDA`,
         `Contato: ${requesterUser?.fullName || requisition.requester || 'Não informado'}`,
-        `Telefone: ${requesterUser?.phone || '(92) 3233-0634'}`,
-        `E-Mail: ${requesterUser?.email || 'csilva@blomaq.com.br'}`
+        `Telefone: ${requesterUser?.phone || '(92) 3233-0634'}`
       ];
+
+      // Adicionar email apenas se o usuário tiver email
+      if (requesterUser?.email) {
+        clienteInfo.push(`E-Mail: ${requesterUser.email}`);
+      }
 
       lineY = currentY + 7;
       clienteInfo.forEach(info => {
@@ -455,10 +463,10 @@ export class PDFGenerator {
       this.doc.rect(startX + 2, currentY, 3, 3);
       if (isFullTank) {
         this.doc.setFont('helvetica', 'bold');
-        this.doc.text('✓', startX + 2.5, currentY + 2.5);
+        this.doc.text('X', startX + 3, currentY + 2.5);
         this.doc.setFont('helvetica', 'normal');
       }
-      this.doc.text('Tanque Cheio - CONFIRMADO', startX + 7, currentY + 2);
+      this.doc.text('Tanque Cheio', startX + 7, currentY + 2);
       currentY += 6;
 
       // Cabeçalho da tabela de combustível
@@ -470,19 +478,17 @@ export class PDFGenerator {
       });
       currentY += 4;
 
-      // Linha da tabela
+      // Linha da tabela - sempre com valores zerados
       const quantity = isFullTank ? 0 : parseFloat(requisition.quantity || '0');
-      const estimatedPrice = this.getEstimatedFuelPrice(requisition.fuelType);
-      const total = quantity * estimatedPrice;
 
       if (!isFullTank) {
         this.doc.text(quantity.toFixed(3), colX[0], currentY);
-        this.doc.text(estimatedPrice.toFixed(2), colX[1], currentY);
-        this.doc.text(total.toFixed(2), colX[2], currentY);
+        this.doc.text('0,00', colX[1], currentY);
+        this.doc.text('0,00', colX[2], currentY);
       } else {
         this.doc.text('Completo', colX[0], currentY);
-        this.doc.text(estimatedPrice.toFixed(2), colX[1], currentY);
-        this.doc.text('A calcular', colX[2], currentY);
+        this.doc.text('0,00', colX[1], currentY);
+        this.doc.text('0,00', colX[2], currentY);
       }
       currentY += 8;
 
