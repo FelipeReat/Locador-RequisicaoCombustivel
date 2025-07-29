@@ -1,4 +1,4 @@
-import { users, fuelRequisitions, departments, vehicles, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Department, type InsertDepartment, type Vehicle, type InsertVehicle, type InsertUserManagement } from "@shared/schema";
+import { users, fuelRequisitions, vehicles, suppliers, companies, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -12,12 +12,19 @@ export interface IStorage {
   changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean>;
   getCurrentUser(): Promise<User | undefined>;
 
-  // Departments
-  getDepartments(): Promise<Department[]>;
-  getDepartment(id: number): Promise<Department | undefined>;
-  createDepartment(department: InsertDepartment): Promise<Department>;
-  updateDepartment(id: number, updates: Partial<InsertDepartment>): Promise<Department | undefined>;
-  deleteDepartment(id: number): Promise<boolean>;
+  // Suppliers
+  getSuppliers(): Promise<Supplier[]>;
+  getSupplier(id: number): Promise<Supplier | undefined>;
+  createSupplier(supplier: InsertSupplier): Promise<Supplier>;
+  updateSupplier(id: number, updates: Partial<InsertSupplier>): Promise<Supplier | undefined>;
+  deleteSupplier(id: number): Promise<boolean>;
+
+  // Companies
+  getCompanies(): Promise<Company[]>;
+  getCompany(id: number): Promise<Company | undefined>;
+  createCompany(company: InsertCompany): Promise<Company>;
+  updateCompany(id: number, updates: Partial<InsertCompany>): Promise<Company | undefined>;
+  deleteCompany(id: number): Promise<boolean>;
 
   // Vehicles
   getVehicles(): Promise<Vehicle[]>;
@@ -51,20 +58,24 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private fuelRequisitions: Map<number, FuelRequisition>;
   private suppliers: Map<number, Supplier>;
+  private companies: Map<number, Company>;
   private vehicles: Map<number, Vehicle>;
   private currentUserId: number;
   private currentRequisitionId: number;
   private currentSupplierId: number;
+  private currentCompanyId: number;
   private currentVehicleId: number;
 
   constructor() {
     this.users = new Map();
     this.fuelRequisitions = new Map();
     this.suppliers = new Map();
+    this.companies = new Map();
     this.vehicles = new Map();
     this.currentUserId = 1;
     this.currentRequisitionId = 1;
     this.currentSupplierId = 1;
+    this.currentCompanyId = 1;
     this.currentVehicleId = 1;
 
     // Add sample data for demonstration
@@ -128,6 +139,9 @@ export class MemStorage implements IStorage {
 
     sampleSuppliers.forEach(supplier => this.suppliers.set(supplier.id, supplier));
     this.currentSupplierId = 3;
+
+    sampleCompanies.forEach(company => this.companies.set(company.id, company));
+    this.currentCompanyId = 3;
 
     // Sample user
     const sampleUser: User = {
@@ -295,7 +309,12 @@ export class MemStorage implements IStorage {
       { id: 42, plate: "NUK-2F38", model: "HONDA CG 125 CARGO ES", brand: "Honda", year: 2020, fuelType: "gasolina", mileage: "14000", status: "active", createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
     ];
 
-    sampleVehicles.forEach(vehicle => this.vehicles.set(vehicle.id, vehicle));
+    sampleVehicles.forEach(vehicle => this.vehicles.set(vehicle.id, {
+      ...vehicle,
+      lastMaintenance: null,
+      nextMaintenance: null,
+      mileage: vehicle.mileage || "0"
+    }));
     this.currentVehicleId = 43;
 
     // Sample requisitions with new schema structure
@@ -502,6 +521,46 @@ export class MemStorage implements IStorage {
     return this.suppliers.delete(id);
   }
 
+  // Company methods
+  async getCompanies(): Promise<Company[]> {
+    return Array.from(this.companies.values());
+  }
+
+  async getCompany(id: number): Promise<Company | undefined> {
+    return this.companies.get(id);
+  }
+
+  async createCompany(insertCompany: InsertCompany): Promise<Company> {
+    const id = this.currentCompanyId++;
+    const now = new Date().toISOString();
+    const company: Company = {
+      ...insertCompany,
+      id,
+      active: "true",
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.companies.set(id, company);
+    return company;
+  }
+
+  async updateCompany(id: number, updates: Partial<InsertCompany>): Promise<Company | undefined> {
+    const company = this.companies.get(id);
+    if (!company) return undefined;
+
+    const updatedCompany = {
+      ...company,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.companies.set(id, updatedCompany);
+    return updatedCompany;
+  }
+
+  async deleteCompany(id: number): Promise<boolean> {
+    return this.companies.delete(id);
+  }
+
   // Vehicle methods
   async getVehicles(): Promise<Vehicle[]> {
     return Array.from(this.vehicles.values());
@@ -559,7 +618,7 @@ export class MemStorage implements IStorage {
       ...insertRequisition,
       id,
       status: "pending",
-      approver: null,
+      approverId: null,
       approvedDate: null,
       rejectionReason: null,
       createdAt: now,
@@ -592,11 +651,11 @@ export class MemStorage implements IStorage {
     };
 
     if (statusUpdate.status === "approved") {
-      updates.approver = statusUpdate.approver;
+      updates.approverId = statusUpdate.approver ? 1 : null;
       updates.approvedDate = new Date().toISOString();
       updates.rejectionReason = null;
     } else if (statusUpdate.status === "rejected") {
-      updates.approver = statusUpdate.approver;
+      updates.approverId = statusUpdate.approver ? 1 : null;
       updates.rejectionReason = statusUpdate.rejectionReason;
       updates.approvedDate = null;
     }
@@ -629,7 +688,7 @@ export class MemStorage implements IStorage {
       rejectedRequests: requisitions.filter(r => r.status === "rejected").length,
       totalLiters: requisitions
         .filter(r => r.status === "approved" || r.status === "fulfilled")
-        .reduce((sum, r) => sum + parseFloat(r.quantity), 0),
+        .reduce((sum, r) => sum + parseFloat(r.quantity || "0"), 0),
     };
   }
 
@@ -638,12 +697,13 @@ export class MemStorage implements IStorage {
     const departmentMap = new Map<string, { count: number; totalLiters: number }>();
 
     requisitions.forEach(req => {
-      const current = departmentMap.get(req.department) || { count: 0, totalLiters: 0 };
+      const department = `Dept${req.requesterId}`;
+      const current = departmentMap.get(department) || { count: 0, totalLiters: 0 };
       current.count += 1;
       if (req.status === "approved" || req.status === "fulfilled") {
-        current.totalLiters += parseFloat(req.quantity);
+        current.totalLiters += parseFloat(req.quantity || "0");
       }
-      departmentMap.set(req.department, current);
+      departmentMap.set(department, current);
     });
 
     return Array.from(departmentMap.entries()).map(([department, data]) => ({
@@ -660,7 +720,7 @@ export class MemStorage implements IStorage {
       const current = fuelTypeMap.get(req.fuelType) || { count: 0, totalLiters: 0 };
       current.count += 1;
       if (req.status === "approved" || req.status === "fulfilled") {
-        current.totalLiters += parseFloat(req.quantity);
+        current.totalLiters += parseFloat(req.quantity || "0");
       }
       fuelTypeMap.set(req.fuelType, current);
     });

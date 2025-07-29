@@ -23,6 +23,7 @@ interface RequisitionDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEdit?: (requisition: FuelRequisition) => void;
+  onEditRequisition?: (requisition: FuelRequisition) => void;
 }
 
 export default function RequisitionDetailsModal({
@@ -30,6 +31,7 @@ export default function RequisitionDetailsModal({
   isOpen,
   onClose,
   onEdit,
+  onEditRequisition,
 }: RequisitionDetailsModalProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -172,74 +174,74 @@ export default function RequisitionDetailsModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium text-gray-500">Status</Label>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</Label>
               <div className="mt-1">
                 <StatusBadge status={requisition.status as any} />
               </div>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Responsável</Label>
-              <p className="text-gray-900 mt-1">{requisition.responsavel}</p>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Responsável</Label>
+              <p className="text-gray-900 dark:text-white mt-1">{requisition.responsavel}</p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Cliente</Label>
-              <p className="text-gray-900 mt-1">{requisition.client}</p>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Cliente</Label>
+              <p className="text-gray-900 dark:text-white mt-1">{requisition.client}</p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Tipo de Combustível</Label>
-              <p className="text-gray-900 mt-1">{getFuelTypeLabel(requisition.fuelType)}</p>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Tipo de Combustível</Label>
+              <p className="text-gray-900 dark:text-white mt-1">{getFuelTypeLabel(requisition.fuelType)}</p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Quantidade</Label>
-              <p className="text-gray-900 mt-1">{requisition.quantity} Litros</p>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Quantidade</Label>
+              <p className="text-gray-900 dark:text-white mt-1">{requisition.quantity} Litros</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium text-gray-500">Data de Solicitação</Label>
-              <p className="text-gray-900 mt-1">{formatDateTime(requisition.createdAt)}</p>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Data de Solicitação</Label>
+              <p className="text-gray-900 dark:text-white mt-1">{formatDateTime(requisition.createdAt)}</p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Data Necessária</Label>
-              <p className="text-gray-900 mt-1">{formatDate(requisition.requiredDate)}</p>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Data Necessária</Label>
+              <p className="text-gray-900 dark:text-white mt-1">{formatDate(requisition.requiredDate)}</p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Prioridade</Label>
-              <p className="text-gray-900 mt-1">{getPriorityLabel(requisition.priority)}</p>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Prioridade</Label>
+              <p className="text-gray-900 dark:text-white mt-1">{getPriorityLabel(requisition.priority)}</p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500">Aprovador</Label>
-              <p className="text-gray-900 mt-1">{requisition.approver || "-"}</p>
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Aprovador</Label>
+              <p className="text-gray-900 dark:text-white mt-1">{requisition.approver || "-"}</p>
             </div>
 
             {requisition.approvedDate && (
               <div>
-                <Label className="text-sm font-medium text-gray-500">Data de Aprovação</Label>
-                <p className="text-gray-900 mt-1">{formatDateTime(requisition.approvedDate)}</p>
+                <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Data de Aprovação</Label>
+                <p className="text-gray-900 dark:text-white mt-1">{formatDateTime(requisition.approvedDate)}</p>
               </div>
             )}
           </div>
         </div>
 
         <div className="mt-6">
-          <Label className="text-sm font-medium text-gray-500">Justificativa</Label>
-          <p className="text-gray-900 bg-gray-50 p-3 rounded-lg mt-2">
+          <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Justificativa</Label>
+          <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-2">
             {requisition.justification}
           </p>
         </div>
 
         {requisition.rejectionReason && (
           <div className="mt-4">
-            <Label className="text-sm font-medium text-gray-500">Motivo da Rejeição</Label>
-            <p className="text-gray-900 bg-red-50 p-3 rounded-lg mt-2">
+            <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Motivo da Rejeição</Label>
+            <p className="text-gray-900 dark:text-white bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mt-2">
               {requisition.rejectionReason}
             </p>
           </div>
@@ -247,7 +249,7 @@ export default function RequisitionDetailsModal({
 
         {showRejectionInput && (
           <div className="mt-4">
-            <Label className="text-sm font-medium text-gray-500">Motivo da Rejeição</Label>
+            <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Motivo da Rejeição</Label>
             <Textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
@@ -280,6 +282,17 @@ export default function RequisitionDetailsModal({
               >
                 <Edit className="mr-1 h-4 w-4" />
                 Editar
+              </Button>
+            )}
+
+            {requisition.status === "approved" && onEditRequisition && (
+              <Button
+                variant="outline"
+                onClick={() => onEditRequisition(requisition)}
+                className="flex items-center"
+              >
+                <Edit className="mr-1 h-4 w-4" />
+                Editar Valores
               </Button>
             )}
 

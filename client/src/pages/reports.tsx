@@ -146,13 +146,13 @@ export default function Reports() {
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
 
-  const chartData = departmentStats?.map((stat) => ({
+  const chartData = departmentStats?.map((stat: any) => ({
     name: getDepartmentLabel(stat.department),
     requisitions: stat.count,
     liters: stat.totalLiters,
   })) || [];
 
-  const pieData = fuelTypeStats?.map((stat, index) => ({
+  const pieData = fuelTypeStats?.map((stat: any, index: number) => ({
     name: getFuelTypeLabel(stat.fuelType),
     value: stat.totalLiters,
     color: ["#1976D2", "#FF9800", "#4CAF50", "#F44336"][index % 4],
@@ -187,7 +187,7 @@ export default function Reports() {
       if (reqDate.getFullYear() === selectedYear) {
         const month = reqDate.getMonth();
         monthlyData[month].requisitions += 1;
-        monthlyData[month].liters += parseInt(req.quantity) || 0;
+        monthlyData[month].liters += parseInt(req.quantity || "0") || 0;
       }
     });
 
@@ -218,7 +218,7 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats?.totalRequests || 0}
+                {(stats as any)?.totalRequests || 0}
               </div>
             </CardContent>
           </Card>
@@ -231,8 +231,8 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {stats?.totalRequests 
-                  ? Math.round((stats.approvedRequests / stats.totalRequests) * 100)
+                {(stats as any)?.totalRequests 
+                  ? Math.round(((stats as any).approvedRequests / (stats as any).totalRequests) * 100)
                   : 0}%
               </div>
             </CardContent>
@@ -246,7 +246,7 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {(stats?.totalLiters || 0).toLocaleString("pt-BR")}L
+                {((stats as any)?.totalLiters || 0).toLocaleString("pt-BR")}L
               </div>
             </CardContent>
           </Card>
@@ -259,7 +259,7 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                {stats?.pendingRequests || 0}
+                {(stats as any)?.pendingRequests || 0}
               </div>
             </CardContent>
           </Card>
@@ -394,7 +394,7 @@ export default function Reports() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {pieData.map((entry, index) => (
+                    {pieData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -423,7 +423,7 @@ export default function Reports() {
                     </tr>
                   </thead>
                   <tbody>
-                    {departmentStats?.map((stat) => (
+                    {departmentStats?.map((stat: any) => (
                       <tr key={stat.department} className="border-b">
                         <td className="py-2">{getDepartmentLabel(stat.department)}</td>
                         <td className="text-right py-2">{stat.count}</td>
@@ -454,7 +454,7 @@ export default function Reports() {
                     </tr>
                   </thead>
                   <tbody>
-                    {fuelTypeStats?.map((stat) => (
+                    {fuelTypeStats?.map((stat: any) => (
                       <tr key={stat.fuelType} className="border-b">
                         <td className="py-2">{getFuelTypeLabel(stat.fuelType)}</td>
                         <td className="text-right py-2">{stat.count}</td>
