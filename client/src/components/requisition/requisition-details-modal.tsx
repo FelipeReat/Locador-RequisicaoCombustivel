@@ -135,15 +135,17 @@ export default function RequisitionDetailsModal({
     setIsGeneratingPDF(true);
     try {
       // Buscar dados do fornecedor e veículo
-      const supplierResponse = await fetch(`/api/suppliers/${requisition.supplierId}`);
-      const vehicleResponse = await fetch(`/api/vehicles/${requisition.vehicleId}`);
+      const supplierResponse = await fetch(`/api/suppliers/${requisition?.supplierId}`);
+      const vehicleResponse = await fetch(`/api/vehicles/${requisition?.vehicleId}`);
 
       const supplier = supplierResponse.ok ? await supplierResponse.json() : null;
       const vehicle = vehicleResponse.ok ? await vehicleResponse.json() : null;
 
       const pdfGenerator = new PDFGenerator();
-      pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle);
-      pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
+      if (requisition) {
+        pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle);
+        pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
+      }
 
       toast({
         title: t("pdf-generated-success"),
@@ -261,7 +263,7 @@ export default function RequisitionDetailsModal({
 
         <DialogFooter className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex space-x-3">
-            {(requisition.status === "approved" || requisition.status === "fulfilled") && (
+            {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && (
               <Button
                 variant="outline"
                 onClick={generatePurchasePDF}
@@ -274,7 +276,7 @@ export default function RequisitionDetailsModal({
               </Button>
             )}
 
-            {requisition.status === "pending" && onEdit && (
+            {requisition && requisition.status === "pending" && onEdit && (
               <Button
                 variant="outline"
                 onClick={() => onEdit(requisition)}
@@ -285,7 +287,7 @@ export default function RequisitionDetailsModal({
               </Button>
             )}
 
-            {requisition.status === "approved" && onEditRequisition && (
+            {requisition && requisition.status === "approved" && onEditRequisition && (
               <Button
                 variant="outline"
                 onClick={() => onEditRequisition(requisition)}
@@ -296,7 +298,7 @@ export default function RequisitionDetailsModal({
               </Button>
             )}
 
-            {requisition.status === "pending" && (
+            {requisition && requisition.status === "pending" && (
               <>
                 {!showRejectionInput ? (
                   <Button

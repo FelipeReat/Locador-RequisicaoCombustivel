@@ -331,6 +331,7 @@ export class MemStorage implements IStorage {
         tanqueCheio: "false",
         fuelType: "diesel",
         quantity: "500",
+        pricePerLiter: null,
         justification: "Abastecimento da frota de caminhões para entregas da semana",
         requiredDate: tomorrow.toISOString().split('T')[0],
         priority: "alta",
@@ -353,6 +354,7 @@ export class MemStorage implements IStorage {
         tanqueCheio: "false",
         fuelType: "gasolina",
         quantity: "200",
+        pricePerLiter: null,
         justification: "Combustível para geradores durante manutenção preventiva",
         requiredDate: now.toISOString().split('T')[0],
         priority: "media",
@@ -375,6 +377,7 @@ export class MemStorage implements IStorage {
         tanqueCheio: "false",
         fuelType: "etanol",
         quantity: "300",
+        pricePerLiter: null,
         justification: "Abastecimento dos veículos administrativos",
         requiredDate: new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString().split('T')[0],
         priority: "baixa",
@@ -667,6 +670,8 @@ export class MemStorage implements IStorage {
     this.fuelRequisitions.set(id, updatedRequisition);
     return updatedRequisition;
   }
+
+
 
   async deleteFuelRequisition(id: number): Promise<boolean> {
     return this.fuelRequisitions.delete(id);
