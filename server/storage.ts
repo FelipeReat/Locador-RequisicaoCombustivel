@@ -98,6 +98,34 @@ export class MemStorage implements IStorage {
       },
     ];
 
+    // Sample companies
+    const sampleCompanies = [
+      {
+        id: 1,
+        name: "BBM Serviços",
+        cnpj: "13.844.973/0001-59",
+        fullName: "BBM Serviços, Aluguel de Máquinas e Tecnologia LTDA",
+        contact: "Bruno Rodrigues Derzi",
+        phone: "(92) 3233-0634",
+        email: "bruno.derzi@blomaq.com.br",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 2,
+        name: "J.B Andaimes",
+        cnpj: "09.518.795/0001-07",
+        fullName: "J. B. ANDAIMES - LOCADORA DE EQUIPAMENTOS PARA CONSTRUCAO CIVIL LTDA",
+        contact: "Bruno Rodrigues Derzi",
+        phone: "(92) 3233-0634",
+        email: "bruno.derzi@blomaq.com.br",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+    ];
+
     sampleSuppliers.forEach(supplier => this.suppliers.set(supplier.id, supplier));
     this.currentSupplierId = 3;
 

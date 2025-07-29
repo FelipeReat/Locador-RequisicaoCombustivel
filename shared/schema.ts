@@ -191,3 +191,32 @@ export type FuelRequisition = typeof fuelRequisitions.$inferSelect;
 export type UpdateFuelRequisitionStatus = z.infer<typeof updateFuelRequisitionStatusSchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type Supplier = typeof suppliers.$inferSelect;
+export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  cnpj: text("cnpj").notNull().unique(),
+  fullName: text("full_name").notNull(),
+  contact: text("contact").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email").notNull(),
+  active: text("active").notNull().default("true"),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export const insertCompanySchema = createInsertSchema(companies, {
+  name: z.string().min(1, "Nome é obrigatório"),
+  cnpj: z.string().min(14, "CNPJ é obrigatório"),
+  fullName: z.string().min(1, "Nome empresarial é obrigatório"),
+  contact: z.string().min(1, "Contato é obrigatório"),
+  phone: z.string().min(1, "Telefone é obrigatório"),
+  email: z.string().email("Email inválido"),
+}).omit({
+  id: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type Company = typeof companies.$inferSelect;

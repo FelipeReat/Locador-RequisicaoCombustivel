@@ -147,12 +147,18 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
         {/* Cliente */}
         <div className="space-y-2">
           <Label htmlFor="client">Cliente *</Label>
-          <Input
-            id="client"
-            value={formData.client}
-            onChange={(e) => handleInputChange("client", e.target.value)}
-            placeholder="Nome do cliente"
-          />
+          <Select 
+            value={formData.client} 
+            onValueChange={(value) => handleInputChange("client", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="BBM Serviços">BBM Serviços</SelectItem>
+              <SelectItem value="J.B Andaimes">J.B Andaimes</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Responsável */}
