@@ -38,6 +38,7 @@ export interface IStorage {
   getFuelRequisition(id: number): Promise<FuelRequisition | undefined>;
   createFuelRequisition(requisition: InsertFuelRequisition): Promise<FuelRequisition>;
   updateFuelRequisition(id: number, updates: Partial<FuelRequisition>): Promise<FuelRequisition | undefined>;
+  updateVehicleMileage(id: number, mileage: string): Promise<boolean>;
   updateFuelRequisitionStatus(id: number, statusUpdate: UpdateFuelRequisitionStatus): Promise<FuelRequisition | undefined>;
   deleteFuelRequisition(id: number): Promise<boolean>;
 
@@ -138,22 +139,40 @@ export class MemStorage implements IStorage {
     sampleDepartments.forEach(department => this.departments.set(department.id, department));
     this.currentDepartmentId = 6;
 
-    // Sample suppliers
+    // Sample suppliers with provided information
     const sampleSuppliers = [
       {
         id: 1,
-        name: "Posto Ipiranga Centro",
-        cnpj: "12.345.678/0001-90",
-        responsavel: "João Silva",
+        name: "TRANSDIESEL",
+        cnpj: "18.001.964/0001-10",
+        responsavel: "CARLOS",
+        email: "contato@transdiesel.com",
+        phone: "(92) 98838-2180",
+        address: "TRANSDIESEL COMERCIO DE DERIVADOS DE PETROLEO LTDA",
         active: "true",
         createdAt: yesterday.toISOString(),
         updatedAt: yesterday.toISOString(),
       },
       {
         id: 2,
-        name: "Posto Shell Zona Sul",
-        cnpj: "98.765.432/0001-10",
-        responsavel: "Maria Santos",
+        name: "POSTO NOVO ALEIXO",
+        cnpj: "10.272.444/0001-30",
+        responsavel: "CARLOS",
+        email: "contato@postonovoaleixo.com",
+        phone: "(92) 98838-2180",
+        address: "D DA C SAMPAIO COMERCIO DE COMBUSTIVEIS LTDA",
+        active: "true",
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 3,
+        name: "POSTO NOSSA SENHORA APARECIDA II",
+        cnpj: "13.191.900/0001-96",
+        responsavel: "NILDA",
+        email: "contato@postonssraparecida.com",
+        phone: "(92) 99695-0275",
+        address: "A L X COMERCIO DE COMBUSTIVEIS LTDA",
         active: "true",
         createdAt: yesterday.toISOString(),
         updatedAt: yesterday.toISOString(),
@@ -189,7 +208,7 @@ export class MemStorage implements IStorage {
     ];
 
     sampleSuppliers.forEach(supplier => this.suppliers.set(supplier.id, supplier));
-    this.currentSupplierId = 3;
+    this.currentSupplierId = 4;
 
     sampleCompanies.forEach(company => this.companies.set(company.id, company));
     this.currentCompanyId = 3;
@@ -383,6 +402,7 @@ export class MemStorage implements IStorage {
         fuelType: "diesel",
         quantity: "500",
         pricePerLiter: null,
+        fiscalCoupon: null,
         justification: "Abastecimento da frota de caminhões para entregas da semana",
         requiredDate: tomorrow.toISOString().split('T')[0],
         priority: "alta",
@@ -406,6 +426,7 @@ export class MemStorage implements IStorage {
         fuelType: "gasolina",
         quantity: "200",
         pricePerLiter: null,
+        fiscalCoupon: null,
         justification: "Combustível para geradores durante manutenção preventiva",
         requiredDate: now.toISOString().split('T')[0],
         priority: "media",
@@ -429,6 +450,7 @@ export class MemStorage implements IStorage {
         fuelType: "etanol",
         quantity: "300",
         pricePerLiter: null,
+        fiscalCoupon: null,
         justification: "Abastecimento dos veículos administrativos",
         requiredDate: new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString().split('T')[0],
         priority: "baixa",
@@ -723,6 +745,19 @@ export class MemStorage implements IStorage {
   }
 
 
+
+  async updateVehicleMileage(id: number, mileage: string): Promise<boolean> {
+    const vehicle = this.vehicles.get(id);
+    if (!vehicle) return false;
+
+    const updatedVehicle = {
+      ...vehicle,
+      mileage,
+      updatedAt: new Date().toISOString(),
+    };
+    this.vehicles.set(id, updatedVehicle);
+    return true;
+  }
 
   async deleteFuelRequisition(id: number): Promise<boolean> {
     return this.fuelRequisitions.delete(id);
