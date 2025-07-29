@@ -4,6 +4,7 @@ import { type FuelRequisition, type Supplier } from "@shared/schema";
 import Header from "@/components/layout/header";
 import StatusBadge from "@/components/requisition/status-badge";
 import RequisitionDetailsModal from "@/components/requisition/requisition-details-modal";
+import EditApprovedRequisitionModal from "@/components/requisition/edit-approved-requisition-modal";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ import { useLanguage } from "@/contexts/language-context";
 export default function Requisitions() {
   const [, setLocation] = useLocation();
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
+  const [editingRequisition, setEditingRequisition] = useState<FuelRequisition | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
@@ -34,12 +36,12 @@ export default function Requisitions() {
     queryKey: ["/api/suppliers"],
   });
 
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
   });
 
   const filteredRequisitions = requisitions?.filter((req) => {
-    const user = users.find(u => u.id === req.requesterId);
+    const user = users.find((u: any) => u.id === req.requesterId);
     const matchesSearch = 
       (user?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (req.client || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,7 +64,7 @@ export default function Requisitions() {
   };
 
   const getUserName = (requesterId: number) => {
-    const user = users.find(u => u.id === requesterId);
+    const user = users.find((u: any) => u.id === requesterId);
     return user?.fullName || "-";
   };
 
@@ -225,6 +227,19 @@ export default function Requisitions() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setLocation(`/requisitions/${requisition.id}/edit`)}
+                            title="Editar requisição"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {requisition.status === "approved" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingRequisition(requisition)}
+                            title="Editar valores reais"
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -247,6 +262,16 @@ export default function Requisitions() {
           setSelectedRequisition(null);
           setLocation(`/requisitions/${req.id}/edit`);
         }}
+        onEditRequisition={(req) => {
+          setSelectedRequisition(null);
+          setEditingRequisition(req);
+        }}
+      />
+
+      <EditApprovedRequisitionModal
+        requisition={editingRequisition}
+        isOpen={!!editingRequisition}
+        onClose={() => setEditingRequisition(null)}
       />
     </>
   );

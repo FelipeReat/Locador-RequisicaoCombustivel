@@ -54,6 +54,7 @@ export const fuelRequisitions = pgTable("fuel_requisitions", {
   tanqueCheio: text("tanque_cheio").notNull().default("false"),
   fuelType: text("fuel_type").notNull(),
   quantity: text("quantity"),
+  pricePerLiter: text("price_per_liter"),
   justification: text("justification"),
   requiredDate: text("required_date"),
   priority: text("priority").notNull().default("media"),
