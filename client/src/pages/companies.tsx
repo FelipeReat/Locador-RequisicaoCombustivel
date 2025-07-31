@@ -160,8 +160,8 @@ export default function Companies() {
   return (
     <>
       <Header 
-        title="Empresas" 
-        subtitle="Gerenciar empresas clientes" 
+        title={t("companies")} 
+        subtitle={t("manage-client-companies")} 
       />
 
       <main className="flex-1 p-6">
