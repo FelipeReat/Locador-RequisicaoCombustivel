@@ -382,6 +382,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Companies
     'companies': 'Empresas',
+    'empresas': 'Empresas',
     'companies-list': 'Empresas Cadastradas',
     'new-company': 'Nova Empresa',
     'edit-company': 'Editar Empresa',
@@ -876,6 +877,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Companies
     'companies': 'Companies',
+    'empresas': 'Companies',
     'companies-list': 'Company List',
     'new-company': 'New Company',
     'edit-company': 'Edit Company',
@@ -1366,6 +1368,7 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Empresas
     'companies': 'Empresas',
+    'empresas': 'Empresas',
     'companies-list': 'Lista de Empresas',
     'new-company': 'Nueva Empresa',
     'edit-company': 'Editar Empresa',
