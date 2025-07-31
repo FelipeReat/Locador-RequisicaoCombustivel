@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
@@ -146,7 +145,7 @@ export default function Companies() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editingCompany) {
       updateMutation.mutate({ id: editingCompany.id, data: formData as InsertCompany });
     } else {
@@ -164,14 +163,14 @@ export default function Companies() {
         title="Empresas" 
         subtitle="Gerenciar empresas clientes" 
       />
-      
+
       <main className="flex-1 p-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               {t("companies-list")}
             </h1>
-            
+
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingCompany(null)}>
@@ -179,14 +178,14 @@ export default function Companies() {
                   {t("new-company")}
                 </Button>
               </DialogTrigger>
-              
+
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>
                     {editingCompany ? t("edit-company") : t("new-company")}
                   </DialogTitle>
                 </DialogHeader>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">{t("name")} *</Label>
@@ -295,7 +294,7 @@ export default function Companies() {
                       </Badge>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-2">
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -305,7 +304,7 @@ export default function Companies() {
                         {company.fullName}
                       </p>
                     </div>
-                    
+
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {t("contact")}:
@@ -314,7 +313,7 @@ export default function Companies() {
                         {company.contact}
                       </p>
                     </div>
-                    
+
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {t("phone")}:
@@ -323,7 +322,7 @@ export default function Companies() {
                         {company.phone}
                       </p>
                     </div>
-                    
+
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {t("email")}:
@@ -332,7 +331,7 @@ export default function Companies() {
                         {company.email}
                       </p>
                     </div>
-                    
+
                     <div className="flex gap-2 pt-3">
                       <Button
                         variant="outline"
