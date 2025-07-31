@@ -22,6 +22,7 @@ export default function Suppliers() {
 
   const [formData, setFormData] = useState<InsertSupplier>({
     name: "",
+    fantasia: "",
     cnpj: "",
     responsavel: "",
     email: "",
@@ -122,6 +123,7 @@ export default function Suppliers() {
   const resetForm = () => {
     setFormData({
       name: "",
+      fantasia: "",
       cnpj: "",
       responsavel: "",
       email: "",
@@ -139,6 +141,7 @@ export default function Suppliers() {
     setEditingSupplier(supplier);
     setFormData({
       name: supplier.name,
+      fantasia: supplier.fantasia,
       cnpj: supplier.cnpj,
       responsavel: supplier.responsavel,
       email: supplier.email || "",
@@ -162,6 +165,7 @@ export default function Suppliers() {
 
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    supplier.fantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.cnpj.includes(searchTerm) ||
     supplier.responsavel.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -209,7 +213,17 @@ export default function Suppliers() {
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder={t('supplier-name')}
+                    placeholder="Nome empresarial completo"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fantasia">{t('supplier-fantasia')} *</Label>
+                  <Input
+                    id="fantasia"
+                    value={formData.fantasia}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fantasia: e.target.value }))}
+                    placeholder="Nome fantasia do posto"
                     required
                   />
                 </div>
@@ -315,7 +329,7 @@ export default function Suppliers() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('supplier-name')}</TableHead>
+                  <TableHead>{t('supplier-fantasia')}</TableHead>
                   <TableHead>{t('supplier-cnpj')}</TableHead>
                   <TableHead>{t('supplier-responsible')}</TableHead>
                   <TableHead>{t('supplier-email')}</TableHead>
@@ -333,7 +347,7 @@ export default function Suppliers() {
                 ) : (
                   filteredSuppliers.map((supplier) => (
                     <TableRow key={supplier.id}>
-                      <TableCell className="font-medium">{supplier.name}</TableCell>
+                      <TableCell className="font-medium">{supplier.fantasia}</TableCell>
                       <TableCell>{formatCNPJ(supplier.cnpj)}</TableCell>
                       <TableCell>{supplier.responsavel}</TableCell>
                       <TableCell>{supplier.email || "-"}</TableCell>
@@ -379,7 +393,17 @@ export default function Suppliers() {
                   id="edit-name"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder={t('supplier-name')}
+                  placeholder="Nome empresarial completo"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-fantasia">{t('supplier-fantasia')} *</Label>
+                <Input
+                  id="edit-fantasia"
+                  value={formData.fantasia}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fantasia: e.target.value }))}
+                  placeholder="Nome fantasia do posto"
                   required
                 />
               </div>

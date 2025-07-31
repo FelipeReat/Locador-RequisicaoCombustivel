@@ -161,7 +161,7 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
             <SelectContent>
               {suppliers.map((supplier) => (
                 <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                  {supplier.name} - {supplier.cnpj} ({supplier.responsavel})
+                  {supplier.fantasia} - {supplier.cnpj} ({supplier.responsavel})
                 </SelectItem>
               ))}
             </SelectContent>

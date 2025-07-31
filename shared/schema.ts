@@ -83,6 +83,7 @@ export const insertUserManagementSchema = createInsertSchema(users, {
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  fantasia: text("fantasia").notNull(),
   cnpj: text("cnpj").notNull().unique(),
   responsavel: text("responsavel").notNull(),
   email: text("email"),
@@ -115,7 +116,8 @@ export const changePasswordSchema = z.object({
 });
 
 export const insertSupplierSchema = createInsertSchema(suppliers, {
-  name: z.string().min(1, "Nome é obrigatório"),
+  name: z.string().min(1, "Nome empresarial é obrigatório"),
+  fantasia: z.string().min(1, "Nome fantasia é obrigatório"),
   cnpj: z.string().min(14, "CNPJ é obrigatório"),
   responsavel: z.string().min(1, "Responsável é obrigatório"),
 }).omit({
