@@ -389,6 +389,7 @@ const translations: Record<Language, Record<string, string>> = {
     'company-created-success': 'Empresa criada com sucesso!',
     'company-updated-success': 'Empresa atualizada com sucesso!',
     'company-deleted-success': 'Empresa excluída com sucesso!',
+    'manage-client-companies': 'Gerenciar empresas clientes',
 
     // Gestão de Frotas
     'fleet-management': 'Gestão de Frota',
@@ -882,6 +883,7 @@ const translations: Record<Language, Record<string, string>> = {
     'company-created-success': 'Company created successfully!',
     'company-updated-success': 'Company updated successfully!',
     'company-deleted-success': 'Company deleted successfully!',
+    'manage-client-companies': 'Manage client companies',
 
     // Fleet Management
     'fleet-management': 'Fleet Management',
@@ -1361,6 +1363,17 @@ const translations: Record<Language, Record<string, string>> = {
     'last-update-label': 'Última Actualización',
     'developed-by-label': 'Desarrollado por',
     'fuelcontrol-team': 'Equipo Control de Combustible',
+
+    // Empresas
+    'companies': 'Empresas',
+    'companies-list': 'Lista de Empresas',
+    'new-company': 'Nueva Empresa',
+    'edit-company': 'Editar Empresa',
+    'company-full-name': 'Nombre Empresarial',
+    'company-created-success': '¡Empresa creada exitosamente!',
+    'company-updated-success': '¡Empresa actualizada exitosamente!',
+    'company-deleted-success': '¡Empresa eliminada exitosamente!',
+    'manage-client-companies': 'Gestionar empresas clientes',
 
     // Gestión de Flota
     'fleet-management': 'Gestión de Flota',
