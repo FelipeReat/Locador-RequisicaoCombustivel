@@ -401,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Veículo não encontrado" });
       }
 
-      const updatedVehicle = await storage.updateVehicle(id, { status });
+      const updatedVehicle = await storage.updateVehicleStatus(id, status);
       res.json(updatedVehicle);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar status do veículo" });
@@ -494,6 +494,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Fornecedor excluído com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir fornecedor" });
+    }
+  });
+
+  // Vehicle mileage update route
+  app.patch("/api/vehicles/:id/mileage", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { mileage } = req.body;
+      
+      const success = await storage.updateVehicleMileage(id, mileage);
+      if (!success) {
+        return res.status(404).json({ message: "Veículo não encontrado" });
+      }
+      
+      res.json({ message: "Quilometragem atualizada com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao atualizar quilometragem" });
+    }
+  });
+
+  // Data cleanup routes
+  app.delete("/api/cleanup/requisitions", async (req, res) => {
+    try {
+      const deletedCount = await storage.cleanupRequisitions();
+      res.json({ deletedCount, message: "Requisições removidas com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao remover requisições" });
+    }
+  });
+
+  app.delete("/api/cleanup/vehicles", async (req, res) => {
+    try {
+      const deletedCount = await storage.cleanupVehicles();
+      res.json({ deletedCount, message: "Veículos removidos com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao remover veículos" });
+    }
+  });
+
+  app.delete("/api/cleanup/suppliers", async (req, res) => {
+    try {
+      const deletedCount = await storage.cleanupSuppliers();
+      res.json({ deletedCount, message: "Fornecedores removidos com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao remover fornecedores" });
+    }
+  });
+
+  app.delete("/api/cleanup/companies", async (req, res) => {
+    try {
+      const deletedCount = await storage.cleanupCompanies();
+      res.json({ deletedCount, message: "Empresas removidas com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao remover empresas" });
     }
   });
 

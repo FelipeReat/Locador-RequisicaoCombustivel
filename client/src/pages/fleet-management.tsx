@@ -35,8 +35,10 @@ import {
   Search,
   Fuel,
   Calendar,
-  Gauge
+  Gauge,
+  RotateCcw
 } from "lucide-react";
+import { MileageResetDialog } from "@/components/mileage-reset-dialog";
 
 export default function FleetManagement() {
   const { toast } = useToast();

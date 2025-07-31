@@ -31,6 +31,7 @@ export interface IStorage {
   getVehicle(id: number): Promise<Vehicle | undefined>;
   createVehicle(vehicle: InsertVehicle): Promise<Vehicle>;
   updateVehicle(id: number, updates: Partial<InsertVehicle>): Promise<Vehicle | undefined>;
+  updateVehicleStatus(id: number, status: string): Promise<Vehicle | undefined>;
   deleteVehicle(id: number): Promise<boolean>;
 
   // Fuel Requisitions
@@ -433,16 +434,17 @@ export class MemStorage implements IStorage {
     const id = this.currentUserId++;
     const now = new Date().toISOString();
     const user: User = { 
-      ...insertUser, 
       id,
-      email: insertUser.email || null,
-      fullName: insertUser.fullName || null,
-      departmentId: insertUser.departmentId || null,
-      phone: insertUser.phone || null,
-      position: insertUser.position || null,
-      role: insertUser.role || "employee",
-      active: insertUser.active || "true",
-      hireDate: insertUser.hireDate || null,
+      username: insertUser.username,
+      password: insertUser.password,
+      email: ('email' in insertUser) ? insertUser.email || null : null,
+      fullName: ('fullName' in insertUser) ? insertUser.fullName || null : null,
+      departmentId: ('departmentId' in insertUser) ? insertUser.departmentId || null : null,
+      phone: ('phone' in insertUser) ? insertUser.phone || null : null,
+      position: ('position' in insertUser) ? insertUser.position || null : null,
+      role: ('role' in insertUser) ? insertUser.role || "employee" : "employee",
+      active: "true",
+      hireDate: ('hireDate' in insertUser) ? insertUser.hireDate || null : null,
       createdAt: now,
       updatedAt: now,
     };
@@ -519,8 +521,13 @@ export class MemStorage implements IStorage {
     const id = this.currentSupplierId++;
     const now = new Date().toISOString();
     const supplier: Supplier = {
-      ...insertSupplier,
       id,
+      name: insertSupplier.name,
+      cnpj: insertSupplier.cnpj,
+      responsavel: insertSupplier.responsavel,
+      email: insertSupplier.email || null,
+      phone: insertSupplier.phone || null,
+      address: insertSupplier.address || null,
       active: "true",
       createdAt: now,
       updatedAt: now,
@@ -598,7 +605,12 @@ export class MemStorage implements IStorage {
   async createVehicle(vehicleData: InsertVehicle): Promise<Vehicle> {
     const vehicle: Vehicle = {
       id: this.currentVehicleId++,
-      ...vehicleData,
+      brand: vehicleData.brand,
+      fuelType: vehicleData.fuelType,
+      plate: vehicleData.plate,
+      model: vehicleData.model,
+      year: vehicleData.year,
+      mileage: vehicleData.mileage || null,
       status: "active",
       lastMaintenance: null,
       nextMaintenance: null,
@@ -616,6 +628,20 @@ export class MemStorage implements IStorage {
     const updatedVehicle = {
       ...vehicle,
       ...updates,
+      mileage: updates.mileage || vehicle.mileage,
+      updatedAt: new Date().toISOString(),
+    };
+    this.vehicles.set(id, updatedVehicle);
+    return updatedVehicle;
+  }
+
+  async updateVehicleStatus(id: number, status: string): Promise<Vehicle | undefined> {
+    const vehicle = this.vehicles.get(id);
+    if (!vehicle) return undefined;
+
+    const updatedVehicle = {
+      ...vehicle,
+      status,
       updatedAt: new Date().toISOString(),
     };
     this.vehicles.set(id, updatedVehicle);
@@ -640,8 +666,22 @@ export class MemStorage implements IStorage {
     const id = this.currentRequisitionId++;
     const now = new Date().toISOString();
     const requisition: FuelRequisition = {
-      ...insertRequisition,
       id,
+      requesterId: insertRequisition.requesterId,
+      supplierId: insertRequisition.supplierId,
+      client: insertRequisition.client,
+      vehicleId: insertRequisition.vehicleId,
+      kmAtual: insertRequisition.kmAtual,
+      kmAnterior: insertRequisition.kmAnterior,
+      kmRodado: insertRequisition.kmRodado,
+      tanqueCheio: insertRequisition.tanqueCheio,
+      fuelType: insertRequisition.fuelType,
+      quantity: insertRequisition.quantity || null,
+      pricePerLiter: insertRequisition.pricePerLiter || null,
+      fiscalCoupon: insertRequisition.fiscalCoupon || null,
+      justification: insertRequisition.justification || null,
+      requiredDate: insertRequisition.requiredDate,
+      priority: insertRequisition.priority || "media",
       status: "pending",
       approverId: null,
       approvedDate: null,
@@ -769,6 +809,35 @@ export class MemStorage implements IStorage {
       fuelType,
       ...data,
     }));
+  }
+
+  // Data cleanup methods
+  async cleanupRequisitions(): Promise<number> {
+    const count = this.fuelRequisitions.size;
+    this.fuelRequisitions.clear();
+    this.currentRequisitionId = 1;
+    return count;
+  }
+
+  async cleanupVehicles(): Promise<number> {
+    const count = this.vehicles.size;
+    this.vehicles.clear();
+    this.currentVehicleId = 1;
+    return count;
+  }
+
+  async cleanupSuppliers(): Promise<number> {
+    const count = this.suppliers.size;
+    this.suppliers.clear();
+    this.currentSupplierId = 1;
+    return count;
+  }
+
+  async cleanupCompanies(): Promise<number> {
+    const count = this.companies.size;
+    this.companies.clear();
+    this.currentCompanyId = 1;
+    return count;
   }
 }
 

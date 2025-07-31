@@ -257,7 +257,7 @@ export default function Suppliers() {
                   <Input
                     id="email"
                     type="email"
-                    value={formData.email}
+                    value={formData.email || ""}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="email@fornecedor.com"
                   />
@@ -266,7 +266,7 @@ export default function Suppliers() {
                   <Label htmlFor="phone">{t('supplier-phone')}</Label>
                   <Input
                     id="phone"
-                    value={formData.phone}
+                    value={formData.phone || ""}
                     onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                     placeholder="(11) 99999-9999"
                   />
@@ -275,7 +275,7 @@ export default function Suppliers() {
                   <Label htmlFor="address">{t('supplier-address')}</Label>
                   <Input
                     id="address"
-                    value={formData.address}
+                    value={formData.address || ""}
                     onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                     placeholder={t('supplier-address')}
                   />
@@ -427,7 +427,7 @@ export default function Suppliers() {
                 <Input
                   id="edit-email"
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ""}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="email@fornecedor.com"
                 />
@@ -436,7 +436,7 @@ export default function Suppliers() {
                 <Label htmlFor="edit-phone">{t('supplier-phone')}</Label>
                 <Input
                   id="edit-phone"
-                  value={formData.phone}
+                  value={formData.phone || ""}
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="(11) 99999-9999"
                 />
@@ -445,7 +445,7 @@ export default function Suppliers() {
                 <Label htmlFor="edit-address">{t('supplier-address')}</Label>
                 <Input
                   id="edit-address"
-                  value={formData.address}
+                  value={formData.address || ""}
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                   placeholder={t('supplier-address')}
                 />

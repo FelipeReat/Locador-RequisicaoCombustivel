@@ -69,10 +69,9 @@ export class PDFGenerator {
 
     const basicInfo = [
       ['ID da Requisição:', `#${String(requisition.id).padStart(4, '0')}`],
-      ['Solicitante:', requisition.requester],
-      ['Departamento:', this.getDepartmentLabel(requisition.department)],
+      ['Cliente:', requisition.client],
       ['Data de Criação:', new Date(requisition.createdAt).toLocaleDateString('pt-BR')],
-      ['Data Necessária:', new Date(requisition.requiredDate).toLocaleDateString('pt-BR')],
+      ['Data Necessária:', requisition.requiredDate ? new Date(requisition.requiredDate).toLocaleDateString('pt-BR') : 'N/A'],
       ['Status:', this.getStatusLabel(requisition.status)],
       ['Prioridade:', this.getPriorityLabel(requisition.priority)]
     ];
@@ -98,8 +97,10 @@ export class PDFGenerator {
 
     const fuelInfo = [
       ['Tipo de Combustível:', this.getFuelTypeLabel(requisition.fuelType)],
-      ['Quantidade:', `${requisition.quantity} litros`],
-      ['Valor Estimado:', this.calculateEstimatedValue(requisition.fuelType, parseInt(requisition.quantity))]
+      ['Quantidade:', requisition.quantity ? `${requisition.quantity} litros` : 'Tanque cheio'],
+      ['KM Atual:', requisition.kmAtual],
+      ['KM Anterior:', requisition.kmAnterior],
+      ['KM Rodado:', requisition.kmRodado]
     ];
 
     this.doc.setFont('helvetica', 'normal');
@@ -123,7 +124,8 @@ export class PDFGenerator {
 
     this.doc.setFont('helvetica', 'normal');
     this.doc.setFontSize(10);
-    const justificationLines = this.doc.splitTextToSize(requisition.justification, 150);
+    const text = requisition.justification || 'Nenhuma justificativa fornecida';
+    const justificationLines = this.doc.splitTextToSize(text, 150);
     this.doc.text(justificationLines, 20, this.currentY);
     this.currentY += justificationLines.length * 5 + 10;
 
@@ -135,7 +137,6 @@ export class PDFGenerator {
       this.currentY += 10;
 
       const approvalInfo = [
-        ['Aprovado por:', requisition.approver || 'N/A'],
         ['Data de Aprovação:', requisition.approvedDate ? new Date(requisition.approvedDate).toLocaleDateString('pt-BR') : 'N/A']
       ];
 
@@ -209,16 +210,15 @@ export class PDFGenerator {
     // Tabela de requisições
     const tableData = requisitions.map(req => [
       `#${String(req.id).padStart(4, '0')}`,
-      req.requester,
-      this.getDepartmentLabel(req.department),
+      req.client,
       this.getFuelTypeLabel(req.fuelType),
-      `${req.quantity}L`,
+      req.quantity ? `${req.quantity}L` : 'Tanque cheio',
       this.getStatusLabel(req.status),
       new Date(req.createdAt).toLocaleDateString('pt-BR')
     ]);
 
     autoTable(this.doc, {
-      head: [['ID', 'Solicitante', 'Departamento', 'Combustível', 'Quantidade', 'Status', 'Data']],
+      head: [['ID', 'Cliente', 'Combustível', 'Quantidade', 'Status', 'Data']],
       body: tableData,
       startY: this.currentY,
       styles: { fontSize: 8 },
@@ -255,8 +255,8 @@ export class PDFGenerator {
     let totalValueNum = 0;
 
     requisitions.forEach(req => {
-      stats[req.status]++;
-      const liters = parseInt(req.quantity) || 0;
+      (stats as any)[req.status]++;
+      const liters = req.quantity ? parseInt(req.quantity) : 0;
       stats.totalLiters += liters;
       totalValueNum += this.calculateEstimatedValueNum(req.fuelType, liters);
     });

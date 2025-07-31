@@ -43,8 +43,10 @@ import {
   Shield,
   Bell,
   Settings as SettingsIcon,
-  Loader2
+  Loader2,
+  Database
 } from "lucide-react";
+import { DataCleanupDialog } from "@/components/data-cleanup-dialog";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -63,7 +65,6 @@ export default function Settings() {
     defaultValues: {
       email: user?.email || "",
       fullName: user?.fullName || "",
-      department: user?.department || undefined,
       phone: user?.phone || "",
       position: user?.position || "",
     },
@@ -148,7 +149,6 @@ export default function Settings() {
     profileForm.reset({
       email: user.email || "",
       fullName: user.fullName || "",
-      department: user.department || undefined,
       phone: user.phone || "",
       position: user.position || "",
     });
@@ -197,7 +197,7 @@ export default function Settings() {
                           <h3 className="text-lg font-semibold">{user?.fullName || user?.username}</h3>
                           <p className="text-sm text-gray-600">@{user?.username}</p>
                           <Badge variant="secondary" className="mt-1">
-                            {user?.department ? getDepartmentLabel(user.department) : "Departamento não definido"}
+                            {user?.role || "Funcionário"}
                           </Badge>
                         </div>
                       </div>
