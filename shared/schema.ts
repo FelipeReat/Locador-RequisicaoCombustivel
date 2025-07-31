@@ -166,7 +166,6 @@ export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, 
   }),
 }).omit({
   id: true,
-  departmentId: true,
   status: true,
   approverId: true,
   approvedDate: true,
