@@ -566,6 +566,28 @@ export default function Settings() {
 
               <Card>
                 <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Database className="mr-2 h-5 w-5" />
+                    Gerenciamento de Dados
+                  </CardTitle>
+                  <CardDescription>
+                    Ferramentas para limpeza e manutenção do sistema
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DataCleanupDialog
+                    trigger={
+                      <Button variant="destructive" className="w-full">
+                        <Database className="mr-2 h-4 w-4" />
+                        Limpeza de Dados
+                      </Button>
+                    }
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
                   <CardTitle>{t('about-system-title')}</CardTitle>
                   <CardDescription>{t('about-fuelcontrol')}</CardDescription>
                 </CardHeader>

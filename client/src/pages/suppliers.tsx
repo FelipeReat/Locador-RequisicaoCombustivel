@@ -30,7 +30,7 @@ export default function Suppliers() {
   });
 
   const { data: suppliers = [], isLoading } = useQuery({
-    queryKey: ["suppliers"],
+    queryKey: ["/api/suppliers"],
     queryFn: async () => {
       const response = await fetch("/api/suppliers");
       if (!response.ok) throw new Error("Erro ao buscar fornecedores");
@@ -49,7 +49,7 @@ export default function Suppliers() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
       setIsCreateDialogOpen(false);
       resetForm();
       toast({
@@ -77,7 +77,7 @@ export default function Suppliers() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
       setIsEditDialogOpen(false);
       setEditingSupplier(null);
       resetForm();
@@ -104,7 +104,7 @@ export default function Suppliers() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
       toast({
         title: t("success"),
         description: t("supplier-deleted"),

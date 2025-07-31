@@ -10,16 +10,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-**July 18, 2025 - Project Migration and Schema Fixes**
-- Successfully migrated project from Replit Agent to Replit environment
-- Fixed critical schema mismatch where requisition forms showed blank fields
-- Updated UI components to use new backend schema structure (responsável/cliente instead of requester/department)
-- Replaced department field with supplier field that correctly displays supplier names from suppliers table
-- Fixed duplicate language translation keys in language-context.tsx
-- Corrected table displays in both dashboard and requisitions pages to show proper data
-- Updated sample data structure to match new schema requirements
-- Removed department filtering as it's no longer part of the data model
-- All requisitions now correctly display: responsável, supplier name, fuel type, quantity, and status
+**July 31, 2025 - Complete Project Migration and Issues Resolution**
+- Successfully completed migration from Replit Agent to Replit environment
+- Resolved all 8 user-reported critical issues:
+  1. Fixed flag update delays with optimized state management
+  2. Solved deletion problems with real-time UI updates
+  3. Corrected PDF supplier names to show formal names in reports
+  4. Implemented mileage reset functionality with MileageResetDialog component
+  5. Added comprehensive data cleanup feature with DataCleanupDialog
+  6. Fixed form validation errors and null handling throughout the system
+  7. Resolved all TypeScript diagnostic errors (LSP clean)
+  8. Enhanced UI responsiveness with immediate data reflection
+- Added new backend API routes for data cleanup and vehicle mileage updates
+- Implemented proper query key management for real-time updates
+- Enhanced PDF generation to display formal supplier names while maintaining simple UI names
+- Created reusable dialog components for system maintenance operations
+- All components now properly invalidate queries for immediate UI updates
 
 **July 17, 2025 - PDF Generation and Theme Improvements**
 - Fixed dark theme inconsistencies across all pages (new-requisition, dashboard, reports, requisitions)
