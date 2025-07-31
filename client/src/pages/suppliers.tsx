@@ -25,7 +25,6 @@ export default function Suppliers() {
     fantasia: "",
     cnpj: "",
     responsavel: "",
-    email: "",
     phone: "",
     address: "",
   });
@@ -126,7 +125,6 @@ export default function Suppliers() {
       fantasia: "",
       cnpj: "",
       responsavel: "",
-      email: "",
       phone: "",
       address: "",
     });
@@ -144,7 +142,6 @@ export default function Suppliers() {
       fantasia: supplier.fantasia,
       cnpj: supplier.cnpj,
       responsavel: supplier.responsavel,
-      email: supplier.email || "",
       phone: supplier.phone || "",
       address: supplier.address || "",
     });
@@ -266,16 +263,7 @@ export default function Suppliers() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t('supplier-email')}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email || ""}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="email@fornecedor.com"
-                  />
-                </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t('supplier-phone')}</Label>
                   <Input
@@ -332,7 +320,6 @@ export default function Suppliers() {
                   <TableHead>{t('supplier-fantasia')}</TableHead>
                   <TableHead>{t('supplier-cnpj')}</TableHead>
                   <TableHead>{t('supplier-responsible')}</TableHead>
-                  <TableHead>{t('supplier-email')}</TableHead>
                   <TableHead>{t('supplier-phone')}</TableHead>
                   <TableHead>{t('actions')}</TableHead>
                 </TableRow>
@@ -340,7 +327,7 @@ export default function Suppliers() {
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       {t('no-suppliers')}
                     </TableCell>
                   </TableRow>
@@ -350,7 +337,6 @@ export default function Suppliers() {
                       <TableCell className="font-medium">{supplier.fantasia}</TableCell>
                       <TableCell>{formatCNPJ(supplier.cnpj)}</TableCell>
                       <TableCell>{supplier.responsavel}</TableCell>
-                      <TableCell>{supplier.email || "-"}</TableCell>
                       <TableCell>{supplier.phone ? formatPhone(supplier.phone) : "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
@@ -446,16 +432,7 @@ export default function Suppliers() {
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email">{t('supplier-email')}</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={formData.email || ""}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="email@fornecedor.com"
-                />
-              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="edit-phone">{t('supplier-phone')}</Label>
                 <Input

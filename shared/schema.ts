@@ -123,6 +123,7 @@ export const insertSupplierSchema = createInsertSchema(suppliers, {
 }).omit({
   id: true,
   active: true,
+  email: true,
   createdAt: true,
   updatedAt: true,
 });

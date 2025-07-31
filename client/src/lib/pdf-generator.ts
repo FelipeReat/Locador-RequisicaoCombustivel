@@ -382,15 +382,10 @@ export class PDFGenerator {
 
       const fornecedorInfo = [
         `CPF/CNPJ: ${supplier?.cnpj || '22.272.444/0001-30'}`,
-        `Nome Empresarial: ${supplier?.name || 'D DA C SAMPAIO COMERCIO DE COMBUSTIVEIS LTDA'}`,
+        `Nome Empresarial: ${supplier?.name || 'A L X COMERCIO DE COMBUSTIVEIS LTDA'}`,
         `Contato: ${supplier?.responsavel || 'CARLOS'}`,
         `Telefone: ${supplier?.phone || '(92) 9883-8218'}  Celular: ${supplier?.mobile || '(92) 98838-2180'}`
       ];
-
-      // Adicionar email apenas se o fornecedor tiver email
-      if (supplier?.email) {
-        fornecedorInfo.push(`E-Mail: ${supplier.email}`);
-      }
 
       let lineY = currentY + 7;
       fornecedorInfo.forEach(info => {
