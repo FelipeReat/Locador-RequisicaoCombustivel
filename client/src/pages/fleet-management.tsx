@@ -420,15 +420,7 @@ export default function FleetManagement() {
                     <Badge variant={getStatusBadgeVariant(vehicle.status)}>
                       {getStatusLabel(vehicle.status)}
                     </Badge>
-                    <MileageResetDialog
-                      vehicleId={vehicle.id}
-                      currentMileage={vehicle.mileage || "0"}
-                      trigger={
-                        <Button variant="outline" size="sm">
-                          <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      }
-                    />
+
                   </div>
                 </CardContent>
               </Card>

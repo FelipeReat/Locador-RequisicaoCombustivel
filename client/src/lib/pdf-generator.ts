@@ -70,6 +70,7 @@ export class PDFGenerator {
     const basicInfo = [
       ['ID da Requisição:', `#${String(requisition.id).padStart(4, '0')}`],
       ['Cliente:', requisition.client],
+      ['Fornecedor:', requisition.supplierInfo?.address || 'N/A'],
       ['Data de Criação:', new Date(requisition.createdAt).toLocaleDateString('pt-BR')],
       ['Data Necessária:', requisition.requiredDate ? new Date(requisition.requiredDate).toLocaleDateString('pt-BR') : 'N/A'],
       ['Status:', this.getStatusLabel(requisition.status)],

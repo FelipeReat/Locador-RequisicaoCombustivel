@@ -379,6 +379,16 @@ const translations: Record<Language, Record<string, string>> = {
     'developed-by-label': 'Desenvolvido por',
     'fuelcontrol-team': 'Equipe Controle de Abastecimento',
 
+    // Companies
+    'companies': 'Empresas',
+    'companies-list': 'Empresas Cadastradas',
+    'new-company': 'Nova Empresa',
+    'edit-company': 'Editar Empresa',
+    'company-full-name': 'Nome Empresarial',
+    'company-created-success': 'Empresa criada com sucesso!',
+    'company-updated-success': 'Empresa atualizada com sucesso!',
+    'company-deleted-success': 'Empresa excluída com sucesso!',
+
     // Gestão de Frotas
     'fleet-management': 'Gestão de Frota',
     'manage-company-vehicles': 'Gerencie os veículos da empresa',
@@ -861,6 +871,16 @@ const translations: Record<Language, Record<string, string>> = {
     'last-update-label': 'Last Update',
     'developed-by-label': 'Developed by',
     'fuelcontrol-team': 'Fuel Control Team',
+
+    // Companies
+    'companies': 'Companies',
+    'companies-list': 'Company List',
+    'new-company': 'New Company',
+    'edit-company': 'Edit Company',
+    'company-full-name': 'Company Full Name',
+    'company-created-success': 'Company created successfully!',
+    'company-updated-success': 'Company updated successfully!',
+    'company-deleted-success': 'Company deleted successfully!',
 
     // Fleet Management
     'fleet-management': 'Fleet Management',

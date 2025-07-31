@@ -9,12 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/language-context";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import { CNPJInput } from "@/components/cnpj-input";
+import { PhoneInput } from "@/components/phone-input";
 import type { Company, InsertCompany } from "@shared/schema";
 
 export default function Companies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [formData, setFormData] = useState<Partial<InsertCompany>>({
@@ -49,8 +53,8 @@ export default function Companies() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast({
-        title: "Sucesso",
-        description: "Empresa criada com sucesso.",
+        title: t("success"),
+        description: t("company-created-success"),
       });
       resetForm();
     },
@@ -165,30 +169,30 @@ export default function Companies() {
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Empresas Cadastradas
+              {t("companies-list")}
             </h1>
             
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingCompany(null)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Nova Empresa
+                  {t("new-company")}
                 </Button>
               </DialogTrigger>
               
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingCompany ? "Editar Empresa" : "Nova Empresa"}
+                    {editingCompany ? t("edit-company") : t("new-company")}
                   </DialogTitle>
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome *</Label>
+                    <Label htmlFor="name">{t("name")} *</Label>
                     <Input
                       id="name"
-                      value={formData.name}
+                      value={formData.name || ""}
                       onChange={(e) => handleInputChange("name", e.target.value)}
                       placeholder="Ex: BBM Serviços"
                       required
@@ -197,20 +201,19 @@ export default function Companies() {
 
                   <div className="space-y-2">
                     <Label htmlFor="cnpj">CNPJ *</Label>
-                    <Input
+                    <CNPJInput
                       id="cnpj"
-                      value={formData.cnpj}
+                      value={formData.cnpj || ""}
                       onChange={(e) => handleInputChange("cnpj", e.target.value)}
-                      placeholder="00.000.000/0000-00"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Nome Empresarial *</Label>
+                    <Label htmlFor="fullName">{t("company-full-name")} *</Label>
                     <Input
                       id="fullName"
-                      value={formData.fullName}
+                      value={formData.fullName || ""}
                       onChange={(e) => handleInputChange("fullName", e.target.value)}
                       placeholder="Nome completo da empresa"
                       required
@@ -218,10 +221,10 @@ export default function Companies() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="contact">Contato *</Label>
+                    <Label htmlFor="contact">{t("contact")} *</Label>
                     <Input
                       id="contact"
-                      value={formData.contact}
+                      value={formData.contact || ""}
                       onChange={(e) => handleInputChange("contact", e.target.value)}
                       placeholder="Nome do responsável"
                       required
@@ -229,22 +232,21 @@ export default function Companies() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone *</Label>
-                    <Input
+                    <Label htmlFor="phone">{t("phone")} *</Label>
+                    <PhoneInput
                       id="phone"
-                      value={formData.phone}
+                      value={formData.phone || ""}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
-                      placeholder="(00) 0000-0000"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">{t("email")} *</Label>
                     <Input
                       id="email"
                       type="email"
-                      value={formData.email}
+                      value={formData.email || ""}
                       onChange={(e) => handleInputChange("email", e.target.value)}
                       placeholder="email@empresa.com"
                       required
@@ -257,14 +259,14 @@ export default function Companies() {
                       className="flex-1"
                       disabled={createMutation.isPending || updateMutation.isPending}
                     >
-                      {editingCompany ? "Atualizar" : "Criar"}
+                      {editingCompany ? t("update") : t("create")}
                     </Button>
                     <Button 
                       type="button" 
                       variant="outline" 
                       onClick={resetForm}
                     >
-                      Cancelar
+                      {t("cancel")}
                     </Button>
                   </div>
                 </form>
@@ -289,7 +291,7 @@ export default function Companies() {
                         </p>
                       </div>
                       <Badge variant={company.active === "true" ? "default" : "secondary"}>
-                        {company.active === "true" ? "Ativo" : "Inativo"}
+                        {company.active === "true" ? t("active") : t("inactive")}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -297,7 +299,7 @@ export default function Companies() {
                   <CardContent className="space-y-2">
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Nome Empresarial:
+                        {t("company-full-name")}:
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {company.fullName}
@@ -306,7 +308,7 @@ export default function Companies() {
                     
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Contato:
+                        {t("contact")}:
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {company.contact}
@@ -315,7 +317,7 @@ export default function Companies() {
                     
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Telefone:
+                        {t("phone")}:
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {company.phone}
@@ -324,7 +326,7 @@ export default function Companies() {
                     
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Email:
+                        {t("email")}:
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {company.email}
