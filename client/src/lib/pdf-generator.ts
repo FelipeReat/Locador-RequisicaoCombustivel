@@ -404,7 +404,7 @@ export class PDFGenerator {
 
       // Informações específicas baseadas no cliente
       let clienteInfo: string[] = [];
-
+      
       if (requisition.client === "BBM Serviços" || requisition.client === "BBM serviços") {
         clienteInfo = [
           `CPF/CNPJ: 13.844.973/0001-59`,
@@ -429,7 +429,7 @@ export class PDFGenerator {
           `Contato: ${requesterUser?.fullName || requisition.requester || 'Não informado'}`,
           `Telefone: ${requesterUser?.phone || 'Não informado'}`
         ];
-
+        
         // Adicionar email apenas se o usuário tiver email
         if (requesterUser?.email) {
           clienteInfo.push(`E-Mail: ${requesterUser.email}`);

@@ -117,9 +117,7 @@ export default function FleetManagement() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidar múltiplas queries para garantir atualização imediata
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
-      queryClient.refetchQueries({ queryKey: ["/api/vehicles"] });
       toast({
         title: t("success"),
         description: t("vehicle-status-changed"),
@@ -144,17 +142,14 @@ export default function FleetManagement() {
 
   const handleEdit = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
-    // Forçar reset do form com novos valores
-    setTimeout(() => {
-      form.reset({
-        plate: vehicle.plate,
-        model: vehicle.model,
-        brand: vehicle.brand,
-        year: vehicle.year,
-        fuelType: vehicle.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10",
-        mileage: vehicle.mileage || "0",
-      });
-    }, 100);
+    form.reset({
+      plate: vehicle.plate,
+      model: vehicle.model,
+      brand: vehicle.brand,
+      year: vehicle.year,
+      fuelType: vehicle.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10",
+      mileage: vehicle.mileage || "0",
+    });
     setIsDialogOpen(true);
   };
 

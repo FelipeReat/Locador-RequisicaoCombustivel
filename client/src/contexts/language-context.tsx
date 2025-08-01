@@ -386,8 +386,6 @@ const translations: Record<Language, Record<string, string>> = {
     'companies-list': 'Empresas Cadastradas',
     'new-company': 'Nova Empresa',
     'edit-company': 'Editar Empresa',
-    'name': 'Nome',
-    'contact': 'Contato',
     'company-full-name': 'Nome Empresarial',
     'company-created-success': 'Empresa criada com sucesso!',
     'company-updated-success': 'Empresa atualizada com sucesso!',

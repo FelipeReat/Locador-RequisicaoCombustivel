@@ -295,7 +295,28 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('account-info')}</CardTitle>
+                  <CardDescription>{t('account-details')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('username')}</Label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{user?.username}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('account-created')}</Label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{user?.createdAt ? formatDate(user.createdAt) : "N/A"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('last-updated')}</Label>
+                      <p className="text-gray-900 dark:text-gray-100 mt-1">{user?.updatedAt ? formatDate(user.updatedAt) : "N/A"}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="security" className="space-y-6">
@@ -578,11 +599,11 @@ export default function Settings() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{t('last-update-label')}:</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Agosto 2025</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Janeiro 2025</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{t('developed-by-label')}:</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">NEOLOQ COMPANY</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('fuelcontrol-team')}</span>
                     </div>
                   </div>
                 </CardContent>

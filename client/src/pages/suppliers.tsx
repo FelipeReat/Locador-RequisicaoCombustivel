@@ -269,21 +269,8 @@ export default function Suppliers() {
                   <Input
                     id="phone"
                     value={formData.phone || ""}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      let formattedValue = value;
-
-                      if (value.length > 2) {
-                        formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2);
-                      }
-                      if (value.length > 7) {
-                        formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
-                      }
-
-                      setFormData(prev => ({ ...prev, phone: formattedValue }));
-                    }}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                     placeholder="(11) 99999-9999"
-                    maxLength={15}
                   />
                 </div>
                 <div className="space-y-2">
@@ -451,21 +438,8 @@ export default function Suppliers() {
                 <Input
                   id="edit-phone"
                   value={formData.phone || ""}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '');
-                    let formattedValue = value;
-
-                    if (value.length > 2) {
-                      formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2);
-                    }
-                    if (value.length > 7) {
-                      formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
-                    }
-
-                    setFormData(prev => ({ ...prev, phone: formattedValue }));
-                  }}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="(11) 99999-9999"
-                  maxLength={15}
                 />
               </div>
               <div className="space-y-2">

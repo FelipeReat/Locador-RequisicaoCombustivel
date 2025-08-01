@@ -502,12 +502,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { mileage } = req.body;
-
+      
       const success = await storage.updateVehicleMileage(id, mileage);
       if (!success) {
         return res.status(404).json({ message: "Veículo não encontrado" });
       }
-
+      
       res.json({ message: "Quilometragem atualizada com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar quilometragem" });
@@ -595,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertCompanySchema.partial().parse(req.body);
       const company = await storage.updateCompany(id, validatedData);
-
+      
       if (!company) {
         return res.status(404).json({ message: "Empresa não encontrada" });
       }
@@ -614,7 +614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteCompany(id);
-
+      
       if (!deleted) {
         return res.status(404).json({ message: "Empresa não encontrada" });
       }
@@ -624,16 +624,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao excluir empresa" });
     }
   });
-
-  app.get("/api/fuel-requisitions/pending", async (req, res) => {
-    try {
-        const allRequisitions = await storage.getFuelRequisitions();
-        const pendingRequisitions = allRequisitions.filter(req => req.status === 'pending');
-        res.json(pendingRequisitions);
-    } catch (error) {
-        res.status(500).json({ message: "Erro ao buscar requisições pendentes" });
-    }
-});
 
   const httpServer = createServer(app);
   return httpServer;

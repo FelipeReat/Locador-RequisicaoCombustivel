@@ -118,7 +118,6 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.refetchQueries({ queryKey: ["/api/users"] });
       toast({
         title: t("success"),
         description: t("user-updated-success"),
@@ -192,18 +191,16 @@ export default function UserManagement() {
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    // Forçar reset do form após um delay para garantir que os valores sejam aplicados
-    setTimeout(() => {
-      form.reset({
-        username: user.username,
-        password: "",
-        email: user.email || "",
-        fullName: user.fullName || "",
-        phone: user.phone || "",
-        position: user.position || "",
-        role: user.role as "admin" | "manager" | "employee",
-      });
-    }, 100);
+    form.reset({
+      username: user.username,
+      password: "",
+      email: user.email || "",
+      fullName: user.fullName || "",
+      phone: user.phone || "",
+      position: user.position || "",
+      role: user.role as "admin" | "manager" | "employee",
+      hireDate: user.hireDate || "",
+    });
     setIsDialogOpen(true);
   };
 
@@ -366,24 +363,7 @@ export default function UserManagement() {
                           <FormItem>
                             <FormLabel>{t("phone")}</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="(11) 99999-9999" 
-                                {...field}
-                                onChange={(e) => {
-                                  const value = e.target.value.replace(/\D/g, '');
-                                  let formattedValue = value;
-
-                                  if (value.length > 2) {
-                                    formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2);
-                                  }
-                                  if (value.length > 7) {
-                                    formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
-                                  }
-
-                                  field.onChange(formattedValue);
-                                }}
-                                maxLength={15}
-                              />
+                              <Input placeholder={t("phone")} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -391,7 +371,7 @@ export default function UserManagement() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <FormField
                         control={form.control}
                         name="position"
@@ -430,7 +410,19 @@ export default function UserManagement() {
                       />
                     </div>
 
-                    
+                    <FormField
+                      control={form.control}
+                      name="hireDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("hire-date")}</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="flex justify-end space-x-2">
                       <Button
