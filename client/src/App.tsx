@@ -37,9 +37,9 @@ function AppRoutes() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex h-screen">
-        <Router>
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex h-screen">
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/dashboard" component={Dashboard} />
@@ -53,9 +53,9 @@ function AppRoutes() {
             <Route path="/settings" component={Settings} />
             <Route component={NotFound} />
           </Switch>
-        </Router>
+        </div>
       </div>
-    </div>
+    </Router>
   );
 }
 

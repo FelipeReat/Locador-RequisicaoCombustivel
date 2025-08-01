@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Check, Clock, FileText } from "lucide-react";
@@ -141,7 +140,7 @@ export default function NotificationsPopover() {
             </Button>
           )}
         </div>
-        
+
         <ScrollArea className="h-[400px]">
           {isLoading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
@@ -196,7 +195,7 @@ export default function NotificationsPopover() {
             </div>
           )}
         </ScrollArea>
-        
+
         {notifications.length > 0 && (
           <>
             <Separator />

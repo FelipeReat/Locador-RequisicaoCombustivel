@@ -60,7 +60,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
               </div>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setLocation("/settings")}>
+            <DropdownMenuItem onClick={() => setLocation('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               {t('settings')}
             </DropdownMenuItem>
