@@ -40,6 +40,7 @@ const formatTimeAgo = (date: Date): string => {
 
 export function NotificationsPopover() {
   const [isOpen, setIsOpen] = useState(false);
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
 
   const { data: requisitions } = useQuery<FuelRequisition[]>({
     queryKey: ["/api/fuel-requisitions"],
@@ -57,40 +58,46 @@ export function NotificationsPopover() {
 
       // Nova requisição nas últimas horas
       if (createdAt > oneHourAgo) {
+        const notificationId = `new_${req.id}`;
         notifications.push({
-          id: `new_${req.id}`,
+          id: notificationId,
           type: "new_requisition",
           title: "Nova Requisição",
           description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
           time: formatTimeAgo(createdAt),
           requisitionId: req.id,
           priority: req.priority as any,
+          isRead: readNotifications.has(notificationId),
         });
       }
 
       // Requisições pendentes de aprovação
       if (req.status === "pending") {
+        const notificationId = `pending_${req.id}`;
         notifications.push({
-          id: `pending_${req.id}`,
+          id: notificationId,
           type: "pending_approval",
           title: "Aguardando Aprovação",
           description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
           time: formatTimeAgo(createdAt),
           requisitionId: req.id,
           priority: req.priority as any,
+          isRead: readNotifications.has(notificationId),
         });
       }
 
       // Mudanças de status recentes
       if (req.approvedDate && new Date(req.approvedDate) > oneHourAgo) {
+        const notificationId = `status_${req.id}`;
         notifications.push({
-          id: `status_${req.id}`,
+          id: notificationId,
           type: "status_change",
           title: req.status === "approved" ? "Requisição Aprovada" : "Status Alterado",
           description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
           time: formatTimeAgo(new Date(req.approvedDate)),
           requisitionId: req.id,
           priority: req.priority as any,
+          isRead: readNotifications.has(notificationId),
         });
       }
     });
@@ -100,6 +107,11 @@ export function NotificationsPopover() {
 
   const notifications = generateNotifications();
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const markAllAsRead = () => {
+    const allNotificationIds = new Set(notifications.map(n => n.id));
+    setReadNotifications(allNotificationIds);
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -167,14 +179,17 @@ export function NotificationsPopover() {
             <div className="p-2">
               {notifications.map((notification, index) => (
                 <div key={notification.id}>
-                  <div className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors">
+                  <div className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
                     <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 mt-1">
+                      <div className="flex-shrink-0 mt-1 relative">
                         {getNotificationIcon(notification.type)}
+                        {!notification.isRead && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          <p className={`text-sm font-medium truncate ${!notification.isRead ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-700 dark:text-gray-200'}`}>
                             {notification.title}
                           </p>
                           {notification.priority && (
@@ -186,7 +201,7 @@ export function NotificationsPopover() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                        <p className={`text-sm truncate ${!notification.isRead ? 'text-gray-700 dark:text-gray-200' : 'text-gray-600 dark:text-gray-300'}`}>
                           {notification.description}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -209,7 +224,7 @@ export function NotificationsPopover() {
             <Button 
               variant="ghost" 
               className="w-full text-sm"
-              onClick={() => setIsOpen(false)}
+              onClick={markAllAsRead}
             >
               Marcar todas como lidas
             </Button>
