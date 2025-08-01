@@ -532,8 +532,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Authentication
     'login': 'Entrar',
     'logout': 'Sair',
-    'username': 'Usuário',
-    'password': 'Senha',
+    'auth-username': 'Usuário',
+    'auth-password': 'Senha',
     'enter-username': 'Digite seu usuário',
     'enter-password': 'Digite sua senha',
     'forgot-password': 'Esqueceu sua senha?',
@@ -1035,8 +1035,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Authentication
     'login': 'Login',
     'logout': 'Logout',
-    'username': 'Username',
-    'password': 'Password',
+    'auth-username': 'Username',
+    'auth-password': 'Password',
     'enter-username': 'Enter your username',
     'enter-password': 'Enter your password',
     'forgot-password': 'Forgot your password?',
@@ -1538,8 +1538,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Authentication
     'login': 'Iniciar Sesión',
     'logout': 'Cerrar Sesión',
-    'username': 'Usuario',
-    'password': 'Contraseña',
+    'auth-username': 'Usuario',
+    'auth-password': 'Contraseña',
     'enter-username': 'Ingrese su usuario',
     'enter-password': 'Ingrese su contraseña',
     'forgot-password': '¿Olvidó su contraseña?',
