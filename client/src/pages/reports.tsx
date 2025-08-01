@@ -38,9 +38,7 @@ export default function Reports() {
     queryKey: ["/api/fuel-requisitions/stats/overview"],
   });
 
-  const { data: departmentStats, isLoading: departmentLoading } = useQuery({
-    queryKey: ["/api/fuel-requisitions/stats/department"],
-  });
+  
 
   const { data: fuelTypeStats, isLoading: fuelTypeLoading } = useQuery({
     queryKey: ["/api/fuel-requisitions/stats/fuel-type"],
@@ -196,7 +194,7 @@ export default function Reports() {
 
   const monthlyTrendData = generateMonthlyTrend();
 
-  if (statsLoading || departmentLoading || fuelTypeLoading || requisitionsLoading) {
+  if (statsLoading || fuelTypeLoading || requisitionsLoading) {
     return <LoadingSpinner message={t('loading-reports')} />;
   }
 
@@ -355,27 +353,7 @@ export default function Reports() {
         </Card>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Department Chart */}
-          <Card className="bg-white dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle className="text-gray-800 dark:text-white">{t('consumption-by-department')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="requisitions" fill="#1976D2" name="Requisições" />
-                  <Bar dataKey="liters" fill="#FF9800" name="Litros" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           {/* Fuel Type Chart */}
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
@@ -406,38 +384,7 @@ export default function Reports() {
         </div>
 
         {/* Detailed Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          {/* Department Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('department-details')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">{t('department')}</th>
-                      <th className="text-right py-2">{t('requisitions-count')}</th>
-                      <th className="text-right py-2">{t('liters-count')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {departmentStats?.map((stat: any) => (
-                      <tr key={stat.department} className="border-b">
-                        <td className="py-2">{getDepartmentLabel(stat.department)}</td>
-                        <td className="text-right py-2">{stat.count}</td>
-                        <td className="text-right py-2">
-                          {stat.totalLiters.toLocaleString("pt-BR")}L
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mt-8">
           {/* Fuel Type Table */}
           <Card>
             <CardHeader>
