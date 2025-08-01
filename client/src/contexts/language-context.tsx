@@ -165,6 +165,10 @@ const translations: Record<Language, Record<string, string>> = {
     'last-login': 'Último acesso',
     'account-created': 'Conta criada',
 
+    // Empresa
+    'name': 'Nome',
+    'contact': 'Contato',
+
     // Mensagens
     'no-data': 'Nenhum dado encontrado',
     'no-results': 'Nenhum resultado encontrado',

@@ -526,6 +526,7 @@ export class MemStorage implements IStorage {
     const supplier: Supplier = {
       id,
       name: insertSupplier.name,
+      fantasia: insertSupplier.fantasia,
       cnpj: insertSupplier.cnpj,
       responsavel: insertSupplier.responsavel,
       email: insertSupplier.email || null,
