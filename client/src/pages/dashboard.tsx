@@ -24,7 +24,13 @@ export default function Dashboard() {
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
   const { t } = useLanguage();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery<{
+    totalRequests: number;
+    pendingRequests: number;
+    approvedRequests: number;
+    rejectedRequests: number;
+    totalLiters: number;
+  }>({
     queryKey: ["/api/fuel-requisitions/stats/overview"],
   });
 
@@ -36,7 +42,7 @@ export default function Dashboard() {
     queryKey: ["/api/suppliers"],
   });
 
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<Array<{ id: number; fullName?: string }>>({
     queryKey: ["/api/users"],
   });
 
@@ -52,7 +58,7 @@ export default function Dashboard() {
   };
 
   const getUserName = (requesterId: number) => {
-    const user = users.find(u => u.id === requesterId);
+    const user = users?.find(u => u.id === requesterId);
     return user?.fullName || "-";
   };
 
