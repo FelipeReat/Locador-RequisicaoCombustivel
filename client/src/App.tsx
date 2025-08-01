@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Router, Route, Switch } from "wouter";
 import { ThemeProvider } from "./contexts/theme-context";
 import { LanguageProvider } from "./contexts/language-context";
 import { NotificationProvider } from "./contexts/notification-context";
@@ -30,35 +30,42 @@ function App() {
           <NotificationProvider>
             <Toaster />
             <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route
-              path="/*"
-              element={
-                <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-                  <Sidebar />
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <Routes>
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/requisitions" element={<Requisitions />} />
-                      <Route path="/new-requisition" element={<NewRequisition />} />
-                      <Route path="/reports" element={<Reports />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/user-management" element={<UserManagement />} />
-                      <Route path="/fleet-management" element={<FleetManagement />} />
-                      <Route path="/companies" element={<Companies />} />
-                      <Route path="/suppliers" element={<Suppliers />} />
-                      <Route path="/edit-values" element={<EditValues />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+              <Switch>
+                <Route path="/login" component={Login} />
+                <Route path="/" component={() => <Dashboard />} />
+                <Route path="/dashboard" component={Dashboard} />
+                <Route path="/requisitions" component={Requisitions} />
+                <Route path="/new-requisition" component={NewRequisition} />
+                <Route path="/reports" component={Reports} />
+                <Route path="/settings" component={Settings} />
+                <Route path="/user-management" component={UserManagement} />
+                <Route path="/fleet-management" component={FleetManagement} />
+                <Route path="/companies" component={Companies} />
+                <Route path="/suppliers" component={Suppliers} />
+                <Route path="/edit-values" component={EditValues} />
+                <Route>
+                  <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+                    <Sidebar />
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      <Switch>
+                        <Route path="/dashboard" component={Dashboard} />
+                        <Route path="/requisitions" component={Requisitions} />
+                        <Route path="/new-requisition" component={NewRequisition} />
+                        <Route path="/reports" component={Reports} />
+                        <Route path="/settings" component={Settings} />
+                        <Route path="/user-management" component={UserManagement} />
+                        <Route path="/fleet-management" component={FleetManagement} />
+                        <Route path="/companies" component={Companies} />
+                        <Route path="/suppliers" component={Suppliers} />
+                        <Route path="/edit-values" component={EditValues} />
+                        <Route component={NotFound} />
+                      </Switch>
+                    </div>
                   </div>
-                </div>
-              }
-            />
-          </Routes>
-        </Router>
-        </NotificationProvider>
+                </Route>
+              </Switch>
+            </Router>
+          </NotificationProvider>
         </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
