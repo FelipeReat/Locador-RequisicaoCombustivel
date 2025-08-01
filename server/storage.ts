@@ -212,9 +212,9 @@ export class MemStorage implements IStorage {
         position: "Almoxarifado",
         role: "manager",
         active: "true",
-        hireDate: null,
-        createdAt: "2024-01-01T00:00:00.000Z",
-        updatedAt: "2024-01-01T00:00:00.000Z",
+        hireDate: yesterday.toISOString(),
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
       },
       {
         id: 3,
@@ -247,7 +247,7 @@ export class MemStorage implements IStorage {
         updatedAt: yesterday.toISOString(),
       },
       {
-        id: 6,
+        id: 5,
         username: "david.medeiros",
         password: "123456",
         email: "david.medeiros@blomaq.com.br",
@@ -262,7 +262,7 @@ export class MemStorage implements IStorage {
         updatedAt: yesterday.toISOString(),
       },
       {
-        id: 7,
+        id: 6,
         username: "wesley.fernandes",
         password: "123456",
         email: "wfernandes@blomaq.com.br",
@@ -279,7 +279,7 @@ export class MemStorage implements IStorage {
     ];
 
     sampleUsers.forEach(user => this.users.set(user.id, user));
-    this.currentUserId = 8;
+    this.currentUserId = 7;
 
     // Sample vehicles from provided images
     const sampleVehicles = [
