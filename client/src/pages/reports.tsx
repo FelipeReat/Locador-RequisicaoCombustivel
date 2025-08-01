@@ -38,9 +38,7 @@ export default function Reports() {
     queryKey: ["/api/fuel-requisitions/stats/overview"],
   });
 
-  const { data: departmentStats, isLoading: departmentLoading } = useQuery({
-    queryKey: ["/api/fuel-requisitions/stats/department"],
-  });
+
 
   const { data: fuelTypeStats, isLoading: fuelTypeLoading } = useQuery({
     queryKey: ["/api/fuel-requisitions/stats/fuel-type"],
@@ -65,7 +63,7 @@ export default function Reports() {
       pdfGenerator.generateRequisitionsReport(allRequisitions, {
         title: 'Relatório Completo de Requisições',
         subtitle: `Período: ${new Date().toLocaleDateString('pt-BR')}`,
-        company: 'FuelControl System'
+        company: 'Sistema de Controle de Abastecimento'
       });
       pdfGenerator.save(`relatorio-completo-${new Date().toISOString().split('T')[0]}.pdf`);
       
@@ -108,7 +106,7 @@ export default function Reports() {
       pdfGenerator.generateRequisitionsReport(monthlyData, {
         title: 'Análise Mensal de Requisições',
         subtitle: `Período: ${getMonthName(selectedMonth)} de ${selectedYear}`,
-        company: 'FuelControl System'
+        company: 'Sistema de Controle de Abastecimento'
       });
       pdfGenerator.save(`analise-mensal-${selectedMonth + 1}-${selectedYear}.pdf`);
       
@@ -125,16 +123,7 @@ export default function Reports() {
     }
   };
 
-  const getDepartmentLabel = (department: string) => {
-    const labels = {
-      logistica: t('logistics'),
-      manutencao: t('maintenance'),
-      transporte: t('transport'),
-      operacoes: t('operations'),
-      administracao: t('administration'),
-    };
-    return labels[department as keyof typeof labels] || department;
-  };
+
 
   const getFuelTypeLabel = (fuelType: string) => {
     const labels = {
@@ -146,11 +135,7 @@ export default function Reports() {
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
 
-  const chartData = departmentStats?.map((stat: any) => ({
-    name: getDepartmentLabel(stat.department),
-    requisitions: stat.count,
-    liters: stat.totalLiters,
-  })) || [];
+
 
   const pieData = fuelTypeStats?.map((stat: any, index: number) => ({
     name: getFuelTypeLabel(stat.fuelType),
@@ -196,7 +181,7 @@ export default function Reports() {
 
   const monthlyTrendData = generateMonthlyTrend();
 
-  if (statsLoading || departmentLoading || fuelTypeLoading || requisitionsLoading) {
+  if (statsLoading || fuelTypeLoading || requisitionsLoading) {
     return <LoadingSpinner message={t('loading-reports')} />;
   }
 
@@ -354,121 +339,64 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Department Chart */}
-          <Card className="bg-white dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle className="text-gray-800 dark:text-white">{t('consumption-by-department')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="requisitions" fill="#1976D2" name="Requisições" />
-                  <Bar dataKey="liters" fill="#FF9800" name="Litros" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {/* Fuel Type Chart */}
+        <Card className="bg-white dark:bg-gray-800 mb-8">
+          <CardHeader>
+            <CardTitle className="text-gray-800 dark:text-white">{t('distribution-by-fuel-type')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {pieData.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-          {/* Fuel Type Chart */}
-          <Card className="bg-white dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle className="text-gray-800 dark:text-white">{t('distribution-by-fuel-type')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Detailed Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          {/* Department Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('department-details')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">{t('department')}</th>
-                      <th className="text-right py-2">{t('requisitions-count')}</th>
-                      <th className="text-right py-2">{t('liters-count')}</th>
+        {/* Fuel Type Details Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('fuel-type-details')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2">{t('fuel-label')}</th>
+                    <th className="text-right py-2">{t('requisitions-count')}</th>
+                    <th className="text-right py-2">{t('liters-count')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fuelTypeStats?.map((stat: any) => (
+                    <tr key={stat.fuelType} className="border-b">
+                      <td className="py-2">{getFuelTypeLabel(stat.fuelType)}</td>
+                      <td className="text-right py-2">{stat.count}</td>
+                      <td className="text-right py-2">
+                        {stat.totalLiters.toLocaleString("pt-BR")}L
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {departmentStats?.map((stat: any) => (
-                      <tr key={stat.department} className="border-b">
-                        <td className="py-2">{getDepartmentLabel(stat.department)}</td>
-                        <td className="text-right py-2">{stat.count}</td>
-                        <td className="text-right py-2">
-                          {stat.totalLiters.toLocaleString("pt-BR")}L
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Fuel Type Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('fuel-type-details')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">{t('fuel-label')}</th>
-                      <th className="text-right py-2">{t('requisitions-count')}</th>
-                      <th className="text-right py-2">{t('liters-count')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fuelTypeStats?.map((stat: any) => (
-                      <tr key={stat.fuelType} className="border-b">
-                        <td className="py-2">{getFuelTypeLabel(stat.fuelType)}</td>
-                        <td className="text-right py-2">{stat.count}</td>
-                        <td className="text-right py-2">
-                          {stat.totalLiters.toLocaleString("pt-BR")}L
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </>
   );

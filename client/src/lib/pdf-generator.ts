@@ -22,7 +22,7 @@ export class PDFGenerator {
   }
 
   private addHeader(options: PDFOptions) {
-    const { title = 'Relatório de Requisições', subtitle, company = 'FuelControl System', date = new Date().toLocaleDateString('pt-BR') } = options;
+    const { title = 'Relatório de Requisições', subtitle, company = 'Sistema de Controle de Abastecimento', date = new Date().toLocaleDateString('pt-BR') } = options;
 
     // Logo/Company
     this.doc.setFontSize(16);
@@ -70,7 +70,7 @@ export class PDFGenerator {
     const basicInfo = [
       ['ID da Requisição:', `#${String(requisition.id).padStart(4, '0')}`],
       ['Cliente:', requisition.client],
-      ['Fornecedor:', requisition.supplierInfo?.address || 'N/A'],
+      ['Fornecedor:', requisition.supplierId?.toString() || 'N/A'],
       ['Data de Criação:', new Date(requisition.createdAt).toLocaleDateString('pt-BR')],
       ['Data Necessária:', requisition.requiredDate ? new Date(requisition.requiredDate).toLocaleDateString('pt-BR') : 'N/A'],
       ['Status:', this.getStatusLabel(requisition.status)],
