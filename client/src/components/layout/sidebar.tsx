@@ -113,9 +113,18 @@ export default function Sidebar() {
               {user?.fullName || user?.username}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {user?.role === 'admin' ? 'Administrador' : user?.position}
+              {user?.role === 'admin' ? 'Administrador' : (user as any)?.position || 'Funcionário'}
             </p>
           </div>
+          <Button 
+            onClick={logout} 
+            variant="ghost" 
+            size="sm" 
+            className="p-1 h-6 w-6 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+            title="Sair do sistema"
+          >
+            <LogOut className="h-3 w-3" />
+          </Button>
         </div>
         <Button 
           onClick={logout} 

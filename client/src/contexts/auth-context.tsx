@@ -42,13 +42,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     queryKey: ['/api/auth/me'],
     retry: false,
     refetchOnWindowFocus: false,
+    enabled: !user, // Only run if user is not already set
   });
 
   useEffect(() => {
-    if (currentUser && typeof currentUser === 'object') {
+    if (currentUser && typeof currentUser === 'object' && !user) {
       setUser(currentUser as User);
     }
-  }, [currentUser]);
+  }, [currentUser, user]);
 
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
@@ -67,8 +68,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = () => {
     setUser(null);
-    queryClient.clear();
+    queryClient.removeQueries();
+    queryClient.setQueryData(['/api/auth/me'], null);
     localStorage.removeItem('auth-token');
+    // Force a page reload to ensure clean state
+    window.location.reload();
   };
 
   const value = {
