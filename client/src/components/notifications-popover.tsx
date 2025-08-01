@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import type { FuelRequisition } from "@shared/schema";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface NotificationItem {
   id: string;
@@ -52,7 +54,7 @@ export function NotificationsPopover() {
 
     requisitions.forEach(req => {
       const createdAt = new Date(req.createdAt);
-      
+
       // Nova requisição nas últimas horas
       if (createdAt > oneHourAgo) {
         notifications.push({

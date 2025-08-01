@@ -1,7 +1,7 @@
 
 import { User, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,7 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const { t } = useLanguage();
   const { toast } = useToast();
 
