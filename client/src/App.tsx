@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Router, Route, Switch } from "wouter";
 import { ThemeProvider } from "./contexts/theme-context";
@@ -20,6 +21,17 @@ import Suppliers from "./pages/suppliers";
 import EditValues from "./pages/edit-values";
 import NotFound from "./pages/not-found";
 
+function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const queryClient = new QueryClient();
 
@@ -32,37 +44,66 @@ function App() {
             <Router>
               <Switch>
                 <Route path="/login" component={Login} />
-                <Route path="/" component={() => <Dashboard />} />
-                <Route path="/dashboard" component={Dashboard} />
-                <Route path="/requisitions" component={Requisitions} />
-                <Route path="/new-requisition" component={NewRequisition} />
-                <Route path="/reports" component={Reports} />
-                <Route path="/settings" component={Settings} />
-                <Route path="/user-management" component={UserManagement} />
-                <Route path="/fleet-management" component={FleetManagement} />
-                <Route path="/companies" component={Companies} />
-                <Route path="/suppliers" component={Suppliers} />
-                <Route path="/edit-values" component={EditValues} />
-                <Route>
-                  <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-                    <Sidebar />
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                      <Switch>
-                        <Route path="/dashboard" component={Dashboard} />
-                        <Route path="/requisitions" component={Requisitions} />
-                        <Route path="/new-requisition" component={NewRequisition} />
-                        <Route path="/reports" component={Reports} />
-                        <Route path="/settings" component={Settings} />
-                        <Route path="/user-management" component={UserManagement} />
-                        <Route path="/fleet-management" component={FleetManagement} />
-                        <Route path="/companies" component={Companies} />
-                        <Route path="/suppliers" component={Suppliers} />
-                        <Route path="/edit-values" component={EditValues} />
-                        <Route component={NotFound} />
-                      </Switch>
-                    </div>
-                  </div>
-                </Route>
+                <Route path="/" component={() => (
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                )} />
+                <Route path="/dashboard" component={() => (
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                )} />
+                <Route path="/requisitions" component={() => (
+                  <AppLayout>
+                    <Requisitions />
+                  </AppLayout>
+                )} />
+                <Route path="/new-requisition" component={() => (
+                  <AppLayout>
+                    <NewRequisition />
+                  </AppLayout>
+                )} />
+                <Route path="/reports" component={() => (
+                  <AppLayout>
+                    <Reports />
+                  </AppLayout>
+                )} />
+                <Route path="/settings" component={() => (
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                )} />
+                <Route path="/user-management" component={() => (
+                  <AppLayout>
+                    <UserManagement />
+                  </AppLayout>
+                )} />
+                <Route path="/fleet-management" component={() => (
+                  <AppLayout>
+                    <FleetManagement />
+                  </AppLayout>
+                )} />
+                <Route path="/companies" component={() => (
+                  <AppLayout>
+                    <Companies />
+                  </AppLayout>
+                )} />
+                <Route path="/suppliers" component={() => (
+                  <AppLayout>
+                    <Suppliers />
+                  </AppLayout>
+                )} />
+                <Route path="/edit-values" component={() => (
+                  <AppLayout>
+                    <EditValues />
+                  </AppLayout>
+                )} />
+                <Route component={() => (
+                  <AppLayout>
+                    <NotFound />
+                  </AppLayout>
+                )} />
               </Switch>
             </Router>
           </NotificationProvider>
