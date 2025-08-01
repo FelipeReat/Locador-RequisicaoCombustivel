@@ -1,79 +1,62 @@
-
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Router, Route, Switch } from "wouter";
+import { Switch, Route } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { LanguageProvider } from "@/contexts/language-context";
-import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import { NotificationProvider } from "@/contexts/notification-context";
-import ProtectedRoute from "@/components/protected-route";
-import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
-import NewRequisition from "@/pages/new-requisition";
 import Requisitions from "@/pages/requisitions";
+import NewRequisition from "@/pages/new-requisition";
+import Reports from "@/pages/reports";
 import UserManagement from "@/pages/user-management";
 import FleetManagement from "@/pages/fleet-management";
-import Suppliers from "@/pages/suppliers";
-import Companies from "@/pages/companies";
-import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
+import Sidebar from "@/components/layout/sidebar";
+import Suppliers from "@/pages/suppliers";
+import Companies from "@/pages/companies";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-function AppRoutes() {
-  const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
-    return <Login />;
-  }
-
+function Router() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex h-screen">
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/dashboard" component={Dashboard} />
-            <Route path="/new-requisition" component={NewRequisition} />
-            <Route path="/requisitions" component={Requisitions} />
-            <Route path="/user-management" component={UserManagement} />
-            <Route path="/fleet" component={FleetManagement} />
-            <Route path="/suppliers" component={Suppliers} />
-            <Route path="/companies" component={Companies} />
-            <Route path="/reports" component={Reports} />
-            <Route path="/settings" component={Settings} />
-            <Route component={NotFound} />
-          </Switch>
-        </div>
+    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/requisitions" component={Requisitions} />
+          <Route path="/new-requisition" component={NewRequisition} />
+          <Route path="/reports" component={Reports} />
+          <Route path="/user-management" component={UserManagement} />
+          <Route path="/fleet-management" component={FleetManagement} />
+          <Route path="/suppliers" component={Suppliers} />
+          <Route path="/companies" component={Companies} />
+          <Route path="/fleet-management" component={FleetManagement} />
+          <Route path="/reports" component={Reports} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/user-management" component={UserManagement} />
+          <Route component={NotFound} />
+        </Switch>
       </div>
-    </Router>
+    </div>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <ThemeProvider>
-          <LanguageProvider>
-            <AuthProvider>
-              <NotificationProvider>
-                <AppRoutes />
-                <Toaster />
-              </NotificationProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </TooltipProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <NotificationProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </NotificationProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

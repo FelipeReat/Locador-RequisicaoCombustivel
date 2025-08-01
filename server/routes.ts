@@ -4,29 +4,6 @@ import { storage } from "./storage";
 import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication routes
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      
-      // Simple authentication - in production, use proper password hashing
-      if (username === "admin" && password === "admin123") {
-        const user = {
-          id: 1,
-          username: "admin",
-          fullName: "Administrador",
-          email: "admin@empresa.com",
-          role: "admin"
-        };
-        res.json(user);
-      } else {
-        res.status(401).json({ message: "Credenciais inválidas" });
-      }
-    } catch (error) {
-      res.status(500).json({ message: "Erro interno do servidor" });
-    }
-  });
-
   // User routes
   app.get("/api/user/profile", async (req, res) => {
     try {

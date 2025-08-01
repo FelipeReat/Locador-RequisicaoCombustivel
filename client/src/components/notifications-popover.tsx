@@ -10,186 +10,209 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { useLanguage } from "@/contexts/language-context";
+import type { FuelRequisition } from "@shared/schema";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-interface Notification {
-  id: number;
+interface NotificationItem {
+  id: string;
+  type: "new_requisition" | "pending_approval" | "status_change";
   title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  read: boolean;
-  createdAt: string;
-  actionUrl?: string;
+  description: string;
+  time: string;
+  requisitionId?: number;
+  priority?: "low" | "medium" | "high" | "urgent";
+  isRead?: boolean;
 }
 
-// Função para formatar tempo relativo
-const formatTimeAgo = (dateString: string): string => {
-  const date = new Date(dateString);
+const formatTimeAgo = (date: Date): string => {
   const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffInSeconds < 60) {
-    return 'Agora há pouco';
-  } else if (diffInSeconds < 3600) {
-    const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} min atrás`;
-  } else if (diffInSeconds < 86400) {
-    const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours}h atrás`;
-  } else {
-    const days = Math.floor(diffInSeconds / 86400);
-    return `${days}d atrás`;
-  }
+  if (diffMins < 1) return "Agora mesmo";
+  if (diffMins < 60) return `${diffMins}m atrás`;
+  if (diffHours < 24) return `${diffHours}h atrás`;
+  return `${diffDays}d atrás`;
 };
 
-export default function NotificationsPopover() {
-  const { t } = useLanguage();
+export function NotificationsPopover() {
   const [isOpen, setIsOpen] = useState(false);
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
 
-  // Query para buscar notificações
-  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
-    queryKey: ['notifications'],
-    queryFn: async () => {
-      // Simulando dados de notificação por enquanto
-      return [
-        {
-          id: 1,
-          title: 'Nova Requisição',
-          message: 'Requisição #001 foi criada por João Silva',
-          type: 'info',
-          read: false,
-          createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-          actionUrl: '/requisitions/1'
-        },
-        {
-          id: 2,
-          title: 'Aprovação Pendente',
-          message: 'Requisição #002 aguarda sua aprovação',
-          type: 'warning',
-          read: false,
-          createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          actionUrl: '/requisitions/2'
-        },
-        {
-          id: 3,
-          title: 'Requisição Aprovada',
-          message: 'Sua requisição #003 foi aprovada',
-          type: 'success',
-          read: true,
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          actionUrl: '/requisitions/3'
-        }
-      ];
-    },
-    refetchInterval: 30000, // Recarregar a cada 30 segundos
+  const { data: requisitions } = useQuery<FuelRequisition[]>({
+    queryKey: ["/api/fuel-requisitions"],
   });
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const generateNotifications = (): NotificationItem[] => {
+    if (!requisitions) return [];
 
-  const getNotificationIcon = (type: Notification['type']) => {
+    const notifications: NotificationItem[] = [];
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+    requisitions.forEach(req => {
+      const createdAt = new Date(req.createdAt);
+
+      // Nova requisição nas últimas horas
+      if (createdAt > oneHourAgo) {
+        const notificationId = `new_${req.id}`;
+        notifications.push({
+          id: notificationId,
+          type: "new_requisition",
+          title: "Nova Requisição",
+          description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
+          time: formatTimeAgo(createdAt),
+          requisitionId: req.id,
+          priority: req.priority as any,
+          isRead: readNotifications.has(notificationId),
+        });
+      }
+
+      // Requisições pendentes de aprovação
+      if (req.status === "pending") {
+        const notificationId = `pending_${req.id}`;
+        notifications.push({
+          id: notificationId,
+          type: "pending_approval",
+          title: "Aguardando Aprovação",
+          description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
+          time: formatTimeAgo(createdAt),
+          requisitionId: req.id,
+          priority: req.priority as any,
+          isRead: readNotifications.has(notificationId),
+        });
+      }
+
+      // Mudanças de status recentes
+      if (req.approvedDate && new Date(req.approvedDate) > oneHourAgo) {
+        const notificationId = `status_${req.id}`;
+        notifications.push({
+          id: notificationId,
+          type: "status_change",
+          title: req.status === "approved" ? "Requisição Aprovada" : "Status Alterado",
+          description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
+          time: formatTimeAgo(new Date(req.approvedDate)),
+          requisitionId: req.id,
+          priority: req.priority as any,
+          isRead: readNotifications.has(notificationId),
+        });
+      }
+    });
+
+    return notifications.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  };
+
+  const notifications = generateNotifications();
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const markAllAsRead = () => {
+    const allNotificationIds = new Set(notifications.map(n => n.id));
+    setReadNotifications(allNotificationIds);
+  };
+
+  const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'info':
+      case "new_requisition":
         return <FileText className="h-4 w-4 text-blue-500" />;
-      case 'success':
-        return <Check className="h-4 w-4 text-green-500" />;
-      case 'warning':
+      case "pending_approval":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'error':
-        return <Bell className="h-4 w-4 text-red-500" />;
+      case "status_change":
+        return <Check className="h-4 w-4 text-green-500" />;
       default:
-        return <Bell className="h-4 w-4" />;
+        return <Bell className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const markAsRead = async (notificationId: number) => {
-    // TODO: Implementar chamada para API para marcar como lida
-    console.log('Marcando notificação como lida:', notificationId);
-  };
-
-  const markAllAsRead = async () => {
-    // TODO: Implementar chamada para API para marcar todas como lidas
-    console.log('Marcando todas as notificações como lidas');
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case "urgent":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+      case "high":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
   };
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-primary transition-colors"
+        >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </Badge>
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h4 className="font-semibold">{t('notifications')}</h4>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-              className="text-xs"
-            >
-              Marcar todas como lidas
-            </Button>
-          )}
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              Notificações
+            </h3>
+            <Badge variant="secondary" className="text-xs">
+              {notifications.length}
+            </Badge>
+          </div>
         </div>
 
-        <ScrollArea className="h-[400px]">
-          {isLoading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              {t('loading')}
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Nenhuma notificação
+        <ScrollArea className="h-80">
+          {notifications.length === 0 ? (
+            <div className="p-6 text-center">
+              <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Nenhuma notificação no momento
+              </p>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="p-2">
               {notifications.map((notification, index) => (
-                <div
-                  key={notification.id}
-                  className={`p-4 hover:bg-muted/50 cursor-pointer transition-colors ${
-                    !notification.read ? 'bg-blue-50/50' : ''
-                  }`}
-                  onClick={() => {
-                    if (!notification.read) {
-                      markAsRead(notification.id);
-                    }
-                    if (notification.actionUrl) {
-                      // TODO: Navegar para a URL
-                      console.log('Navegando para:', notification.actionUrl);
-                    }
-                    setIsOpen(false);
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 mt-0.5">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm truncate">
-                          {notification.title}
-                        </p>
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                <div key={notification.id}>
+                  <div className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1 relative">
+                        {getNotificationIcon(notification.type)}
+                        {!notification.isRead && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {formatTimeAgo(notification.createdAt)}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className={`text-sm font-medium truncate ${!notification.isRead ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-700 dark:text-gray-200'}`}>
+                            {notification.title}
+                          </p>
+                          {notification.priority && (
+                            <Badge 
+                              variant="secondary" 
+                              className={`text-xs ml-2 ${getPriorityColor(notification.priority)}`}
+                            >
+                              {notification.priority}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className={`text-sm truncate ${!notification.isRead ? 'text-gray-700 dark:text-gray-200' : 'text-gray-600 dark:text-gray-300'}`}>
+                          {notification.description}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {notification.time}
+                        </p>
+                      </div>
                     </div>
                   </div>
+                  {index < notifications.length - 1 && (
+                    <Separator className="my-1" />
+                  )}
                 </div>
               ))}
             </div>
@@ -197,23 +220,15 @@ export default function NotificationsPopover() {
         </ScrollArea>
 
         {notifications.length > 0 && (
-          <>
-            <Separator />
-            <div className="p-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-center text-xs"
-                onClick={() => {
-                  // TODO: Navegar para página de notificações
-                  console.log('Ver todas as notificações');
-                  setIsOpen(false);
-                }}
-              >
-                Ver todas as notificações
-              </Button>
-            </div>
-          </>
+          <div className="p-3 border-t">
+            <Button 
+              variant="ghost" 
+              className="w-full text-sm"
+              onClick={markAllAsRead}
+            >
+              Marcar todas como lidas
+            </Button>
+          </div>
         )}
       </PopoverContent>
     </Popover>
