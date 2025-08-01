@@ -160,12 +160,23 @@ export function EditApprovedRequisitionModal({
             </Label>
             <Input
               value={pricePerLiter}
-              onChange={(e) => setPricePerLiter(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 4) {
+                  let formattedValue = value;
+                  if (value.length > 2) {
+                    formattedValue = value.slice(0, -2) + ',' + value.slice(-2);
+                  } else if (value.length === 1) {
+                    formattedValue = '0,0' + value;
+                  } else if (value.length === 2) {
+                    formattedValue = '0,' + value;
+                  }
+                  setPricePerLiter(formattedValue);
+                }
+              }}
               placeholder="Ex: 5,89"
               className="w-full"
-              type="number"
-              min="0"
-              step="0.01"
+              maxLength={5}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Valor pago por litro de combustível
@@ -178,12 +189,18 @@ export function EditApprovedRequisitionModal({
             </Label>
             <Input
               value={fiscalCoupon}
-              onChange={(e) => setFiscalCoupon(e.target.value)}
-              placeholder="Ex: 123456789"
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 6) {
+                  setFiscalCoupon(value);
+                }
+              }}
+              placeholder="Ex: 123456"
               className="w-full"
+              maxLength={6}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Número do cupom fiscal para controle
+              Número do cupom fiscal (máximo 6 dígitos)
             </p>
           </div>
 

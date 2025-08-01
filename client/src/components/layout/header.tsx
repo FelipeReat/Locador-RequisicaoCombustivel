@@ -1,4 +1,5 @@
-import { Bell, User } from "lucide-react";
+import { User } from "lucide-react";
+import { NotificationsPopover } from "@/components/notifications-popover";
 
 interface HeaderProps {
   title: string;
@@ -14,12 +15,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
           {subtitle && <p className="text-sm text-gray-600 dark:text-gray-300">{subtitle}</p>}
         </div>
         <div className="flex items-center space-x-4">
-          <button className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              3
-            </span>
-          </button>
+          <NotificationsPopover />
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
               <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
