@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
@@ -51,7 +52,16 @@ import { DataCleanupDialog } from "@/components/data-cleanup-dialog";
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("profile");
+
+  // Set initial tab from URL parameters
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["profile", "security", "notifications", "system"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { settings: notificationSettings, updateSetting } = useNotifications();

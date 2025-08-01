@@ -3,8 +3,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { type FuelRequisition } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/money-input";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -117,7 +117,7 @@ export function EditApprovedRequisitionModal({
   const calculateTotal = () => {
     const quantityNum = parseFloat(quantity.replace(",", "."));
     const priceNum = parseFloat(pricePerLiter.replace(",", "."));
-    
+
     if (!isNaN(quantityNum) && !isNaN(priceNum)) {
       return (quantityNum * priceNum).toFixed(2).replace(".", ",");
     }
@@ -158,25 +158,11 @@ export function EditApprovedRequisitionModal({
             <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Preço por Litro (R$) *
             </Label>
-            <Input
+            <MoneyInput
               value={pricePerLiter}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                if (value.length <= 4) {
-                  let formattedValue = value;
-                  if (value.length > 2) {
-                    formattedValue = value.slice(0, -2) + ',' + value.slice(-2);
-                  } else if (value.length === 1) {
-                    formattedValue = '0,0' + value;
-                  } else if (value.length === 2) {
-                    formattedValue = '0,' + value;
-                  }
-                  setPricePerLiter(formattedValue);
-                }
-              }}
+              onChange={(value) => setPricePerLiter(value)}
               placeholder="Ex: 5,89"
               className="w-full"
-              maxLength={5}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Valor pago por litro de combustível
@@ -232,7 +218,7 @@ export function EditApprovedRequisitionModal({
             <X className="mr-2 h-4 w-4" />
             Cancelar
           </Button>
-          
+
           <Button
             onClick={handleSave}
             disabled={updateRequisition.isPending}
