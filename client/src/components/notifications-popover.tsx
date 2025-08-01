@@ -1,3 +1,6 @@
+The code modifies the placement of the formatTimeAgo function in the NotificationsPopover component.
+```
+```replit_final_file
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Check, Clock, FileText } from "lucide-react";

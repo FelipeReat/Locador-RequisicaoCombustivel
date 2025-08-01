@@ -528,6 +528,18 @@ const translations: Record<Language, Record<string, string>> = {
     'security-tip-3': 'Não compartilhe sua senha com outras pessoas',
     'security-tip-4': 'Altere sua senha regularmente',
     'security-tip-5': 'Evite usar informações pessoais óbvias',
+
+    // Authentication
+    'login': 'Entrar',
+    'logout': 'Sair',
+    'username': 'Usuário',
+    'password': 'Senha',
+    'enter-username': 'Digite seu usuário',
+    'enter-password': 'Digite sua senha',
+    'forgot-password': 'Esqueceu sua senha?',
+    'login-system': 'Entrar no Sistema',
+    'invalid-credentials': 'Usuário ou senha inválidos',
+    'logging-in': 'Entrando...',
   },
   'en-US': {
     // Navigation
@@ -1019,6 +1031,18 @@ const translations: Record<Language, Record<string, string>> = {
     'security-tip-3': 'Do not share your password with others',
     'security-tip-4': 'Change your password regularly',
     'security-tip-5': 'Avoid using obvious personal information',
+
+    // Authentication
+    'login': 'Login',
+    'logout': 'Logout',
+    'username': 'Username',
+    'password': 'Password',
+    'enter-username': 'Enter your username',
+    'enter-password': 'Enter your password',
+    'forgot-password': 'Forgot your password?',
+    'login-system': 'Login System',
+    'invalid-credentials': 'Invalid username or password',
+    'logging-in': 'Logging in...',
   },
   'es-ES': {
     // Navegación
@@ -1415,7 +1439,7 @@ const translations: Record<Language, Record<string, string>> = {
     'error-changing-status': 'Error al cambiar estado',
 
     // Gestión de Usuarios
-    'user-management': 'Gestión de Usuarios',
+    'Gestión de Usuarios',
     'manage-employees-permissions': 'Gestione empleados y sus permisos del sistema',
     'search-users': 'Buscar usuarios...',
     'new-user': 'Nuevo Usuario',
@@ -1510,6 +1534,18 @@ const translations: Record<Language, Record<string, string>> = {
     'security-tip-3': 'No comparta su contraseña con otras personas',
     'security-tip-4': 'Cambie su contraseña regularmente',
     'security-tip-5': 'Evite usar información personal obvia',
+
+    // Authentication
+    'login': 'Iniciar Sesión',
+    'logout': 'Cerrar Sesión',
+    'username': 'Usuario',
+    'password': 'Contraseña',
+    'enter-username': 'Ingrese su usuario',
+    'enter-password': 'Ingrese su contraseña',
+    'forgot-password': '¿Olvidó su contraseña?',
+    'login-system': 'Acceder al Sistema',
+    'invalid-credentials': 'Credenciales inválidas',
+    'logging-in': 'Iniciando sesión...',
   },
 };
 
