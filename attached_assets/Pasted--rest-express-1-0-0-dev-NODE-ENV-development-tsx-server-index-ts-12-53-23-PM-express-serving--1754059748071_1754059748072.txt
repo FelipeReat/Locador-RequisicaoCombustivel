@@ -1,0 +1,31 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+12:53:23 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+12:53:40 PM [express] GET /api/fuel-requisitions/stats/overview 304 in 2ms :: {"totalRequests":3,"pen…
+12:53:40 PM [express] GET /api/fuel-requisitions 200 in 1ms :: [{"id":1,"requesterId":1,"supplierId":…
+12:53:40 PM [express] GET /api/suppliers 200 in 1ms :: [{"id":1,"name":"TRANSDIESEL COMERCIO DE DERIV…
+12:53:40 PM [express] GET /api/users 200 in 0ms :: [{"id":1,"username":"admin","password":"admin123",…
+2:31:15 PM [express] GET /api/user/profile 200 in 1ms :: {"id":1,"username":"admin","password":"admi…
+2:31:53 PM [express] GET /api/companies 200 in 1ms :: [{"id":1,"name":"BBM Serviços","cnpj":"13.844.…
+2:48:36 PM [vite] hmr update /src/contexts/language-context.tsx, /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt
+2:48:36 PM [vite] hmr update /src/pages/suppliers.tsx, /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt
+2:48:36 PM [vite] hmr update /src/pages/fleet-management.tsx, /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt
+2:48:38 PM [vite] hmr update /src/pages/user-management.tsx, /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt
+2:48:38 PM [vite] hmr update /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt, /src/pages/reports.tsx, /src/components/requisition/requisition-details-modal.tsx
+2:48:38 PM [vite] hmr update /src/pages/reports.tsx, /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt
+2:48:40 PM [vite] hmr invalidate /src/contexts/language-context.tsx Could not Fast Refresh ("useLanguage" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+2:48:40 PM [vite] hmr update /src/App.tsx?v=3XAc70BhgPUt7lL0oQ8Gt, /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt, /src/components/layout/sidebar.tsx, /src/pages/new-requisition.tsx, /src/pages/dashboard.tsx, /src/pages/requisitions.tsx, /src/pages/companies.tsx, /src/pages/reports.tsx, /src/pages/user-management.tsx, /src/pages/suppliers.tsx, /src/pages/fleet-management.tsx, /src/pages/settings.tsx, /src/components/requisition/requisition-details-modal.tsx, /src/components/requisition/status-badge.tsx, /src/components/requisition/requisition-form.tsx
+2:48:40 PM [vite] page reload src/pages/edit-values.tsx
+2:48:40 PM [vite] hmr update /src/components/layout/header.tsx, /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt
+2:48:41 PM [vite] hmr update /src/App.tsx?v=3XAc70BhgPUt7lL0oQ8Gt, /src/index.css?v=3XAc70BhgPUt7lL0oQ8Gt
+2:48:41 PM [vite] Pre-transform error: Failed to resolve import "react-router-dom" from "client/src/App.tsx". Does the file exist?
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.5.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+npm notice To update run: npm install -g npm@11.5.2
+npm notice
