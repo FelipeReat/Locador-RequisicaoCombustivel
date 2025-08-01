@@ -1439,7 +1439,7 @@ const translations: Record<Language, Record<string, string>> = {
     'error-changing-status': 'Error al cambiar estado',
 
     // Gestión de Usuarios
-    'Gestión de Usuarios',
+    'user-management': 'Gestión de Usuarios',
     'manage-employees-permissions': 'Gestione empleados y sus permisos del sistema',
     'search-users': 'Buscar usuarios...',
     'new-user': 'Nuevo Usuario',
