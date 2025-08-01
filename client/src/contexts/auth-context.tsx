@@ -67,12 +67,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
+    console.log('Logout function called');
     setUser(null);
-    queryClient.removeQueries();
+    queryClient.clear();
     queryClient.setQueryData(['/api/auth/me'], null);
     localStorage.removeItem('auth-token');
-    // Force a page reload to ensure clean state
-    window.location.reload();
   };
 
   const value = {

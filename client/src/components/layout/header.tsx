@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
 import type { User as UserType } from "@shared/schema";
 
 interface HeaderProps {
@@ -24,22 +25,10 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [location, navigate] = useLocation();
+  const { user, logout } = useAuth();
 
-  const { data: user } = useQuery<UserType>({
-    queryKey: ["/api/user/profile"],
-  });
-
-  const handleLogout = async () => {
-    try {
-      await apiRequest("POST", "/api/auth/logout");
-      window.location.href = "/login";
-    } catch (error) {
-      toast({
-        title: t("error"),
-        description: t("logout-error"),
-        variant: "destructive",
-      });
-    }
+  const handleLogout = () => {
+    logout();
   };
 
   const handleProfileSettings = () => {
