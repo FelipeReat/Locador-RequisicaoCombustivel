@@ -1,4 +1,3 @@
-
 import { User, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -22,26 +21,25 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
-  const [, navigate] = useLocation();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [location, navigate] = useLocation();
 
   const { data: user } = useQuery<UserType>({
     queryKey: ["/api/user/profile"],
   });
 
-  const handleLogout = () => {
-    // Clear any stored authentication data
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    toast({
-      title: t("success"),
-      description: "Logout realizado com sucesso",
-    });
-    
-    // Redirect to login page (assuming you have a login route)
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    try {
+      await apiRequest("POST", "/api/auth/logout");
+      window.location.href = "/login";
+    } catch (error) {
+      toast({
+        title: t("error"),
+        description: t("logout-error"),
+        variant: "destructive",
+      });
+    }
   };
 
   const handleProfileSettings = () => {
@@ -61,7 +59,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
         </div>
         <div className="flex items-center space-x-4">
           <NotificationsPopover />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2 h-auto p-2">
@@ -74,7 +72,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
-            
+
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
@@ -86,21 +84,21 @@ export default function Header({ title, subtitle }: HeaderProps) {
                   </p>
                 </div>
               </DropdownMenuLabel>
-              
+
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuItem onClick={handleProfileSettings}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configurações do Perfil</span>
               </DropdownMenuItem>
-              
+
               <DropdownMenuItem onClick={handleChangePassword}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Alterar Senha</span>
               </DropdownMenuItem>
-              
+
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sair</span>
