@@ -184,23 +184,37 @@ export class MemStorage implements IStorage {
       updatedAt: yesterday.toISOString(),
     };
 
-    // Sample users based on provided names
+    // Sample users
     const sampleUsers: User[] = [
-      sampleUser, // Admin (id: 1)
+      {
+        id: 1,
+        username: "admin",
+        password: "admin123",
+        email: "admin@blomaq.com.br",
+        fullName: "Administrador do Sistema",
+        departmentId: null,
+        phone: "(11) 99999-9999",
+        position: "Administrador",
+        role: "admin",
+        active: "true",
+        hireDate: null,
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      },
       {
         id: 2,
-        username: "alexandre.santos",
+        username: "alexandre.serrao",
         password: "123456",
-        email: "alexandre.santos@empresa.com",
-        fullName: "Alexandre Santos",
-        departmentId: 1,
-        phone: "(11) 98888-8888",
-        position: "Coordenador de Logística",
+        email: "apaiva@blomaq.com.br",
+        fullName: "Alexandre Serrão de Souza",
+        departmentId: null,
+        phone: "(92) 99460-3483",
+        position: "Almoxarifado",
         role: "manager",
         active: "true",
-        hireDate: yesterday.toISOString(),
-        createdAt: yesterday.toISOString(),
-        updatedAt: yesterday.toISOString(),
+        hireDate: null,
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
       },
       {
         id: 3,
@@ -491,11 +505,11 @@ export class MemStorage implements IStorage {
   async authenticateUser(credentials: LoginUser): Promise<User | null> {
     // Find user by username
     const user = Array.from(this.users.values()).find(u => u.username === credentials.username);
-    
+
     if (!user || user.password !== credentials.password) {
       return null;
     }
-    
+
     // Return user without password for security
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword as User;
