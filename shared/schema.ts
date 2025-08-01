@@ -63,6 +63,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+// Login schema for authentication
+export const loginSchema = z.object({
+  username: z.string().min(1, "Nome de usuário é obrigatório"),
+  password: z.string().min(1, "Senha é obrigatória"),
+});
+
 export const insertUserManagementSchema = createInsertSchema(users, {
   username: z.string().min(1, "Nome de usuário é obrigatório"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
@@ -184,6 +190,7 @@ export const updateFuelRequisitionStatusSchema = z.object({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type LoginUser = z.infer<typeof loginSchema>;
 export type User = typeof users.$inferSelect;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 export type ChangePassword = z.infer<typeof changePasswordSchema>;

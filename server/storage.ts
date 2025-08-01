@@ -1,4 +1,4 @@
-import { users, fuelRequisitions, vehicles, suppliers, companies, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany } from "@shared/schema";
+import { users, fuelRequisitions, vehicles, suppliers, companies, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany, type LoginUser } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -11,6 +11,7 @@ export interface IStorage {
   updateUserProfile(id: number, profile: UpdateUserProfile): Promise<User | undefined>;
   changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean>;
   getCurrentUser(): Promise<User | undefined>;
+  authenticateUser(credentials: LoginUser): Promise<User | null>;
 
   // Suppliers
   getSuppliers(): Promise<Supplier[]>;
@@ -440,11 +441,11 @@ export class MemStorage implements IStorage {
       id,
       username: insertUser.username,
       password: insertUser.password,
-      email: ('email' in insertUser) ? insertUser.email || null : null,
+      email: ('email' in insertUser) ? (insertUser.email || null) : null,
       fullName: ('fullName' in insertUser) ? insertUser.fullName || null : null,
       departmentId: ('departmentId' in insertUser) ? insertUser.departmentId || null : null,
       phone: ('phone' in insertUser) ? insertUser.phone || null : null,
-      position: ('position' in insertUser) ? insertUser.position || null : null,
+      position: ('position' in insertUser) ? (insertUser.position || null) : null,
       role: ('role' in insertUser) ? insertUser.role || "employee" : "employee",
       active: "true",
       hireDate: ('hireDate' in insertUser) ? insertUser.hireDate || null : null,
@@ -485,6 +486,19 @@ export class MemStorage implements IStorage {
     // In a real app, this would get the current authenticated user
     // For demo purposes, return the sample user
     return this.users.get(1);
+  }
+
+  async authenticateUser(credentials: LoginUser): Promise<User | null> {
+    // Find user by username
+    const user = Array.from(this.users.values()).find(u => u.username === credentials.username);
+    
+    if (!user || user.password !== credentials.password) {
+      return null;
+    }
+    
+    // Return user without password for security
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword as User;
   }
 
   async getUsers(): Promise<User[]> {
@@ -529,7 +543,7 @@ export class MemStorage implements IStorage {
       fantasia: insertSupplier.fantasia,
       cnpj: insertSupplier.cnpj,
       responsavel: insertSupplier.responsavel,
-      email: insertSupplier.email || null,
+      email: null,
       phone: insertSupplier.phone || null,
       address: insertSupplier.address || null,
       active: "true",
@@ -684,7 +698,7 @@ export class MemStorage implements IStorage {
       pricePerLiter: insertRequisition.pricePerLiter || null,
       fiscalCoupon: insertRequisition.fiscalCoupon || null,
       justification: insertRequisition.justification || null,
-      requiredDate: insertRequisition.requiredDate,
+      requiredDate: insertRequisition.requiredDate || null,
       priority: insertRequisition.priority || "media",
       status: "pending",
       approverId: null,
