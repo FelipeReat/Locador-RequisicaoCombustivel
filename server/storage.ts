@@ -276,10 +276,25 @@ export class MemStorage implements IStorage {
         createdAt: yesterday.toISOString(),
         updatedAt: yesterday.toISOString(),
       },
+      {
+        id: 7,
+        username: "rafael.dourado",
+        password: "123456",
+        email: "rdourado@blomaq.com.br",
+        fullName: "Rafael da Anunciação Dourado",
+        departmentId: 1,
+        phone: "(92) 92412-385",
+        position: "Almoxarifado",
+        role: "manager",
+        active: "true",
+        hireDate: yesterday.toISOString(),
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
     ];
 
     sampleUsers.forEach(user => this.users.set(user.id, user));
-    this.currentUserId = 7;
+    this.currentUserId = 8;
 
     // Sample vehicles from provided images
     const sampleVehicles = [
