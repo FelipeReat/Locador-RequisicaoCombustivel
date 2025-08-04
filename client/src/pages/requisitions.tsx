@@ -226,7 +226,7 @@ export default function Requisitions() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setLocation(`/requisitions/${requisition.id}/edit`)}
+                            onClick={() => setSelectedRequisition(requisition)}
                             title="Editar requisição"
                           >
                             <Edit className="h-4 w-4" />
@@ -260,7 +260,7 @@ export default function Requisitions() {
         onClose={() => setSelectedRequisition(null)}
         onEdit={(req) => {
           setSelectedRequisition(null);
-          setLocation(`/requisitions/${req.id}/edit`);
+          setLocation("/new-requisition");
         }}
         onEditRequisition={(req) => {
           setSelectedRequisition(null);

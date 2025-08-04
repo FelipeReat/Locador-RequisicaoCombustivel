@@ -3,6 +3,7 @@ import { type FuelRequisition, type Supplier } from "@shared/schema";
 import Header from "@/components/layout/header";
 import StatusBadge from "@/components/requisition/status-badge";
 import RequisitionDetailsModal from "@/components/requisition/requisition-details-modal";
+import EditApprovedRequisitionModal from "@/components/requisition/edit-approved-requisition-modal";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { 
@@ -23,6 +24,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
+  const [editingRequisition, setEditingRequisition] = useState<FuelRequisition | null>(null);
   const { t } = useLanguage();
   const { userRole, canApprove } = usePermissions();
 
@@ -264,11 +266,22 @@ export default function Dashboard() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {userRole !== 'employee' && (
+                        {userRole !== 'employee' && requisition.status === 'approved' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingRequisition(requisition)}
+                            title="Editar valores reais"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {userRole !== 'employee' && requisition.status === 'pending' && (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setLocation("/requisitions")}
+                            title="Ir para requisições"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -291,6 +304,16 @@ export default function Dashboard() {
           setSelectedRequisition(null);
           setLocation("/requisitions");
         }}
+        onEditRequisition={(req) => {
+          setSelectedRequisition(null);
+          setEditingRequisition(req);
+        }}
+      />
+
+      <EditApprovedRequisitionModal
+        requisition={editingRequisition}
+        isOpen={!!editingRequisition}
+        onClose={() => setEditingRequisition(null)}
       />
     </>
   );
