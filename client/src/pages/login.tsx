@@ -33,8 +33,20 @@ export default function Login() {
     } catch (err: any) {
       console.error('Login error:', err);
       
-      // Use the error message directly from the server
-      const errorMessage = err.message || 'Erro ao fazer login. Tente novamente.';
+      // Handle specific error types with user-friendly messages
+      let errorMessage = 'Erro ao fazer login. Tente novamente.';
+      
+      if (err.message) {
+        if (err.message.includes('Usuário não encontrado')) {
+          errorMessage = 'Usuário não encontrado. Verifique se o nome de usuário está correto.';
+        } else if (err.message.includes('Senha incorreta')) {
+          errorMessage = 'Senha incorreta. Verifique sua senha e tente novamente.';
+        } else if (err.message.includes('Credenciais inválidas')) {
+          errorMessage = 'Usuário ou senha incorretos. Verifique seus dados e tente novamente.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
       
       setError(errorMessage);
       

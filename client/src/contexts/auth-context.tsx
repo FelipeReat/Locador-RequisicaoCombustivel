@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 
 interface User {
   id: number;
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   });
   const queryClient = useQueryClient();
-  const navigate = useNavigate(); // useNavigate hook is used in the mutation
+  const [, navigate] = useLocation(); // useLocation hook for wouter navigation
 
   // Check if user is already logged in - only when user is not set and no saved user
   const { data: currentUser, isLoading } = useQuery({
