@@ -15,8 +15,10 @@ Preferred communication style: Simple, everyday language.
 - Disabled action buttons for employees in dashboard quick actions and table actions
 - Restricted data cleanup functionality to administrators only
 - Implemented bulk password reset functionality for administrators
-- Reset all user passwords to "blomaq123" except admin user
+- Reset all user passwords to "blomaq123" except admin user (password: "admin123")
+- Removed edit, reject, and approve buttons from requisition details modal for employee users
 - Enhanced security with proper permission checks throughout the application
+- Applied usePermissions hook consistently across all action components
 
 **August 01, 2025 - Modern Login System Implementation**
 - Successfully implemented a modern login system with visual design based on user requirements
