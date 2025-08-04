@@ -73,6 +73,13 @@ export default function Login() {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {error && (
+              <Alert variant="destructive" className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+                <AlertDescription className="text-red-700 dark:text-red-300">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -110,13 +117,7 @@ export default function Login() {
                 </div>
               </div>
 
-              {error && (
-                <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
-                  <AlertDescription className="text-red-800 dark:text-red-400 text-sm">
-                    {error}
-                  </AlertDescription>
-                </Alert>
-              )}
+
 
               <Button
                 type="submit"
