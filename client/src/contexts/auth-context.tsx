@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: number;
@@ -33,6 +34,12 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Define LoginCredentials interface for clarity
+interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(() => {
     // Tentar recuperar usuário do localStorage na inicialização
@@ -44,6 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   });
   const queryClient = useQueryClient();
+  const navigate = useNavigate(); // useNavigate hook is used in the mutation
 
   // Check if user is already logged in - only when user is not set and no saved user
   const { data: currentUser, isLoading } = useQuery({
@@ -63,33 +71,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [currentUser, user]);
 
   const loginMutation = useMutation({
-    mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      try {
-        const response = await apiRequest('POST', '/api/auth/login', { username, password });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          const error = new Error(errorData.message || 'Erro de login');
-          (error as any).errorType = errorData.errorType || 'UNKNOWN';
-          throw error;
-        }
-        
-        return await response.json();
-      } catch (error: any) {
-        console.error('Login error:', error);
-        // Preserve error type if it exists
-        const newError = new Error(error.message || 'Erro de conexão com o servidor');
-        (newError as any).errorType = error.errorType || 'CONNECTION_ERROR';
-        throw newError;
+    mutationFn: async ({ username, password }: LoginCredentials) => {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const error = new Error(errorData.message || 'Login failed');
+        // Pass the errorType to help with specific error handling
+        (error as any).errorType = errorData.errorType;
+        throw error;
       }
+
+      return response.json();
     },
-    onSuccess: (userData) => {
-      setUser(userData);
-      localStorage.setItem('auth-user', JSON.stringify(userData));
-      queryClient.setQueryData(['/api/auth/me'], userData);
+    onSuccess: (user) => {
+      setUser(user);
+      localStorage.setItem('auth-user', JSON.stringify(user)); // Ensure user is saved on success
+      queryClient.setQueryData(['/api/auth/me'], user);
+      navigate('/dashboard');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Login mutation error:', error);
+      // The error is already thrown from mutationFn, so no need to re-throw here
+      // The UI can then catch this error and display appropriate messages based on error.errorType
     },
   });
 

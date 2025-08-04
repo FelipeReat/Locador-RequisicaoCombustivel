@@ -33,35 +33,8 @@ export default function Login() {
     } catch (err: any) {
       console.error('Login error:', err);
       
-      // Handle specific error cases based on error type
-      let errorMessage = 'Erro ao fazer login. Tente novamente.';
-      
-      if (err?.errorType) {
-        switch (err.errorType) {
-          case 'USER_NOT_FOUND':
-            errorMessage = 'Usuário não encontrado. O nome de usuário informado não existe no sistema. Verifique se digitou corretamente.';
-            break;
-          case 'INVALID_PASSWORD':
-            errorMessage = 'Senha incorreta. A senha informada não confere com o usuário. Verifique se digitou a senha correta.';
-            break;
-          case 'CONNECTION_ERROR':
-            errorMessage = 'Erro de conexão com o servidor. Verifique sua internet e tente novamente.';
-            break;
-          default:
-            errorMessage = err.message || 'Erro desconhecido. Tente novamente.';
-        }
-      } else if (err?.message) {
-        // Fallback to message-based detection for compatibility
-        if (err.message.includes('Usuário não encontrado')) {
-          errorMessage = 'Usuário não encontrado. O nome de usuário informado não existe no sistema. Verifique se digitou corretamente.';
-        } else if (err.message.includes('Senha incorreta')) {
-          errorMessage = 'Senha incorreta. A senha informada não confere com o usuário. Verifique se digitou a senha correta.';
-        } else if (err.message.includes('network') || err.message.includes('fetch')) {
-          errorMessage = 'Erro de conexão com o servidor. Verifique sua internet e tente novamente.';
-        } else {
-          errorMessage = err.message;
-        }
-      }
+      // Use the error message directly from the server
+      const errorMessage = err.message || 'Erro ao fazer login. Tente novamente.';
       
       setError(errorMessage);
       
