@@ -3,6 +3,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { type FuelRequisition } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +36,7 @@ export default function RequisitionDetailsModal({
 }: RequisitionDetailsModalProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { canEdit, canApprove } = usePermissions();
   const queryClient = useQueryClient();
   const [showRejectionInput, setShowRejectionInput] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -272,35 +274,38 @@ export default function RequisitionDetailsModal({
               </Button>
             )}
 
-            {requisition && requisition.status === "pending" && onEdit && (
+            {requisition && requisition.status === "pending" && onEdit && canEdit() && (
               <Button
                 variant="outline"
                 onClick={() => onEdit(requisition)}
                 className="flex items-center"
+                data-testid="button-edit-requisition"
               >
                 <Edit className="mr-1 h-4 w-4" />
                 Editar
               </Button>
             )}
 
-            {requisition && requisition.status === "approved" && onEditRequisition && (
+            {requisition && requisition.status === "approved" && onEditRequisition && canEdit() && (
               <Button
                 variant="outline"
                 onClick={() => onEditRequisition(requisition)}
                 className="flex items-center"
+                data-testid="button-edit-values"
               >
                 <Edit className="mr-1 h-4 w-4" />
                 Editar Valores
               </Button>
             )}
 
-            {requisition && requisition.status === "pending" && (
+            {requisition && requisition.status === "pending" && canApprove() && (
               <>
                 {!showRejectionInput ? (
                   <Button
                     variant="destructive"
                     onClick={() => setShowRejectionInput(true)}
                     className="flex items-center"
+                    data-testid="button-reject-requisition"
                   >
                     <X className="mr-1 h-4 w-4" />
                     Rejeitar
@@ -311,6 +316,7 @@ export default function RequisitionDetailsModal({
                     onClick={handleReject}
                     disabled={updateStatus.isPending}
                     className="flex items-center"
+                    data-testid="button-confirm-rejection"
                   >
                     {updateStatus.isPending && (
                       <Loader2 className="mr-1 h-4 w-4 animate-spin" />
@@ -323,6 +329,7 @@ export default function RequisitionDetailsModal({
                   onClick={handleApprove}
                   disabled={updateStatus.isPending}
                   className="flex items-center bg-green-600 hover:bg-green-700"
+                  data-testid="button-approve-requisition"
                 >
                   {updateStatus.isPending && (
                     <Loader2 className="mr-1 h-4 w-4 animate-spin" />
