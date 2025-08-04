@@ -525,7 +525,7 @@ export class PDFGenerator {
 
       // Nome do responsável em negrito (buscar pelo requesterId)
       this.doc.setFont('helvetica', 'bold');
-      this.doc.setFontSize(10);
+      this.doc.setFontSize(8);
       let responsavelNome = 'Responsável não identificado';
       
       if (requesterUser?.fullName) {
