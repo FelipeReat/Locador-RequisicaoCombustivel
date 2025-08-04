@@ -268,7 +268,7 @@ export default function Dashboard() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setLocation(`/requisitions/${requisition.id}/edit`)}
+                            onClick={() => setLocation("/requisitions")}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -289,7 +289,7 @@ export default function Dashboard() {
         onClose={() => setSelectedRequisition(null)}
         onEdit={(req) => {
           setSelectedRequisition(null);
-          setLocation(`/requisitions/${req.id}/edit`);
+          setLocation("/requisitions");
         }}
       />
     </>
