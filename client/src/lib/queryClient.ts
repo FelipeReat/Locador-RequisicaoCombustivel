@@ -1,3 +1,4 @@
+
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
@@ -7,29 +8,32 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(method: string, path: string, data?: any) {
-  const url = `${process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000'}${path}`;
-
+export async function apiRequest(
+  method: string,
+  url: string,
+  data?: unknown | undefined,
+): Promise<Response> {
   // Adicionar token de autenticação se disponível
   const authUser = localStorage.getItem('auth-user');
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const headers: Record<string, string> = {};
+  
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (authUser) {
     headers['x-auth-token'] = 'authenticated';
   }
 
-  const options: RequestInit = {
+  const res = await fetch(url, {
     method,
     headers,
-  };
+    body: data ? JSON.stringify(data) : undefined,
+    credentials: "include",
+  });
 
-  if (data) {
-    options.body = JSON.stringify(data);
-  }
-
-  return fetch(url, options);
+  await throwIfResNotOk(res);
+  return res;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -38,8 +42,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Adicionar token de autenticação se disponível
+    const authUser = localStorage.getItem('auth-user');
+    const headers: Record<string, string> = {};
+
+    if (authUser) {
+      headers['x-auth-token'] = 'authenticated';
+    }
+
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
