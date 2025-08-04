@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { 
   Fuel, 
@@ -17,16 +18,49 @@ import {
   User
 } from "lucide-react";
 
+// Mapeamento dos ícones para renderização dinâmica
+const iconMap = {
+  LayoutDashboard,
+  ClipboardList,
+  Plus,
+  BarChart3,
+  Users,
+  Car,
+  Building2,
+  Building,
+  Settings,
+};
+
 export default function Sidebar() {
   const [location] = useLocation();
   const { t } = useLanguage();
   const { user, logout } = useAuth();
+  const { allowedPages, userRole } = usePermissions();
 
   const isActive = (path: string) => {
     if (path === "/" || path === "/dashboard") {
       return location === "/" || location === "/dashboard";
     }
     return location === path;
+  };
+
+  // Função para obter o ícone correto
+  const getIcon = (iconName: string) => {
+    const IconComponent = iconMap[iconName as keyof typeof iconMap];
+    return IconComponent ? <IconComponent className="mr-3 h-4 w-4" /> : <Settings className="mr-3 h-4 w-4" />;
+  };
+
+  // Função para obter o rótulo da função do usuário
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrador';
+      case 'manager':
+        return 'Gerente';
+      case 'employee':
+      default:
+        return 'Funcionário';
+    }
   };
 
   return (
@@ -39,68 +73,14 @@ export default function Sidebar() {
       </div>
 
       <nav className="mt-6">
-        <Link href="/dashboard">
-          <div className={`sidebar-link ${isActive("/dashboard") ? "active" : ""}`}>
-            <LayoutDashboard className="mr-3 h-4 w-4" />
-            {t('dashboard')}
-          </div>
-        </Link>
-
-        <Link href="/requisitions">
-          <div className={`sidebar-link ${isActive("/requisitions") ? "active" : ""}`}>
-            <ClipboardList className="mr-3 h-4 w-4" />
-            {t('requisitions')}
-          </div>
-        </Link>
-
-        <Link href="/new-requisition">
-          <div className={`sidebar-link ${isActive("/new-requisition") ? "active" : ""}`}>
-            <Plus className="mr-3 h-4 w-4" />
-            {t('new-requisition')}
-          </div>
-        </Link>
-
-        <Link href="/reports">
-          <div className={`sidebar-link ${isActive("/reports") ? "active" : ""}`}>
-            <BarChart3 className="mr-3 h-4 w-4" />
-            {t('reports')}
-          </div>
-        </Link>
-
-        <Link href="/user-management">
-          <div className={`sidebar-link ${isActive("/user-management") ? "active" : ""}`}>
-            <Users className="mr-3 h-4 w-4" />
-            {t('users')}
-          </div>
-        </Link>
-
-        <Link href="/fleet-management">
-          <div className={`sidebar-link ${isActive("/fleet-management") ? "active" : ""}`}>
-            <Car className="mr-3 h-4 w-4" />
-            {t('fleet')}
-          </div>
-        </Link>
-
-        <Link href="/suppliers">
-          <div className={`sidebar-link ${isActive("/suppliers") ? "active" : ""}`}>
-            <Building2 className="mr-3 h-4 w-4" />
-            {t('suppliers')}
-          </div>
-        </Link>
-
-        <Link href="/companies">
-          <div className={`sidebar-link ${isActive("/companies") ? "active" : ""}`}>
-            <Building className="mr-3 h-4 w-4" />
-            {t('companies')}
-          </div>
-        </Link>
-
-        <Link href="/settings">
-          <div className={`sidebar-link ${isActive("/settings") ? "active" : ""}`}>
-            <Settings className="mr-3 h-4 w-4" />
-            {t('settings')}
-          </div>
-        </Link>
+        {allowedPages.map((page) => (
+          <Link key={page.path} href={page.path}>
+            <div className={`sidebar-link ${isActive(page.path) ? "active" : ""}`}>
+              {getIcon(page.icon)}
+              {t(page.label)}
+            </div>
+          </Link>
+        ))}
       </nav>
 
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -113,7 +93,7 @@ export default function Sidebar() {
               {user?.fullName || user?.username}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {user?.role === 'admin' ? 'Administrador' : (user as any)?.position || 'Funcionário'}
+              {getRoleLabel(user?.role || 'employee')}
             </p>
           </div>
         </div>

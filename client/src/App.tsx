@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/theme-context";
 import { LanguageProvider } from "@/contexts/language-context";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "@/pages/dashboard";
 import Requisitions from "@/pages/requisitions";
 import NewRequisition from "@/pages/new-requisition";
@@ -40,16 +41,56 @@ function Router() {
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Switch>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/requisitions" component={Requisitions} />
-          <Route path="/new-requisition" component={NewRequisition} />
-          <Route path="/reports" component={Reports} />
-          <Route path="/user-management" component={UserManagement} />
-          <Route path="/fleet-management" component={FleetManagement} />
-          <Route path="/suppliers" component={Suppliers} />
-          <Route path="/companies" component={Companies} />
-          <Route path="/settings" component={Settings} />
+          <Route path="/">
+            <ProtectedRoute path="/dashboard">
+              <Dashboard />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/dashboard">
+            <ProtectedRoute path="/dashboard">
+              <Dashboard />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/requisitions">
+            <ProtectedRoute path="/requisitions">
+              <Requisitions />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/new-requisition">
+            <ProtectedRoute path="/new-requisition">
+              <NewRequisition />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/reports">
+            <ProtectedRoute path="/reports">
+              <Reports />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/user-management">
+            <ProtectedRoute path="/user-management">
+              <UserManagement />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/fleet-management">
+            <ProtectedRoute path="/fleet-management">
+              <FleetManagement />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/suppliers">
+            <ProtectedRoute path="/suppliers">
+              <Suppliers />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/companies">
+            <ProtectedRoute path="/companies">
+              <Companies />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/settings">
+            <ProtectedRoute path="/settings">
+              <Settings />
+            </ProtectedRoute>
+          </Route>
           <Route component={NotFound} />
         </Switch>
       </div>
