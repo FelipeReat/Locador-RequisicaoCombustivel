@@ -535,7 +535,7 @@ export class PDFGenerator {
       this.doc.text(responsavelNome, signatureX + 17.5, signatureY, { align: 'center' });
 
       // Rodapé da via
-      this.doc.setFontSize(7);
+      this.doc.setFontSize(10);
       this.doc.text('OBRIGATÓRIO ANEXAR GRAMPEADO O CUPOM FISCAL NA VIA BLOMAQ', startX, 200);
     };
 
