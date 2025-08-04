@@ -31,7 +31,18 @@ export default function Login() {
         description: "Bem-vindo ao sistema!",
       });
     } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      console.error('Login error:', err);
+      
+      // Handle specific error cases
+      if (err.message === 'Credenciais inválidas') {
+        setError('Usuário ou senha incorretos. Verifique suas credenciais e tente novamente.');
+      } else if (err.message && err.message.includes('401')) {
+        setError('Usuário ou senha incorretos. Verifique suas credenciais e tente novamente.');
+      } else if (err.message && err.message.includes('network')) {
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else {
+        setError(err.message || 'Erro ao fazer login. Verifique suas credenciais e tente novamente.');
+      }
     }
   };
 

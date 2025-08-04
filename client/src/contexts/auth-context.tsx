@@ -58,12 +58,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
       const response = await apiRequest('POST', '/api/auth/login', { username, password });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+        throw new Error(errorData.message || 'Erro ao fazer login');
+      }
+      
       return await response.json();
     },
     onSuccess: (userData) => {
       setUser(userData);
       setHasAttemptedAuth(true);
       queryClient.setQueryData(['/api/auth/me'], userData);
+    },
+    onError: (error) => {
+      console.error('Login mutation error:', error);
     },
   });
 
