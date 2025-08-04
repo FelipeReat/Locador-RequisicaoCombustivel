@@ -57,14 +57,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      const response = await apiRequest('POST', '/api/auth/login', { username, password });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
-        throw new Error(errorData.message || 'Erro ao fazer login');
+      try {
+        const response = await apiRequest('POST', '/api/auth/login', { username, password });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Credenciais inválidas' }));
+          throw new Error(errorData.message || 'Credenciais inválidas');
+        }
+        
+        return await response.json();
+      } catch (error: any) {
+        // Re-throw the error to be handled by the component
+        throw error;
       }
-      
-      return await response.json();
     },
     onSuccess: (userData) => {
       setUser(userData);
