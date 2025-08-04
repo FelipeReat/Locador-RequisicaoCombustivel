@@ -526,10 +526,15 @@ export class PDFGenerator {
       // Linha para assinatura
       this.doc.line(signatureX, signatureY, signatureX + 35, signatureY);
 
-      // Nome do responsável em negrito
+      // Nome do responsável em negrito (buscar pelo requesterId)
       this.doc.setFont('helvetica', 'bold');
       this.doc.setFontSize(10);
-      const responsavelNome = requesterUser?.fullName || 'Responsável não identificado';
+      let responsavelNome = 'Responsável não identificado';
+      
+      if (requesterUser?.fullName) {
+        responsavelNome = requesterUser.fullName.toUpperCase();
+      }
+      
       this.doc.text(responsavelNome, signatureX + 17.5, signatureY + 4, { align: 'center' });
 
       // Label "Responsável"

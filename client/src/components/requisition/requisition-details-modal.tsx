@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { type FuelRequisition } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -164,6 +164,68 @@ export default function RequisitionDetailsModal({
     }
   };
 
+  const handleDownloadPDF = () => {
+    if (!requisition) return;
+
+    try {
+      const pdfGenerator = new PDFGenerator('landscape');
+
+      // Buscar dados do fornecedor
+      const supplier = suppliers?.find(s => s.id === requisition.supplierId);
+
+      // Buscar dados do veículo
+      const vehicle = vehicles?.find(v => v.id === requisition.vehicleId);
+
+      // Buscar dados do usuário que criou a requisição
+      const requesterUser = users?.find(u => u.id === requisition.requesterId);
+
+      pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle, requesterUser);
+      pdfGenerator.save(`requisicao-${String(requisition.id).padStart(3, '0')}.pdf`);
+
+      toast({
+        title: "PDF Gerado",
+        description: "O arquivo foi baixado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fetch suppliers
+  const { data: suppliers } = useQuery<any[]>({
+    queryKey: ["suppliers"],
+    queryFn: async () => {
+      const response = await fetch("/api/suppliers");
+      if (!response.ok) throw new Error("Failed to fetch suppliers");
+      return response.json();
+    },
+  });
+
+  // Fetch vehicles
+  const { data: vehicles } = useQuery<Vehicle[]>({
+    queryKey: ["vehicles"],
+    queryFn: async () => {
+      const response = await fetch("/api/vehicles");
+      if (!response.ok) throw new Error("Failed to fetch vehicles");
+      return response.json();
+    },
+  });
+
+  // Fetch users
+  const { data: users } = useQuery<any[]>({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const response = await fetch("/api/users");
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
+    },
+  });
+
   if (!requisition) return null;
 
   return (
@@ -264,7 +326,7 @@ export default function RequisitionDetailsModal({
             {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && (
               <Button
                 variant="outline"
-                onClick={generatePurchasePDF}
+                onClick={handleDownloadPDF}
                 className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
                 disabled={isGeneratingPDF}
               >
