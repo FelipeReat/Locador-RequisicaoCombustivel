@@ -10,14 +10,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = loginSchema.parse(req.body);
       const user = await storage.authenticateUser(validatedData);
 
-      if (!user) {
-        return res.status(401).json({ message: "Credenciais inválidas" });
-      }
-
       res.json(user);
     } catch (error) {
       if (error instanceof Error) {
-        res.status(400).json({ message: error.message });
+        if (error.message === 'USER_NOT_FOUND') {
+          return res.status(401).json({ 
+            message: "Usuário não encontrado. Verifique se o nome de usuário está correto.",
+            errorType: "USER_NOT_FOUND"
+          });
+        } else if (error.message === 'INVALID_PASSWORD') {
+          return res.status(401).json({ 
+            message: "Senha incorreta. Verifique sua senha e tente novamente.",
+            errorType: "INVALID_PASSWORD"
+          });
+        } else {
+          res.status(400).json({ message: error.message });
+        }
       } else {
         res.status(500).json({ message: "Erro interno do servidor" });
       }

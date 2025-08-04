@@ -66,10 +66,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
       try {
         const response = await apiRequest('POST', '/api/auth/login', { username, password });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          const error = new Error(errorData.message || 'Erro de login');
+          (error as any).errorType = errorData.errorType || 'UNKNOWN';
+          throw error;
+        }
+        
         return await response.json();
       } catch (error: any) {
         console.error('Login error:', error);
-        throw new Error(error.message || 'Erro de conexão com o servidor');
+        // Preserve error type if it exists
+        const newError = new Error(error.message || 'Erro de conexão com o servidor');
+        (newError as any).errorType = error.errorType || 'CONNECTION_ERROR';
+        throw newError;
       }
     },
     onSuccess: (userData) => {

@@ -547,8 +547,12 @@ export class MemStorage implements IStorage {
     // Find user by username
     const user = Array.from(this.users.values()).find(u => u.username === credentials.username);
 
-    if (!user || user.password !== credentials.password) {
-      return null;
+    if (!user) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    if (user.password !== credentials.password) {
+      throw new Error('INVALID_PASSWORD');
     }
 
     // Set this user as the currently logged in user

@@ -33,22 +33,44 @@ export default function Login() {
     } catch (err: any) {
       console.error('Login error:', err);
       
-      // Handle specific error cases
-      let errorMessage = 'Erro ao fazer login. Verifique suas credenciais e tente novamente.';
+      // Handle specific error cases based on error type
+      let errorMessage = 'Erro ao fazer login. Tente novamente.';
       
-      if (err?.message) {
-        if (err.message.includes('Credenciais inválidas') || 
-            err.message.includes('401') || 
-            err.message.includes('Unauthorized')) {
-          errorMessage = 'Usuário ou senha incorretos. Verifique suas credenciais e tente novamente.';
+      if (err?.errorType) {
+        switch (err.errorType) {
+          case 'USER_NOT_FOUND':
+            errorMessage = '❌ Usuário não encontrado. Verifique se o nome de usuário está correto e tente novamente.';
+            break;
+          case 'INVALID_PASSWORD':
+            errorMessage = '🔒 Senha incorreta. Verifique sua senha e tente novamente.';
+            break;
+          case 'CONNECTION_ERROR':
+            errorMessage = '🌐 Erro de conexão. Verifique sua internet e tente novamente.';
+            break;
+          default:
+            errorMessage = err.message || 'Erro desconhecido. Tente novamente.';
+        }
+      } else if (err?.message) {
+        // Fallback to message-based detection for compatibility
+        if (err.message.includes('Usuário não encontrado')) {
+          errorMessage = '❌ Usuário não encontrado. Verifique se o nome de usuário está correto e tente novamente.';
+        } else if (err.message.includes('Senha incorreta')) {
+          errorMessage = '🔒 Senha incorreta. Verifique sua senha e tente novamente.';
         } else if (err.message.includes('network') || err.message.includes('fetch')) {
-          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+          errorMessage = '🌐 Erro de conexão. Verifique sua internet e tente novamente.';
         } else {
           errorMessage = err.message;
         }
       }
       
       setError(errorMessage);
+      
+      // Show toast with error for better visibility
+      toast({
+        title: "Erro no login",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -75,11 +97,23 @@ export default function Login() {
           <CardContent className="space-y-6">
             {error && (
               <Alert variant="destructive" className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
-                <AlertDescription className="text-red-700 dark:text-red-300">
+                <AlertDescription className="text-red-700 dark:text-red-300 text-sm leading-relaxed">
                   {error}
                 </AlertDescription>
               </Alert>
             )}
+
+            {/* Informações úteis para o usuário */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="text-sm text-blue-700 dark:text-blue-300">
+                <div className="font-medium mb-2">💡 Informações de acesso:</div>
+                <ul className="space-y-1 text-xs">
+                  <li>• Administrador: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">admin</code> / <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">admin123</code></li>
+                  <li>• Funcionários: senha padrão <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">blomaq123</code></li>
+                  <li>• Verifique se não há espaços antes ou depois do usuário/senha</li>
+                </ul>
+              </div>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-300">
