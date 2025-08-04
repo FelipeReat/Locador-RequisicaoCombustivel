@@ -352,7 +352,7 @@ export class PDFGenerator {
       addWatermark(startX + maxWidth / 2);
 
       // Cabeçalho
-      this.doc.setFontSize(11);
+      this.doc.setFontSize(14);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('REQUISIÇÃO PARA ABASTECIMENTO COM COMBUSTÍVEIS', startX, currentY);
       currentY += 8;
