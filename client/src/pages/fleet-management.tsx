@@ -36,7 +36,8 @@ import {
   Fuel,
   Calendar,
   Gauge,
-  RotateCcw
+  RotateCcw,
+  Trash2
 } from "lucide-react";
 import { MileageResetDialog } from "@/components/mileage-reset-dialog";
 
@@ -127,6 +128,27 @@ export default function FleetManagement() {
       toast({
         title: t("error"),
         description: error.message || t("error-changing-status"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteVehicle = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/vehicles/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      toast({
+        title: t("success"),
+        description: t("vehicle-deleted-success"),
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: t("error"),
+        description: error.message || t("error-deleting-vehicle"),
         variant: "destructive",
       });
     },
@@ -384,6 +406,14 @@ export default function FleetManagement() {
                         onClick={() => handleEdit(vehicle)}
                       >
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteVehicle.mutate(vehicle.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

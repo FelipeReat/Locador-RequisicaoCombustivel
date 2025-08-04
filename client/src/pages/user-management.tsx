@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
 import {
-  insertUserManagementSchema,
+  insertUserManagementWithoutPasswordSchema,
   type User,
   type InsertUserManagement,
 } from "@shared/schema";
@@ -68,11 +68,10 @@ export default function UserManagement() {
     queryKey: ["/api/users"],
   });
 
-  const form = useForm<InsertUserManagement>({
-    resolver: zodResolver(insertUserManagementSchema),
+  const form = useForm<Omit<InsertUserManagement, 'password'>>({
+    resolver: zodResolver(insertUserManagementWithoutPasswordSchema),
     defaultValues: {
       username: "",
-      password: "",
       email: "",
       fullName: "",
       phone: "",
@@ -82,8 +81,10 @@ export default function UserManagement() {
   });
 
   const createUser = useMutation({
-    mutationFn: async (data: InsertUserManagement) => {
-      const response = await apiRequest("POST", "/api/users", data);
+    mutationFn: async (data: Omit<InsertUserManagement, 'password'>) => {
+      // Add default password for new users
+      const userData = { ...data, password: "blomaq123" };
+      const response = await apiRequest("POST", "/api/users", userData);
       return response.json();
     },
     onSuccess: () => {
@@ -110,7 +111,7 @@ export default function UserManagement() {
       data,
     }: {
       id: number;
-      data: Partial<InsertUserManagement>;
+      data: Partial<Omit<InsertUserManagement, 'password'>>;
     }) => {
       const response = await apiRequest("PUT", `/api/users/${id}`, data);
       return response.json();
@@ -182,7 +183,7 @@ export default function UserManagement() {
     },
   });
 
-  const onSubmit = (data: InsertUserManagement) => {
+  const onSubmit = (data: Omit<InsertUserManagement, 'password'>) => {
     if (editingUser) {
       updateUser.mutate({ id: editingUser.id, data });
     } else {
@@ -194,7 +195,6 @@ export default function UserManagement() {
     setEditingUser(user);
     form.reset({
       username: user.username,
-      password: "",
       email: user.email || "",
       fullName: user.fullName || "",
       phone: user.phone || "",
@@ -285,43 +285,19 @@ export default function UserManagement() {
                     onSubmit={form.handleSubmit(onSubmit)}
                     className="space-y-4"
                   >
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="username"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("username")} *</FormLabel>
-                            <FormControl>
-                              <Input placeholder={t("username")} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {editingUser
-                                ? t("new-password-optional")
-                                : t("password") + " *"}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder={t("password")}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("username")} *</FormLabel>
+                          <FormControl>
+                            <Input placeholder={t("username")} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}

@@ -86,6 +86,10 @@ export const insertUserManagementSchema = createInsertSchema(users, {
   updatedAt: true,
 });
 
+export const insertUserManagementWithoutPasswordSchema = insertUserManagementSchema.omit({
+  password: true,
+});
+
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),

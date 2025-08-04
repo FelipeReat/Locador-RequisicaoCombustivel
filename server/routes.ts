@@ -711,7 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Empresa não encontrada" });
       }
 
-      res.status(204).send();
+      res.json({ message: "Empresa excluída com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir empresa" });
     }
