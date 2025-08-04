@@ -523,9 +523,6 @@ export class PDFGenerator {
       const signatureX = startX + maxWidth - 40;
       const signatureY = 190;
 
-      // Linha para assinatura
-      this.doc.line(signatureX, signatureY, signatureX + 35, signatureY);
-
       // Nome do responsável em negrito (buscar pelo requesterId)
       this.doc.setFont('helvetica', 'bold');
       this.doc.setFontSize(10);
@@ -535,12 +532,7 @@ export class PDFGenerator {
         responsavelNome = requesterUser.fullName.toUpperCase();
       }
       
-      this.doc.text(responsavelNome, signatureX + 17.5, signatureY + 4, { align: 'center' });
-
-      // Label "Responsável"
-      this.doc.setFont('helvetica', 'normal');
-      this.doc.setFontSize(8);
-      this.doc.text('Responsável', signatureX + 17.5, signatureY + 14, { align: 'center' });
+      this.doc.text(responsavelNome, signatureX + 17.5, signatureY, { align: 'center' });
 
       // Rodapé da via
       this.doc.setFontSize(7);
