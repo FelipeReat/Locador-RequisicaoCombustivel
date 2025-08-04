@@ -99,7 +99,7 @@ export class MemStorage implements IStorage {
         name: "TRANSDIESEL COMERCIO DE DERIVADOS DE PETROLEO LTDA",
         fantasia: "TRANSDIESEL",
         cnpj: "18.001.964/0001-10",
-        responsavel: "Carlos",
+        responsavel: "CARLOS",
         email: null,
         phone: "(92) 3233-0634",
         address: "RUA DAS FLORES, 123",
