@@ -68,6 +68,7 @@ export class MemStorage implements IStorage {
   private currentSupplierId: number;
   private currentCompanyId: number;
   private currentVehicleId: number;
+  private loggedInUserId: number | null = null;
 
   constructor() {
     this.users = new Map();
@@ -497,9 +498,21 @@ export class MemStorage implements IStorage {
   }
 
   async getCurrentUser(): Promise<User | undefined> {
-    // In a real app, this would get the current authenticated user
-    // For demo purposes, return the sample user
-    return this.users.get(1);
+    // Return the currently logged in user, or null if no one is logged in
+    if (this.loggedInUserId === null) {
+      return undefined;
+    }
+    return this.users.get(this.loggedInUserId);
+  }
+
+  // Method to set the current logged in user
+  setCurrentUser(userId: number): void {
+    this.loggedInUserId = userId;
+  }
+
+  // Method to logout current user
+  logoutCurrentUser(): void {
+    this.loggedInUserId = null;
   }
 
   async authenticateUser(credentials: LoginUser): Promise<User | null> {
@@ -509,6 +522,9 @@ export class MemStorage implements IStorage {
     if (!user || user.password !== credentials.password) {
       return null;
     }
+
+    // Set this user as the currently logged in user
+    this.setCurrentUser(user.id);
 
     // Return user without password for security
     const { password, ...userWithoutPassword } = user;

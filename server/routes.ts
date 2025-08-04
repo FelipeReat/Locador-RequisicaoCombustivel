@@ -43,6 +43,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      // Clear the current logged in user
+      storage.logoutCurrentUser();
+      res.json({ message: "Logout realizado com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao fazer logout" });
+    }
+  });
+
   // User routes
   app.get("/api/user/profile", async (req, res) => {
     try {
@@ -58,8 +68,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/user/profile", async (req, res) => {
     try {
+      const currentUser = await storage.getCurrentUser();
+      if (!currentUser) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+
       const validatedData = updateUserProfileSchema.parse(req.body);
-      const user = await storage.updateUserProfile(1, validatedData); // Using ID 1 for demo
+      const user = await storage.updateUserProfile(currentUser.id, validatedData);
 
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
@@ -77,8 +92,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user/change-password", async (req, res) => {
     try {
+      const currentUser = await storage.getCurrentUser();
+      if (!currentUser) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+
       const validatedData = changePasswordSchema.parse(req.body);
-      const success = await storage.changePassword(1, validatedData.currentPassword, validatedData.newPassword);
+      const success = await storage.changePassword(currentUser.id, validatedData.currentPassword, validatedData.newPassword);
 
       if (!success) {
         return res.status(400).json({ message: "Senha atual incorreta" });

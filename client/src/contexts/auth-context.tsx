@@ -80,8 +80,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await loginMutation.mutateAsync({ username, password });
   };
 
-  const logout = () => {
+  const logout = async () => {
     console.log('Logout function called');
+    try {
+      // Call the logout endpoint to clear server-side session
+      await apiRequest('POST', '/api/auth/logout', {});
+    } catch (error) {
+      console.error('Logout API error:', error);
+    }
+    // Clear client-side state regardless of API success/failure
     setUser(null);
     queryClient.clear();
     queryClient.setQueryData(['/api/auth/me'], null);
