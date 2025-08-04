@@ -39,13 +39,13 @@ export default function Login() {
       if (err?.errorType) {
         switch (err.errorType) {
           case 'USER_NOT_FOUND':
-            errorMessage = '❌ Usuário não encontrado. Verifique se o nome de usuário está correto e tente novamente.';
+            errorMessage = 'Usuário não encontrado. O nome de usuário informado não existe no sistema. Verifique se digitou corretamente.';
             break;
           case 'INVALID_PASSWORD':
-            errorMessage = '🔒 Senha incorreta. Verifique sua senha e tente novamente.';
+            errorMessage = 'Senha incorreta. A senha informada não confere com o usuário. Verifique se digitou a senha correta.';
             break;
           case 'CONNECTION_ERROR':
-            errorMessage = '🌐 Erro de conexão. Verifique sua internet e tente novamente.';
+            errorMessage = 'Erro de conexão com o servidor. Verifique sua internet e tente novamente.';
             break;
           default:
             errorMessage = err.message || 'Erro desconhecido. Tente novamente.';
@@ -53,15 +53,15 @@ export default function Login() {
       } else if (err?.message) {
         // Fallback to message-based detection for compatibility
         if (err.message.includes('Usuário não encontrado')) {
-          errorMessage = '❌ Usuário não encontrado. Verifique se o nome de usuário está correto e tente novamente.';
+          errorMessage = 'Usuário não encontrado. O nome de usuário informado não existe no sistema. Verifique se digitou corretamente.';
         } else if (err.message.includes('Senha incorreta')) {
-          errorMessage = '🔒 Senha incorreta. Verifique sua senha e tente novamente.';
+          errorMessage = 'Senha incorreta. A senha informada não confere com o usuário. Verifique se digitou a senha correta.';
         } else if (err.message.includes('network') || err.message.includes('fetch')) {
-          errorMessage = '🌐 Erro de conexão. Verifique sua internet e tente novamente.';
+          errorMessage = 'Erro de conexão com o servidor. Verifique sua internet e tente novamente.';
         } else {
           errorMessage = err.message;
         }
-      }
+      }</errorMessage>
       
       setError(errorMessage);
       
@@ -103,17 +103,7 @@ export default function Login() {
               </Alert>
             )}
 
-            {/* Informações úteis para o usuário */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <div className="text-sm text-blue-700 dark:text-blue-300">
-                <div className="font-medium mb-2">💡 Informações de acesso:</div>
-                <ul className="space-y-1 text-xs">
-                  <li>• Administrador: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">admin</code> / <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">admin123</code></li>
-                  <li>• Funcionários: senha padrão <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">blomaq123</code></li>
-                  <li>• Verifique se não há espaços antes ou depois do usuário/senha</li>
-                </ul>
-              </div>
-            </div>
+            
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-300">
