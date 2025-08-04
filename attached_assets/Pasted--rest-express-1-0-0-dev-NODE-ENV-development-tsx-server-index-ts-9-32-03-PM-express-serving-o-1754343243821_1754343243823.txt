@@ -1,0 +1,31 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+9:32:03 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+9:32:11 PM [express] GET /api/auth/me 401 in 4ms :: {"message":"Não autenticado"}
+9:32:21 PM [express] POST /api/auth/login 401 in 3ms :: {"message":"Senha incorreta. Verifique sua s…
+9:32:32 PM [express] POST /api/auth/login 401 in 1ms :: {"message":"Usuário não encontrado. Verifiqu…
+9:33:50 PM [vite] hmr update /src/contexts/auth-context.tsx, /src/index.css?v=Rt_cg7dm3mGlpeRLiYGLf
+9:33:50 PM [vite] Internal server error: Failed to resolve import "react-router-dom" from "client/src/contexts/auth-context.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/runner/workspace/client/src/contexts/auth-context.tsx:4:28
+  19 |  import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+  20 |  import { apiRequest } from "@/lib/queryClient";
+  21 |  import { useNavigate } from "react-router-dom";
+     |                               ^
+  22 |  const AuthContext = createContext(void 0);
+  23 |  export function useAuth() {
+      at TransformPluginContext._formatError (/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49258:41)
+      at TransformPluginContext.error (/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49253:16)
+      at normalizeUrl (/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64291:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async <anonymous> (/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64423:39)
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64350:7)
+      at async PluginContainer.transform (/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49099:18)
+      at async loadAndTransform (/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:51977:27)
+      at async viteTransformMiddleware (/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:62105:24)
