@@ -61,7 +61,7 @@ export default function Login() {
         } else {
           errorMessage = err.message;
         }
-      }</errorMessage>
+      }
       
       setError(errorMessage);
       
