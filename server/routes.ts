@@ -28,7 +28,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Check for authentication header or session
       const authHeader = req.headers.authorization;
-      if (!authHeader) {
+      const authToken = req.headers['x-auth-token'];
+      
+      if (!authHeader && !authToken) {
         return res.status(401).json({ message: "Não autenticado" });
       }
 

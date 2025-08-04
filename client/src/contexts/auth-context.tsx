@@ -34,10 +34,18 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    // Tentar recuperar usuário do localStorage na inicialização
+    try {
+      const savedUser = localStorage.getItem('auth-user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
   const queryClient = useQueryClient();
 
-  // Check if user is already logged in - only when user is not set
+  // Check if user is already logged in - only when user is not set and no saved user
   const { data: currentUser, isLoading } = useQuery({
     queryKey: ['/api/auth/me'],
     retry: false,
@@ -47,7 +55,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     if (currentUser && typeof currentUser === 'object' && !user) {
-      setUser(currentUser as User);
+      const userData = currentUser as User;
+      setUser(userData);
+      localStorage.setItem('auth-user', JSON.stringify(userData));
     }
   }, [currentUser, user]);
 
@@ -69,6 +79,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     onSuccess: (userData) => {
       setUser(userData);
+      localStorage.setItem('auth-user', JSON.stringify(userData));
       queryClient.setQueryData(['/api/auth/me'], userData);
     },
     onError: (error) => {
@@ -93,6 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     queryClient.clear();
     queryClient.setQueryData(['/api/auth/me'], null);
     localStorage.removeItem('auth-token');
+    localStorage.removeItem('auth-user');
   };
 
   const value = {

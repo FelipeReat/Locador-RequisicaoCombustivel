@@ -7,20 +7,29 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+export async function apiRequest(method: string, path: string, data?: any) {
+  const url = `${process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000'}${path}`;
 
-  await throwIfResNotOk(res);
-  return res;
+  // Adicionar token de autenticação se disponível
+  const authUser = localStorage.getItem('auth-user');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (authUser) {
+    headers['x-auth-token'] = 'authenticated';
+  }
+
+  const options: RequestInit = {
+    method,
+    headers,
+  };
+
+  if (data) {
+    options.body = JSON.stringify(data);
+  }
+
+  return fetch(url, options);
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
