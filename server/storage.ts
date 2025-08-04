@@ -206,7 +206,7 @@ export class MemStorage implements IStorage {
       {
         id: 2,
         username: "alexandre.serrao",
-        password: "123456",
+        password: "blomaq123",
         email: "apaiva@blomaq.com.br",
         fullName: "Alexandre Serrão de Souza",
         departmentId: null,
@@ -221,7 +221,7 @@ export class MemStorage implements IStorage {
       {
         id: 3,
         username: "breno.derzi",
-        password: "123456",
+        password: "blomaq123",
         email: "breno.derzi@blomaq.com.br",
         fullName: "Wenderson Breno Grante Souza",
         departmentId: 2,
@@ -236,7 +236,7 @@ export class MemStorage implements IStorage {
       {
         id: 4,
         username: "bruno.derzi",
-        password: "123456",
+        password: "blomaq123",
         email: "bruno.derzi@blomaq.com.br",
         fullName: "Bruno Rodrigues Derzi",
         departmentId: 3,
@@ -251,7 +251,7 @@ export class MemStorage implements IStorage {
       {
         id: 5,
         username: "david.medeiros",
-        password: "123456",
+        password: "blomaq123",
         email: "david.medeiros@blomaq.com.br",
         fullName: "David Medeiros de Souza",
         departmentId: 5,
@@ -266,7 +266,7 @@ export class MemStorage implements IStorage {
       {
         id: 6,
         username: "wesley.fernandes",
-        password: "123456",
+        password: "blomaq123",
         email: "wfernandes@blomaq.com.br",
         fullName: "Wesley Fernandes da Gama",
         departmentId: 1,
@@ -281,7 +281,7 @@ export class MemStorage implements IStorage {
       {
         id: 7,
         username: "rafael.dourado",
-        password: "123456",
+        password: "blomaq123",
         email: "rdourado@blomaq.com.br",
         fullName: "Rafael da Anunciação Dourado",
         departmentId: 1,
