@@ -404,7 +404,7 @@ export class PDFGenerator {
 
       // Informações específicas baseadas no cliente
       let clienteInfo: string[] = [];
-      
+
       if (requisition.client === "BBM Serviços" || requisition.client === "BBM serviços") {
         clienteInfo = [
           `CPF/CNPJ: 13.844.973/0001-59`,
@@ -429,7 +429,7 @@ export class PDFGenerator {
           `Contato: ${requesterUser?.fullName || requisition.requester || 'Não informado'}`,
           `Telefone: ${requesterUser?.phone || 'Não informado'}`
         ];
-        
+
         // Adicionar email apenas se o usuário tiver email
         if (requesterUser?.email) {
           clienteInfo.push(`E-Mail: ${requesterUser.email}`);
@@ -526,8 +526,16 @@ export class PDFGenerator {
       // Linha para assinatura
       this.doc.line(signatureX, signatureY, signatureX + 35, signatureY);
 
-      // Texto do responsável centralizado embaixo da linha
-      this.doc.text(`${requesterUser?.fullName || requisition.requester || 'Responsável'}`, signatureX + 17.5, signatureY + 4, { align: 'center' });
+      // Nome do responsável em negrito
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setFontSize(10);
+      const responsavelNome = requesterUser?.fullName || 'Responsável não identificado';
+      this.doc.text(responsavelNome, signatureX + 17.5, signatureY + 4, { align: 'center' });
+
+      // Label "Responsável"
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(8);
+      this.doc.text('Responsável', signatureX + 17.5, signatureY + 14, { align: 'center' });
 
       // Rodapé da via
       this.doc.setFontSize(7);
