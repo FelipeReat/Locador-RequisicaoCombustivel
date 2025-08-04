@@ -35,6 +35,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [hasAttemptedAuth, setHasAttemptedAuth] = useState(false);
   const queryClient = useQueryClient();
 
   // Check if user is already logged in
@@ -42,14 +43,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     queryKey: ['/api/auth/me'],
     retry: false,
     refetchOnWindowFocus: false,
-    enabled: !user, // Only run if user is not already set
+    enabled: !user && !hasAttemptedAuth, // Only run if user is not set and we haven't attempted auth
   });
 
   useEffect(() => {
     if (currentUser && typeof currentUser === 'object' && !user) {
       setUser(currentUser as User);
+      setHasAttemptedAuth(true);
+    } else if (!isLoading && !currentUser && !hasAttemptedAuth) {
+      setHasAttemptedAuth(true);
     }
-  }, [currentUser, user]);
+  }, [currentUser, user, isLoading, hasAttemptedAuth]);
 
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
@@ -58,6 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     onSuccess: (userData) => {
       setUser(userData);
+      setHasAttemptedAuth(true);
       queryClient.setQueryData(['/api/auth/me'], userData);
     },
   });
@@ -69,9 +74,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = () => {
     console.log('Logout function called');
     setUser(null);
+    setHasAttemptedAuth(false);
     queryClient.clear();
     queryClient.setQueryData(['/api/auth/me'], null);
     localStorage.removeItem('auth-token');
+    // Force a complete reload to ensure clean state
+    window.location.reload();
   };
 
   const value = {

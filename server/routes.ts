@@ -26,7 +26,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", async (req, res) => {
     try {
-      // In a real implementation, you would get the user from session/token
+      // Check for authentication header or session
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+      
+      // In a real implementation, you would validate the token/session
       const user = await storage.getCurrentUser();
       if (!user) {
         return res.status(401).json({ message: "Não autenticado" });
