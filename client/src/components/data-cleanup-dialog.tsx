@@ -14,6 +14,7 @@ import { Trash2, AlertTriangle, Database, FileText, Truck, Building } from "luci
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface DataCleanupDialogProps {
   trigger: React.ReactNode;
@@ -23,6 +24,12 @@ export function DataCleanupDialog({ trigger }: DataCleanupDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userRole } = usePermissions();
+
+  // Only allow admin access to data cleanup
+  if (userRole !== 'admin') {
+    return null;
+  }
 
   const cleanupMutation = useMutation({
     mutationFn: async (dataType: string) => {

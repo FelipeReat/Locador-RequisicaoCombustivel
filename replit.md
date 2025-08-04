@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 04, 2025 - Security and Access Control Implementation**
+- Successfully implemented role-based access control in dashboard
+- Disabled action buttons for employees in dashboard quick actions and table actions
+- Restricted data cleanup functionality to administrators only
+- Implemented bulk password reset functionality for administrators
+- Reset all user passwords to "blomaq123" except admin user
+- Enhanced security with proper permission checks throughout the application
+
 **August 01, 2025 - Modern Login System Implementation**
 - Successfully implemented a modern login system with visual design based on user requirements
 - Created elegant login page with "Módulo de requisição de abastecimento" title

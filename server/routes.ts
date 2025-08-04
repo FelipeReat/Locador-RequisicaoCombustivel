@@ -317,6 +317,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Password reset route (admin only)
+  app.post("/api/admin/reset-passwords", async (req, res) => {
+    try {
+      const currentUser = await storage.getCurrentUser();
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Acesso negado - apenas administradores" });
+      }
+
+      const { newPassword, excludeUsernames } = req.body;
+      if (!newPassword) {
+        return res.status(400).json({ message: "Nova senha é obrigatória" });
+      }
+
+      const count = await storage.resetAllPasswords(newPassword, excludeUsernames || []);
+      res.json({ 
+        message: `${count} senhas foram redefinidas com sucesso`,
+        count 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao redefinir senhas" });
+    }
+  });
+
   // User management routes
   app.get("/api/users", async (req, res) => {
     try {

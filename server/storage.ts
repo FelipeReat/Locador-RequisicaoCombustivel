@@ -10,6 +10,7 @@ export interface IStorage {
   deleteUser(id: number): Promise<boolean>;
   updateUserProfile(id: number, profile: UpdateUserProfile): Promise<User | undefined>;
   changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean>;
+  resetAllPasswords(newPassword: string, excludeUsernames?: string[]): Promise<number>;
   getCurrentUser(): Promise<User | undefined>;
   authenticateUser(credentials: LoginUser): Promise<User | null>;
 
@@ -495,6 +496,33 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, updatedUser);
     return true;
+  }
+
+  async resetAllPasswords(newPassword: string, excludeUsernames: string[] = []): Promise<number> {
+    let count = 0;
+    const now = new Date().toISOString();
+
+    console.log(`[STORAGE] Starting password reset for ${this.users.size} users`);
+    console.log(`[STORAGE] New password: ${newPassword}`);
+    console.log(`[STORAGE] Excluding usernames:`, excludeUsernames);
+
+    for (const [id, user] of this.users.entries()) {
+      if (!excludeUsernames.includes(user.username)) {
+        console.log(`[STORAGE] Resetting password for user: ${user.username}`);
+        const updatedUser = {
+          ...user,
+          password: newPassword,
+          updatedAt: now,
+        };
+        this.users.set(id, updatedUser);
+        count++;
+      } else {
+        console.log(`[STORAGE] Skipping user: ${user.username} (excluded)`);
+      }
+    }
+
+    console.log(`[STORAGE] Password reset complete. ${count} passwords updated.`);
+    return count;
   }
 
   async getCurrentUser(): Promise<User | undefined> {

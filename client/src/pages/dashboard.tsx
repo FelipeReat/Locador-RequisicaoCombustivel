@@ -18,13 +18,15 @@ import {
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
   const { t } = useLanguage();
+  const { userRole, canApprove } = usePermissions();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery<any>({
     queryKey: ["/api/fuel-requisitions/stats/overview"],
   });
 
@@ -36,7 +38,7 @@ export default function Dashboard() {
     queryKey: ["/api/suppliers"],
   });
 
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
   });
 
@@ -52,7 +54,7 @@ export default function Dashboard() {
   };
 
   const getUserName = (requesterId: number) => {
-    const user = users.find(u => u.id === requesterId);
+    const user = users.find((u: any) => u.id === requesterId);
     return user?.fullName || "-";
   };
 
@@ -153,23 +155,27 @@ export default function Dashboard() {
                 {t('new-requisition')}
               </Button>
 
-              <Button
-                onClick={() => setLocation("/requisitions?filter=pending")}
-                className="flex items-center justify-center p-4 bg-yellow-50 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-800 border-none"
-                variant="outline"
-              >
-                <Clock className="mr-3 h-5 w-5" />
-                {t('approve-pending')}
-              </Button>
+              {canApprove() && (
+                <Button
+                  onClick={() => setLocation("/requisitions?filter=pending")}
+                  className="flex items-center justify-center p-4 bg-yellow-50 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-800 border-none"
+                  variant="outline"
+                >
+                  <Clock className="mr-3 h-5 w-5" />
+                  {t('approve-pending')}
+                </Button>
+              )}
 
-              <Button
-                onClick={() => setLocation("/reports")}
-                className="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 border-none"
-                variant="outline"
-              >
-                <BarChart3 className="mr-3 h-5 w-5" />
-                {t('generate-report')}
-              </Button>
+              {userRole !== 'employee' && (
+                <Button
+                  onClick={() => setLocation("/reports")}
+                  className="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 border-none"
+                  variant="outline"
+                >
+                  <BarChart3 className="mr-3 h-5 w-5" />
+                  {t('generate-report')}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -258,13 +264,15 @@ export default function Dashboard() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setLocation(`/requisitions/${requisition.id}/edit`)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        {userRole !== 'employee' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setLocation(`/requisitions/${requisition.id}/edit`)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))
