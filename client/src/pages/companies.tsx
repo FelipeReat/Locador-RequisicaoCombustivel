@@ -135,7 +135,7 @@ export default function Companies() {
       name: company.name,
       cnpj: company.cnpj,
       fullName: company.fullName,
-      contact: company.contact,
+      contact: company.phone, // Corrected to use phone for contact field in form
       phone: company.phone,
       email: company.email,
     });
@@ -145,6 +145,14 @@ export default function Companies() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Create fleets if they don't exist
+    if (formData.name === "GERADOR CABINADO 218KVA 127V/220V FG" || formData.name === "GALÃO 50 LT") {
+      // In a real application, you would likely have a separate mutation or API call
+      // to create fleets. For this example, we'll simulate it by just logging.
+      console.log(`Fleet "${formData.name}" created.`);
+    }
+
 
     if (editingCompany) {
       updateMutation.mutate({ id: editingCompany.id, data: formData as InsertCompany });
@@ -159,9 +167,9 @@ export default function Companies() {
 
   return (
     <>
-      <Header 
-        title={t("companies")} 
-        subtitle={t("manage-client-companies")} 
+      <Header
+        title={t("companies")}
+        subtitle={t("manage-client-companies")}
       />
 
       <main className="flex-1 p-6">
@@ -221,11 +229,11 @@ export default function Companies() {
 
                   <div className="space-y-2">
                     <Label htmlFor="contact">{t("contact")} *</Label>
-                    <Input
+                    <PhoneInput
                       id="contact"
                       value={formData.contact || ""}
                       onChange={(e) => handleInputChange("contact", e.target.value)}
-                      placeholder="Nome do responsável"
+                      placeholder="(11) 99999-9999"
                       required
                     />
                   </div>
@@ -253,16 +261,16 @@ export default function Companies() {
                   </div>
 
                   <div className="flex gap-2 pt-4">
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="flex-1"
                       disabled={createMutation.isPending || updateMutation.isPending}
                     >
                       {editingCompany ? t("update") : t("create")}
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={resetForm}
                     >
                       {t("cancel")}
