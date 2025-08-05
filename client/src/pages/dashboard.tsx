@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type FuelRequisition, type Supplier } from "@shared/schema";
 import Header from "@/components/layout/header";
 import StatusBadge from "@/components/requisition/status-badge";
@@ -14,12 +14,14 @@ import {
   Plus, 
   BarChart3, 
   Eye,
-  Edit
+  Edit,
+  Check
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -27,6 +29,8 @@ export default function Dashboard() {
   const [editingRequisition, setEditingRequisition] = useState<FuelRequisition | null>(null);
   const { t } = useLanguage();
   const { userRole, canApprove } = usePermissions();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: stats, isLoading: statsLoading } = useQuery<any>({
     queryKey: ["/api/fuel-requisitions/stats/overview"],
@@ -45,6 +49,43 @@ export default function Dashboard() {
   });
 
   const recentRequisitions = requisitions?.slice(0, 5) || [];
+
+  // Mutation para confirmar requisição (mudar de approved para fulfilled)
+  const confirmRequisition = useMutation({
+    mutationFn: async (requisitionId: number) => {
+      const response = await fetch(`/api/fuel-requisitions/${requisitionId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "fulfilled"
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao confirmar requisição");
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Requisição confirmada como realizada",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao confirmar requisição",
+        variant: "destructive",
+      });
+    }
+  });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
@@ -113,16 +154,34 @@ export default function Dashboard() {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
-              <div className="bg-green-100 dark:bg-green-900 rounded-full p-3">
-                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="bg-green-100 dark:bg-green-900 rounded-full p-3">
+                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{t('approved-requests')}</p>
+                  <p className="text-2xl font-semibold text-gray-800 dark:text-white">
+                    {stats?.approvedRequests || 0}
+                  </p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">{t('approved-requests')}</p>
-                <p className="text-2xl font-semibold text-gray-800 dark:text-white">
-                  {stats?.approvedRequests || 0}
-                </p>
-              </div>
+              {userRole !== 'employee' && stats?.approvedRequests > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const approvedRequisitions = requisitions?.filter(req => req.status === 'approved') || [];
+                    if (approvedRequisitions.length > 0) {
+                      setLocation("/requisitions?filter=approved");
+                    }
+                  }}
+                  className="text-green-600 hover:text-green-700 border-green-300 hover:border-green-400 dark:text-green-400 dark:hover:text-green-300 dark:border-green-600 dark:hover:border-green-500"
+                  title="Ver requisições aprovadas para confirmar"
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
 
@@ -267,14 +326,30 @@ export default function Dashboard() {
                           <Eye className="h-4 w-4" />
                         </Button>
                         {userRole !== 'employee' && requisition.status === 'approved' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingRequisition(requisition)}
-                            title="Editar valores reais"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingRequisition(requisition)}
+                              title="Editar valores reais"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              disabled={confirmRequisition.isPending}
+                              title="Confirmar como realizada"
+                              className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                            >
+                              {confirmRequisition.isPending ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </>
                         )}
                         {userRole !== 'employee' && requisition.status === 'pending' && (
                           <Button
