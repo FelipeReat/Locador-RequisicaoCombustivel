@@ -166,22 +166,7 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
-              {userRole !== 'employee' && stats?.approvedRequests > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const approvedRequisitions = requisitions?.filter(req => req.status === 'approved') || [];
-                    if (approvedRequisitions.length > 0) {
-                      setLocation("/requisitions?filter=approved");
-                    }
-                  }}
-                  className="text-green-600 hover:text-green-700 border-green-300 hover:border-green-400 dark:text-green-400 dark:hover:text-green-300 dark:border-green-600 dark:hover:border-green-500"
-                  title="Ver requisições aprovadas para confirmar"
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-              )}
+
             </div>
           </div>
 
