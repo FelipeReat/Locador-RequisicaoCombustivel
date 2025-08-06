@@ -329,7 +329,7 @@ export class DatabaseStorage implements IStorage {
     const [approvedResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'approved'));
     const [rejectedResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'rejected'));
     const [fulfilledResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'fulfilled'));
-    
+
     const [litersResult] = await db.select({ 
       total: sql<number>`sum(cast(quantity as decimal))` 
     }).from(fuelRequisitions).where(
@@ -372,5 +372,50 @@ export class DatabaseStorage implements IStorage {
       count: row.count,
       totalLiters: row.totalLiters || 0,
     }));
+  }
+  
+  // Data cleanup methods
+  async cleanupRequisitions(): Promise<number> {
+    const requisitions = await db.select().from(fuelRequisitions);
+    const count = requisitions.length;
+
+    if (count > 0) {
+      await db.delete(fuelRequisitions);
+    }
+
+    return count;
+  }
+
+  async cleanupVehicles(): Promise<number> {
+    const vehiclesList = await db.select().from(vehicles);
+    const count = vehiclesList.length;
+
+    if (count > 0) {
+      await db.delete(vehicles);
+    }
+
+    return count;
+  }
+
+  async cleanupSuppliers(): Promise<number> {
+    const suppliersList = await db.select().from(suppliers);
+    const count = suppliersList.length;
+
+    if (count > 0) {
+      await db.delete(suppliers);
+    }
+
+    return count;
+  }
+
+  async cleanupCompanies(): Promise<number> {
+    const companiesList = await db.select().from(companies);
+    const count = companiesList.length;
+
+    if (count > 0) {
+      await db.delete(companies);
+    }
+
+    return count;
   }
 }
