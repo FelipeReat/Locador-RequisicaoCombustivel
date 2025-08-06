@@ -205,6 +205,9 @@ export default function Reports() {
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {(stats as any)?.totalRequests || 0}
               </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {(stats as any)?.approvedRequests || 0} aprovadas | {(stats as any)?.rejectedRequests || 0} rejeitadas
+              </div>
             </CardContent>
           </Card>
           
@@ -216,9 +219,18 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {(stats as any)?.approvedRequests && (stats as any)?.fulfilledRequests 
-                  ? Math.min(100, Math.round(((stats as any).fulfilledRequests / (stats as any).approvedRequests) * 100))
-                  : 0}%
+                {(() => {
+                  const approved = (stats as any)?.approvedRequests || 0;
+                  const fulfilled = (stats as any)?.fulfilledRequests || 0;
+                  
+                  if (approved === 0) return '0%';
+                  
+                  const rate = Math.min(100, Math.round((fulfilled / approved) * 100));
+                  return `${rate}%`;
+                })()}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {(stats as any)?.fulfilledRequests || 0} de {(stats as any)?.approvedRequests || 0} aprovadas
               </div>
             </CardContent>
           </Card>
@@ -245,6 +257,9 @@ export default function Reports() {
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                 {(stats as any)?.pendingRequests || 0}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Aguardando aprovação
               </div>
             </CardContent>
           </Card>
