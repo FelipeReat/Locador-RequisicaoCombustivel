@@ -1,4 +1,3 @@
-
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
@@ -16,7 +15,7 @@ export async function apiRequest(
   // Adicionar token de autenticação se disponível
   const authUser = localStorage.getItem('auth-user');
   const headers: Record<string, string> = {};
-  
+
   if (data) {
     headers["Content-Type"] = "application/json";
   }
@@ -67,9 +66,9 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      staleTime: 0, // Dados sempre considerados stale - força refetch
+      staleTime: 2 * 60 * 1000, // 2 minutos para dados menos críticos
       gcTime: 1000 * 60 * 2, // 2 minutos (reduzido de 5 minutos)
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false, // Reduzir refetch automático
       refetchOnReconnect: true,
       refetchOnMount: true, // Sempre refetch ao montar componente
       retry: (failureCount, error: any) => {
