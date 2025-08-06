@@ -211,13 +211,13 @@ export default function Reports() {
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                {t('approval-rate')}
+                Taxa de Realização
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {(stats as any)?.totalRequests 
-                  ? Math.round(((stats as any).approvedRequests / (stats as any).totalRequests) * 100)
+                {(stats as any)?.approvedRequests 
+                  ? Math.round(((stats as any).fulfilledRequests / (stats as any).approvedRequests) * 100)
                   : 0}%
               </div>
             </CardContent>
