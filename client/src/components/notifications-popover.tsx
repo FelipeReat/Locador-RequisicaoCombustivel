@@ -40,7 +40,11 @@ const formatTimeAgo = (date: Date): string => {
 
 export function NotificationsPopover() {
   const [isOpen, setIsOpen] = useState(false);
-  const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(() => {
+    // Carregar notificações lidas do localStorage
+    const saved = localStorage.getItem('read-notifications');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
 
   const { data: requisitions } = useQuery<FuelRequisition[]>({
     queryKey: ["/api/fuel-requisitions"],
@@ -52,13 +56,16 @@ export function NotificationsPopover() {
     const notifications: NotificationItem[] = [];
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     requisitions.forEach(req => {
       const createdAt = new Date(req.createdAt);
 
-      // Nova requisição nas últimas horas
-      if (createdAt > oneHourAgo) {
-        const notificationId = `new_${req.id}`;
+      // Nova requisição nas últimas 24 horas (para não perder notificações muito rapidamente)
+      if (createdAt > oneDayAgo) {
+        const notificationId = `new_${req.id}_${createdAt.getTime()}`;
+        const isRecent = createdAt > oneHourAgo;
+        
         notifications.push({
           id: notificationId,
           type: "new_requisition",
@@ -67,13 +74,13 @@ export function NotificationsPopover() {
           time: formatTimeAgo(createdAt),
           requisitionId: req.id,
           priority: req.priority as any,
-          isRead: readNotifications.has(notificationId),
+          isRead: readNotifications.has(notificationId) || !isRecent,
         });
       }
 
-      // Requisições pendentes de aprovação
+      // Requisições pendentes de aprovação (sempre visível)
       if (req.status === "pending") {
-        const notificationId = `pending_${req.id}`;
+        const notificationId = `pending_${req.id}_${req.status}`;
         notifications.push({
           id: notificationId,
           type: "pending_approval",
@@ -87,30 +94,70 @@ export function NotificationsPopover() {
       }
 
       // Mudanças de status recentes
-      if (req.approvedDate && new Date(req.approvedDate) > oneHourAgo) {
-        const notificationId = `status_${req.id}`;
+      if (req.approvedDate && new Date(req.approvedDate) > oneDayAgo) {
+        const approvedDate = new Date(req.approvedDate);
+        const notificationId = `status_${req.id}_${req.status}_${approvedDate.getTime()}`;
+        const isRecent = approvedDate > oneHourAgo;
+        
         notifications.push({
           id: notificationId,
           type: "status_change",
           title: req.status === "approved" ? "Requisição Aprovada" : "Status Alterado",
           description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
-          time: formatTimeAgo(new Date(req.approvedDate)),
+          time: formatTimeAgo(approvedDate),
           requisitionId: req.id,
           priority: req.priority as any,
-          isRead: readNotifications.has(notificationId),
+          isRead: readNotifications.has(notificationId) || !isRecent,
         });
       }
     });
 
-    return notifications.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    // Ordenar por tempo (mais recentes primeiro) e depois por status de leitura
+    return notifications.sort((a, b) => {
+      if (a.isRead !== b.isRead) {
+        return a.isRead ? 1 : -1; // Não lidas primeiro
+      }
+      return new Date(b.time).getTime() - new Date(a.time).getTime();
+    });
   };
 
   const notifications = generateNotifications();
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  // Limpeza automática de notificações antigas do localStorage
+  React.useEffect(() => {
+    const cleanupOldNotifications = () => {
+      const saved = localStorage.getItem('read-notifications');
+      if (saved) {
+        const readIds = new Set(JSON.parse(saved));
+        const currentNotificationIds = new Set(notifications.map(n => n.id));
+        const validReadIds = Array.from(readIds).filter(id => currentNotificationIds.has(id));
+        
+        if (validReadIds.length !== readIds.size) {
+          localStorage.setItem('read-notifications', JSON.stringify(validReadIds));
+          setReadNotifications(new Set(validReadIds));
+        }
+      }
+    };
+
+    if (notifications.length > 0) {
+      cleanupOldNotifications();
+    }
+  }, [notifications.length]);
+
   const markAllAsRead = () => {
     const allNotificationIds = new Set(notifications.map(n => n.id));
     setReadNotifications(allNotificationIds);
+    // Salvar no localStorage
+    localStorage.setItem('read-notifications', JSON.stringify(Array.from(allNotificationIds)));
+  };
+
+  const markAsRead = (notificationId: string) => {
+    const newReadNotifications = new Set(readNotifications);
+    newReadNotifications.add(notificationId);
+    setReadNotifications(newReadNotifications);
+    // Salvar no localStorage
+    localStorage.setItem('read-notifications', JSON.stringify(Array.from(newReadNotifications)));
   };
 
   const getNotificationIcon = (type: string) => {
@@ -179,7 +226,10 @@ export function NotificationsPopover() {
             <div className="p-2">
               {notifications.map((notification, index) => (
                 <div key={notification.id}>
-                  <div className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                  <div 
+                    className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg cursor-pointer transition-colors ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                    onClick={() => !notification.isRead && markAsRead(notification.id)}
+                  >
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 mt-1 relative">
                         {getNotificationIcon(notification.type)}
