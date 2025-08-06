@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type FuelRequisition, type Supplier } from "@shared/schema";
 import Header from "@/components/layout/header";
 import StatusBadge from "@/components/requisition/status-badge";
@@ -15,9 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, Edit, Search, Filter } from "lucide-react";
+import { Eye, Edit, Search, Filter, Check } from "lucide-react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useToast } from "@/hooks/use-toast";
+import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
 
 export default function Requisitions() {
   const [, setLocation] = useLocation();
@@ -27,6 +30,13 @@ export default function Requisitions() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   const { t } = useLanguage();
+  const { userRole } = usePermissions();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Hooks para atualizações em tempo real
+  const { forceRefresh } = useRealTimeUpdates();
+  const { invalidateByOperation } = useSmartInvalidation();
 
   const { data: requisitions, isLoading } = useQuery<FuelRequisition[]>({
     queryKey: ["/api/fuel-requisitions"],
@@ -38,6 +48,86 @@ export default function Requisitions() {
 
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
+  });
+
+  // Mutation para confirmar requisição (mudar de approved para fulfilled)
+  const confirmRequisition = useMutation({
+    mutationFn: async (requisitionId: number) => {
+      const response = await fetch(`/api/fuel-requisitions/${requisitionId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "fulfilled"
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao confirmar requisição");
+      }
+
+      return await response.json();
+    },
+    // Atualização otimística
+    onMutate: async (requisitionId: number) => {
+      // Cancela queries em andamento
+      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
+      
+      // Salva estado anterior
+      const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
+      const previousStats = queryClient.getQueryData(["/api/fuel-requisitions/stats/overview"]);
+      
+      // Atualiza otimisticamente a lista
+      queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
+        if (!old) return old;
+        return old.map(req => 
+          req.id === requisitionId 
+            ? { ...req, status: 'fulfilled' as any, fulfilledAt: new Date().toISOString() }
+            : req
+        );
+      });
+
+      // Atualiza otimisticamente as estatísticas
+      queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          approvedRequests: Math.max(0, (old.approvedRequests || 0) - 1),
+          fulfilledRequests: (old.fulfilledRequests || 0) + 1
+        };
+      });
+
+      return { previousRequisitions, previousStats };
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Requisição confirmada como realizada",
+      });
+      // Usa invalidação inteligente
+      invalidateByOperation('requisition');
+    },
+    onError: (error: any, variables, context) => {
+      // Rollback em caso de erro
+      if (context?.previousRequisitions) {
+        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
+      }
+      if (context?.previousStats) {
+        queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], context.previousStats);
+      }
+      
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao confirmar requisição",
+        variant: "destructive",
+      });
+    },
+    // Sempre revalida para garantir consistência
+    onSettled: () => {
+      invalidateByOperation('requisition');
+    }
   });
 
   const filteredRequisitions = requisitions?.filter((req) => {
@@ -233,16 +323,32 @@ export default function Requisitions() {
                           </Button>
                         )}
                         
-                        {requisition.status === "approved" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingRequisition(requisition)}
-                            title="Editar valores reais"
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                        {userRole !== 'employee' && requisition.status === "approved" && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingRequisition(requisition)}
+                              title="Editar valores reais"
+                              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              disabled={confirmRequisition.isPending}
+                              title="Confirmar como realizada"
+                              className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                            >
+                              {confirmRequisition.isPending ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </>
                         )}
                       </td>
                     </tr>
