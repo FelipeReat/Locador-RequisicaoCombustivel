@@ -220,17 +220,17 @@ export default function Reports() {
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {(() => {
-                  const approved = (stats as any)?.approvedRequests || 0;
+                  const total = (stats as any)?.totalRequests || 0;
                   const fulfilled = (stats as any)?.fulfilledRequests || 0;
                   
-                  if (approved === 0) return '0%';
+                  if (total === 0) return '0%';
                   
-                  const rate = Math.min(100, Math.round((fulfilled / approved) * 100));
+                  const rate = Math.round((fulfilled / total) * 100);
                   return `${rate}%`;
                 })()}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {(stats as any)?.fulfilledRequests || 0} de {(stats as any)?.approvedRequests || 0} aprovadas
+                {(stats as any)?.fulfilledRequests || 0} de {(stats as any)?.totalRequests || 0} requisições
               </div>
             </CardContent>
           </Card>
