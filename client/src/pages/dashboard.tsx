@@ -22,6 +22,7 @@ import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useToast } from "@/hooks/use-toast";
+import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -31,6 +32,10 @@ export default function Dashboard() {
   const { userRole, canApprove } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Hooks para atualizações em tempo real
+  const { forceRefresh } = useRealTimeUpdates();
+  const { invalidateByOperation } = useSmartInvalidation();
 
   const { data: stats, isLoading: statsLoading } = useQuery<any>({
     queryKey: ["/api/fuel-requisitions/stats/overview"],
@@ -70,20 +75,63 @@ export default function Dashboard() {
 
       return await response.json();
     },
+    // Atualização otimista
+    onMutate: async (requisitionId: number) => {
+      // Cancela queries em andamento
+      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
+      
+      // Salva estado anterior
+      const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
+      const previousStats = queryClient.getQueryData(["/api/fuel-requisitions/stats/overview"]);
+      
+      // Atualiza otimisticamente a lista
+      queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
+        if (!old) return old;
+        return old.map(req => 
+          req.id === requisitionId 
+            ? { ...req, status: 'fulfilled' as any, fulfilledAt: new Date().toISOString() }
+            : req
+        );
+      });
+
+      // Atualiza otimisticamente as estatísticas
+      queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          approvedRequests: Math.max(0, (old.approvedRequests || 0) - 1),
+          fulfilledRequests: (old.fulfilledRequests || 0) + 1
+        };
+      });
+
+      return { previousRequisitions, previousStats };
+    },
     onSuccess: () => {
       toast({
         title: "Sucesso",
         description: "Requisição confirmada como realizada",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      // Usa invalidação inteligente
+      invalidateByOperation('requisition');
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
+      // Rollback em caso de erro
+      if (context?.previousRequisitions) {
+        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
+      }
+      if (context?.previousStats) {
+        queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], context.previousStats);
+      }
+      
       toast({
         title: "Erro",
         description: error.message || "Erro ao confirmar requisição",
         variant: "destructive",
       });
+    },
+    // Sempre revalida para garantir consistência
+    onSettled: () => {
+      invalidateByOperation('requisition');
     }
   });
 

@@ -2,6 +2,7 @@ import { User, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { NotificationsPopover } from "@/components/notifications-popover";
+import { SyncIndicator } from "@/components/ui/sync-indicator";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -47,6 +48,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
           {subtitle && <p className="text-sm text-gray-600 dark:text-gray-300">{subtitle}</p>}
         </div>
         <div className="flex items-center space-x-4">
+          <SyncIndicator />
           <NotificationsPopover />
 
           <DropdownMenu>

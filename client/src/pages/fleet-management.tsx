@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertVehicleSchema, type Vehicle, type InsertVehicle } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
+import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
 import Header from "@/components/layout/header";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,10 @@ export default function FleetManagement() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { t } = useLanguage();
+  
+  // Hooks para atualizações em tempo real
+  const { forceRefresh } = useRealTimeUpdates();
+  const { invalidateByOperation } = useSmartInvalidation();
 
   const { data: vehicles, isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
@@ -117,19 +122,49 @@ export default function FleetManagement() {
       const response = await apiRequest("PATCH", `/api/vehicles/${id}/status`, { status });
       return response.json();
     },
+    // Atualização otimista para resposta imediata
+    onMutate: async ({ id, status }: { id: number; status: string }) => {
+      // Cancela queries em andamento
+      await queryClient.cancelQueries({ queryKey: ["/api/vehicles"] });
+      
+      // Salva estado anterior
+      const previousVehicles = queryClient.getQueryData(["/api/vehicles"]);
+      
+      // Atualiza otimisticamente
+      queryClient.setQueryData(["/api/vehicles"], (old: Vehicle[] | undefined) => {
+        if (!old) return old;
+        return old.map(vehicle => 
+          vehicle.id === id 
+            ? { ...vehicle, status }
+            : vehicle
+        );
+      });
+
+      return { previousVehicles };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       toast({
         title: t("success"),
         description: t("vehicle-status-changed"),
       });
+      // Usa invalidação inteligente
+      invalidateByOperation('vehicle');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback em caso de erro
+      if (context?.previousVehicles) {
+        queryClient.setQueryData(["/api/vehicles"], context.previousVehicles);
+      }
+      
       toast({
         title: t("error"),
         description: error.message || t("error-changing-status"),
         variant: "destructive",
       });
+    },
+    // Sempre revalida para garantir consistência
+    onSettled: () => {
+      invalidateByOperation('vehicle');
     },
   });
 
