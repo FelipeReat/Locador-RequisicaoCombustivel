@@ -67,16 +67,17 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      // Configurações mais responsivas para atualizações em tempo real
-      staleTime: 30 * 1000, // 30 segundos - dados ficam "fresh" por 30s
-      cacheTime: 5 * 60 * 1000, // 5 minutos - cache mantido por 5min
-      refetchOnWindowFocus: true, // Revalida quando usuário volta para a aba
-      refetchOnReconnect: true, // Revalida quando reconecta à internet
-      refetchInterval: false, // Não usar polling automático (pode ser habilitado se necessário)
+      staleTime: 0, // Dados sempre considerados stale - força refetch
+      gcTime: 1000 * 60 * 2, // 2 minutos (reduzido de 5 minutos)
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMount: true, // Sempre refetch ao montar componente
       retry: (failureCount, error: any) => {
-        // Não retry em erros de autenticação
-        if (error?.message?.includes('401')) return false;
-        return failureCount < 2; // Máximo 2 tentativas
+        // Não tenta novamente para erros 401 (não autorizado)
+        if (error?.status === 401) {
+          return false;
+        }
+        return failureCount < 3;
       },
     },
     mutations: {

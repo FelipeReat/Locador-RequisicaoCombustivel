@@ -56,6 +56,12 @@ export default function FleetManagement() {
 
   const { data: vehicles, isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
+    onSuccess: (data) => {
+      console.log(`📊 Query de veículos executada - ${data?.length || 0} veículos carregados`);
+    },
+    onError: (error) => {
+      console.error(`❌ Erro na query de veículos:`, error);
+    },
   });
 
   const form = useForm<InsertVehicle>({
@@ -119,52 +125,38 @@ export default function FleetManagement() {
 
   const toggleVehicleStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      console.log(`🔄 Alterando status do veículo ${id} para ${status}`);
       const response = await apiRequest("PATCH", `/api/vehicles/${id}/status`, { status });
-      return response.json();
+      const result = await response.json();
+      console.log(`✅ Resposta do servidor:`, result);
+      return result;
     },
-    // Atualização otimista para resposta imediata
-    onMutate: async ({ id, status }: { id: number; status: string }) => {
-      // Cancela queries em andamento
-      await queryClient.cancelQueries({ queryKey: ["/api/vehicles"] });
+    onSuccess: (data, { id, status }) => {
+      console.log(`🎉 Sucesso na mutação - Veículo ${id} agora tem status ${status}`);
       
-      // Salva estado anterior
-      const previousVehicles = queryClient.getQueryData(["/api/vehicles"]);
+      // Remove atualização otimista e força refetch completo
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       
-      // Atualiza otimisticamente
-      queryClient.setQueryData(["/api/vehicles"], (old: Vehicle[] | undefined) => {
-        if (!old) return old;
-        return old.map(vehicle => 
-          vehicle.id === id 
-            ? { ...vehicle, status }
-            : vehicle
-        );
-      });
-
-      return { previousVehicles };
-    },
-    onSuccess: () => {
+      // Força refetch imediato
+      queryClient.refetchQueries({ queryKey: ["/api/vehicles"] });
+      
+      // Também invalida outras queries relacionadas
+      invalidateByOperation('vehicle');
+      
+      console.log(`🔄 Cache invalidado e refetch forçado`);
+      
       toast({
         title: t("success"),
         description: t("vehicle-status-changed"),
       });
-      // Usa invalidação inteligente
-      invalidateByOperation('vehicle');
     },
-    onError: (error, variables, context) => {
-      // Rollback em caso de erro
-      if (context?.previousVehicles) {
-        queryClient.setQueryData(["/api/vehicles"], context.previousVehicles);
-      }
-      
+    onError: (error) => {
+      console.error(`❌ Erro na mutação:`, error);
       toast({
         title: t("error"),
         description: error.message || t("error-changing-status"),
         variant: "destructive",
       });
-    },
-    // Sempre revalida para garantir consistência
-    onSettled: () => {
-      invalidateByOperation('vehicle');
     },
   });
 
