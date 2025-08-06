@@ -216,7 +216,7 @@ export default function Reports() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {(stats as any)?.approvedRequests 
+                {(stats as any)?.approvedRequests && (stats as any)?.fulfilledRequests 
                   ? Math.round(((stats as any).fulfilledRequests / (stats as any).approvedRequests) * 100)
                   : 0}%
               </div>

@@ -837,6 +837,7 @@ export class MemStorage implements IStorage {
     pendingRequests: number;
     approvedRequests: number;
     rejectedRequests: number;
+    fulfilledRequests: number;
     totalLiters: number;
   }> {
     const requisitions = Array.from(this.fuelRequisitions.values());
@@ -846,6 +847,7 @@ export class MemStorage implements IStorage {
       pendingRequests: requisitions.filter(r => r.status === "pending").length,
       approvedRequests: requisitions.filter(r => r.status === "approved").length,
       rejectedRequests: requisitions.filter(r => r.status === "rejected").length,
+      fulfilledRequests: requisitions.filter(r => r.status === "fulfilled").length,
       totalLiters: requisitions
         .filter(r => r.status === "approved" || r.status === "fulfilled")
         .reduce((sum, r) => sum + parseFloat(r.quantity || "0"), 0),

@@ -321,12 +321,14 @@ export class DatabaseStorage implements IStorage {
     pendingRequests: number;
     approvedRequests: number;
     rejectedRequests: number;
+    fulfilledRequests: number;
     totalLiters: number;
   }> {
     const [totalResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions);
     const [pendingResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'pending'));
     const [approvedResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'approved'));
     const [rejectedResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'rejected'));
+    const [fulfilledResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'fulfilled'));
     
     const [litersResult] = await db.select({ 
       total: sql<number>`sum(cast(quantity as decimal))` 
@@ -339,6 +341,7 @@ export class DatabaseStorage implements IStorage {
       pendingRequests: pendingResult.count,
       approvedRequests: approvedResult.count,
       rejectedRequests: rejectedResult.count,
+      fulfilledRequests: fulfilledResult.count,
       totalLiters: litersResult.total || 0,
     };
   }
