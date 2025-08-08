@@ -27,7 +27,7 @@ import { IStorage } from './storage';
 export class DatabaseStorage implements IStorage {
   private loggedInUserId: number | null = null;
   private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
-  private readonly DEFAULT_TTL = 30000; // 30 seconds cache
+  private readonly DEFAULT_TTL = 10000; // 10 seconds cache para melhor responsividade
 
   private getCacheKey(method: string, params?: any): string {
     return `${method}:${params ? JSON.stringify(params) : 'all'}`;
@@ -293,9 +293,15 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // Fuel Requisitions
+  // Fuel Requisitions with caching
   async getFuelRequisitions(): Promise<FuelRequisition[]> {
-    return await db.select().from(fuelRequisitions).orderBy(desc(fuelRequisitions.createdAt));
+    const cacheKey = this.getCacheKey('fuelRequisitions');
+    const cached = this.getFromCache<FuelRequisition[]>(cacheKey);
+    if (cached) return cached;
+
+    const result = await db.select().from(fuelRequisitions).orderBy(desc(fuelRequisitions.createdAt));
+    this.setCache(cacheKey, result, 10000); // Cache por 10 segundos
+    return result;
   }
 
   async getFuelRequisition(id: number): Promise<FuelRequisition | undefined> {
@@ -310,6 +316,11 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
+    
+    // Invalidar cache relacionado às requisições após criar
+    this.invalidateCache('fuelRequisitions');
+    this.invalidateCache('requisitionStats');
+    
     return result[0];
   }
 
@@ -321,6 +332,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(fuelRequisitions.id, id))
       .returning();
+    
+    // Invalidar cache relacionado às requisições após atualizar
+    this.invalidateCache('fuelRequisitions');
+    this.invalidateCache('requisitionStats');
+    
     return result[0];
   }
 
@@ -354,6 +370,11 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(fuelRequisitions.id, id))
       .returning();
+    
+    // Invalidar cache relacionado às requisições após atualizar status
+    this.invalidateCache('fuelRequisitions');
+    this.invalidateCache('requisitionStats');
+    
     return result[0];
   }
 
@@ -362,7 +383,7 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // Analytics - Optimized to use single query instead of 6 separate queries
+  // Analytics - Optimized to use single query instead of 6 separate queries with caching
   async getRequisitionStats(): Promise<{
     totalRequests: number;
     pendingRequests: number;
@@ -371,6 +392,10 @@ export class DatabaseStorage implements IStorage {
     fulfilledRequests: number;
     totalLiters: number;
   }> {
+    const cacheKey = this.getCacheKey('requisitionStats');
+    const cached = this.getFromCache<any>(cacheKey);
+    if (cached) return cached;
+
     const [result] = await db.select({
       totalRequests: sql<number>`count(*)`,
       pendingRequests: sql<number>`sum(case when status = 'pending' then 1 else 0 end)`,
@@ -380,7 +405,7 @@ export class DatabaseStorage implements IStorage {
       totalLiters: sql<number>`sum(case when status IN ('approved', 'fulfilled') and quantity is not null then cast(quantity as decimal) else 0 end)`
     }).from(fuelRequisitions);
 
-    return {
+    const stats = {
       totalRequests: result.totalRequests,
       pendingRequests: result.pendingRequests,
       approvedRequests: result.approvedRequests,
@@ -388,6 +413,9 @@ export class DatabaseStorage implements IStorage {
       fulfilledRequests: result.fulfilledRequests,
       totalLiters: result.totalLiters || 0,
     };
+
+    this.setCache(cacheKey, stats, 15000); // Cache por 15 segundos
+    return stats;
   }
 
   async getRequisitionsByDepartment(): Promise<{ department: string; count: number; totalLiters: number }[]> {

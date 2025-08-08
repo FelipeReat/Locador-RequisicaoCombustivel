@@ -39,22 +39,12 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
 
   // Fetch suppliers
   const { data: suppliers = [] } = useQuery<Supplier[]>({
-    queryKey: ["suppliers"],
-    queryFn: async () => {
-      const response = await fetch("/api/suppliers");
-      if (!response.ok) throw new Error("Failed to fetch suppliers");
-      return response.json();
-    },
+    queryKey: ["/api/suppliers"],
   });
 
   // Fetch vehicles
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
-    queryKey: ["vehicles"],
-    queryFn: async () => {
-      const response = await fetch("/api/vehicles");
-      if (!response.ok) throw new Error("Failed to fetch vehicles");
-      return response.json();
-    },
+    queryKey: ["/api/vehicles"],
   });
 
   // Update kmAnterior when vehicle is selected
@@ -72,12 +62,7 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
 
   // Fetch users
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["users"],
-    queryFn: async () => {
-      const response = await fetch("/api/users");
-      if (!response.ok) throw new Error("Failed to fetch users");
-      return response.json();
-    },
+    queryKey: ["/api/users"],
   });
 
   const createMutation = useMutation({
@@ -100,16 +85,64 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
       
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fuel-requisitions"] });
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+    // Atualização otimística para mostrar a requisição imediatamente
+    onMutate: async (newRequisition) => {
+      // Cancelar qualquer query em andamento
+      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
+      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      
+      // Obter dados atuais
+      const previousRequisitions = queryClient.getQueryData<any[]>(["/api/fuel-requisitions"]);
+      const previousStats = queryClient.getQueryData<any>(["/api/fuel-requisitions/stats/overview"]);
+      
+      // Adicionar nova requisição otimisticamente
+      if (previousRequisitions) {
+        const optimisticRequisition = {
+          ...newRequisition,
+          id: Date.now(), // ID temporário
+          status: "pending",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          approverId: null,
+          approvedDate: null,
+          rejectionReason: null
+        };
+        
+        queryClient.setQueryData(["/api/fuel-requisitions"], [optimisticRequisition, ...previousRequisitions]);
+      }
+      
+      // Atualizar estatísticas otimisticamente
+      if (previousStats) {
+        queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], {
+          ...previousStats,
+          totalRequests: (parseInt(previousStats.totalRequests) + 1).toString(),
+          pendingRequests: (parseInt(previousStats.pendingRequests) + 1).toString()
+        });
+      }
+      
+      return { previousRequisitions, previousStats };
+    },
+    onSuccess: (data) => {
+      // Invalidar e recarregar para obter dados reais do servidor
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      
       toast({
         title: t('requisition-created-success'),
         description: "A requisição foi criada com sucesso.",
       });
       onSuccess?.();
     },
-    onError: (error) => {
+    onError: (error, newRequisition, context) => {
+      // Reverter mudanças otimísticas em caso de erro
+      if (context?.previousRequisitions) {
+        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
+      }
+      if (context?.previousStats) {
+        queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], context.previousStats);
+      }
+      
       toast({
         title: t('operation-error'),
         description: error.message,

@@ -56,12 +56,6 @@ export default function FleetManagement() {
 
   const { data: vehicles, isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
-    onSuccess: (data) => {
-      console.log(`📊 Query de veículos executada - ${data?.length || 0} veículos carregados`);
-    },
-    onError: (error) => {
-      console.error(`❌ Erro na query de veículos:`, error);
-    },
   });
 
   const form = useForm<InsertVehicle>({
