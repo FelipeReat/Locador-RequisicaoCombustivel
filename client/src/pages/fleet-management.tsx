@@ -260,10 +260,9 @@ export default function FleetManagement() {
     return labels[status as keyof typeof labels] || status;
   };
 
-  // Maintain stable sorting to prevent position changes
+  // Sort vehicles alphabetically by model
   const sortedVehicles = vehicles ? [...vehicles].sort((a, b) => {
-    // Sort by creation date to maintain consistent order
-    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return a.model.localeCompare(b.model, 'pt-BR');
   }) : [];
 
   const filteredVehicles = sortedVehicles.filter(vehicle => {
