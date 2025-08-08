@@ -26,6 +26,38 @@ import { IStorage } from './storage';
 
 export class DatabaseStorage implements IStorage {
   private loggedInUserId: number | null = null;
+  private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
+  private readonly DEFAULT_TTL = 30000; // 30 seconds cache
+
+  private getCacheKey(method: string, params?: any): string {
+    return `${method}:${params ? JSON.stringify(params) : 'all'}`;
+  }
+
+  private getFromCache<T>(key: string): T | null {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < cached.ttl) {
+      return cached.data;
+    }
+    this.cache.delete(key);
+    return null;
+  }
+
+  private setCache(key: string, data: any, ttl = this.DEFAULT_TTL): void {
+    this.cache.set(key, { data, timestamp: Date.now(), ttl });
+  }
+
+  private invalidateCache(pattern?: string): void {
+    if (!pattern) {
+      this.cache.clear();
+      return;
+    }
+    const keys = Array.from(this.cache.keys());
+    keys.forEach(key => {
+      if (key.includes(pattern)) {
+        this.cache.delete(key);
+      }
+    });
+  }
 
   // Users
   async getUser(id: number): Promise<User | undefined> {
@@ -127,9 +159,15 @@ export class DatabaseStorage implements IStorage {
     this.loggedInUserId = null;
   }
 
-  // Suppliers
+  // Suppliers with caching
   async getSuppliers(): Promise<Supplier[]> {
-    return await db.select().from(suppliers).orderBy(desc(suppliers.createdAt));
+    const cacheKey = this.getCacheKey('suppliers');
+    const cached = this.getFromCache<Supplier[]>(cacheKey);
+    if (cached) return cached;
+
+    const result = await db.select().from(suppliers).orderBy(desc(suppliers.createdAt));
+    this.setCache(cacheKey, result);
+    return result;
   }
 
   async getSupplier(id: number): Promise<Supplier | undefined> {
@@ -144,6 +182,7 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
+    this.invalidateCache('suppliers');
     return result[0];
   }
 
@@ -199,9 +238,15 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // Vehicles
+  // Vehicles with caching
   async getVehicles(): Promise<Vehicle[]> {
-    return await db.select().from(vehicles).orderBy(desc(vehicles.createdAt));
+    const cacheKey = this.getCacheKey('vehicles');
+    const cached = this.getFromCache<Vehicle[]>(cacheKey);
+    if (cached) return cached;
+
+    const result = await db.select().from(vehicles).orderBy(desc(vehicles.createdAt));
+    this.setCache(cacheKey, result);
+    return result;
   }
 
   async getVehicle(id: number): Promise<Vehicle | undefined> {
@@ -216,6 +261,7 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
+    this.invalidateCache('vehicles');
     return result[0];
   }
 
@@ -238,6 +284,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(vehicles.id, id))
       .returning();
+    this.invalidateCache('vehicles');
     return result[0];
   }
 
@@ -315,7 +362,7 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // Analytics
+  // Analytics - Optimized to use single query instead of 6 separate queries
   async getRequisitionStats(): Promise<{
     totalRequests: number;
     pendingRequests: number;
@@ -324,25 +371,22 @@ export class DatabaseStorage implements IStorage {
     fulfilledRequests: number;
     totalLiters: number;
   }> {
-    const [totalResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions);
-    const [pendingResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'pending'));
-    const [approvedResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'approved'));
-    const [rejectedResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'rejected'));
-    const [fulfilledResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions).where(eq(fuelRequisitions.status, 'fulfilled'));
-
-    const [litersResult] = await db.select({ 
-      total: sql<number>`sum(cast(quantity as decimal))` 
-    }).from(fuelRequisitions).where(
-      sql`status IN ('approved', 'fulfilled') AND quantity IS NOT NULL`
-    );
+    const [result] = await db.select({
+      totalRequests: sql<number>`count(*)`,
+      pendingRequests: sql<number>`sum(case when status = 'pending' then 1 else 0 end)`,
+      approvedRequests: sql<number>`sum(case when status = 'approved' then 1 else 0 end)`,
+      rejectedRequests: sql<number>`sum(case when status = 'rejected' then 1 else 0 end)`,
+      fulfilledRequests: sql<number>`sum(case when status = 'fulfilled' then 1 else 0 end)`,
+      totalLiters: sql<number>`sum(case when status IN ('approved', 'fulfilled') and quantity is not null then cast(quantity as decimal) else 0 end)`
+    }).from(fuelRequisitions);
 
     return {
-      totalRequests: totalResult.count,
-      pendingRequests: pendingResult.count,
-      approvedRequests: approvedResult.count,
-      rejectedRequests: rejectedResult.count,
-      fulfilledRequests: fulfilledResult.count,
-      totalLiters: litersResult.total || 0,
+      totalRequests: result.totalRequests,
+      pendingRequests: result.pendingRequests,
+      approvedRequests: result.approvedRequests,
+      rejectedRequests: result.rejectedRequests,
+      fulfilledRequests: result.fulfilledRequests,
+      totalLiters: result.totalLiters || 0,
     };
   }
 
@@ -374,10 +418,10 @@ export class DatabaseStorage implements IStorage {
     }));
   }
   
-  // Data cleanup methods
+  // Data cleanup methods - Optimized to avoid unnecessary SELECT before DELETE
   async cleanupRequisitions(): Promise<number> {
-    const requisitions = await db.select().from(fuelRequisitions);
-    const count = requisitions.length;
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions);
+    const count = countResult.count;
 
     if (count > 0) {
       await db.delete(fuelRequisitions);
@@ -387,8 +431,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cleanupVehicles(): Promise<number> {
-    const vehiclesList = await db.select().from(vehicles);
-    const count = vehiclesList.length;
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(vehicles);
+    const count = countResult.count;
 
     if (count > 0) {
       await db.delete(vehicles);
@@ -398,8 +442,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cleanupSuppliers(): Promise<number> {
-    const suppliersList = await db.select().from(suppliers);
-    const count = suppliersList.length;
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(suppliers);
+    const count = countResult.count;
 
     if (count > 0) {
       await db.delete(suppliers);
@@ -409,8 +453,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cleanupCompanies(): Promise<number> {
-    const companiesList = await db.select().from(companies);
-    const count = companiesList.length;
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(companies);
+    const count = countResult.count;
 
     if (count > 0) {
       await db.delete(companies);
