@@ -131,27 +131,51 @@ export default function FleetManagement() {
       console.log(`✅ Resposta do servidor:`, result);
       return result;
     },
+    onMutate: async ({ id, status }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/vehicles"] });
+      
+      // Snapshot the previous value
+      const previousVehicles = queryClient.getQueryData<Vehicle[]>(["/api/vehicles"]);
+      
+      // Optimistically update the cache - maintain position in array
+      queryClient.setQueryData<Vehicle[]>(["/api/vehicles"], (old) => {
+        if (!old) return old;
+        return old.map(vehicle => 
+          vehicle.id === id 
+            ? { ...vehicle, status, updatedAt: new Date().toISOString() }
+            : vehicle
+        );
+      });
+      
+      return { previousVehicles };
+    },
     onSuccess: (data, { id, status }) => {
       console.log(`🎉 Sucesso na mutação - Veículo ${id} agora tem status ${status}`);
       
-      // Remove atualização otimista e força refetch completo
-      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      // Update with server response but maintain position
+      queryClient.setQueryData<Vehicle[]>(["/api/vehicles"], (old) => {
+        if (!old) return old;
+        return old.map(vehicle => 
+          vehicle.id === id ? data : vehicle
+        );
+      });
       
-      // Força refetch imediato
-      queryClient.refetchQueries({ queryKey: ["/api/vehicles"] });
-      
-      // Também invalida outras queries relacionadas
-      invalidateByOperation('vehicle');
-      
-      console.log(`🔄 Cache invalidado e refetch forçado`);
+      console.log(`🔄 Cache atualizado mantendo posição`);
       
       toast({
         title: t("success"),
         description: t("vehicle-status-changed"),
       });
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       console.error(`❌ Erro na mutação:`, error);
+      
+      // Revert to previous state if mutation fails
+      if (context?.previousVehicles) {
+        queryClient.setQueryData(["/api/vehicles"], context.previousVehicles);
+      }
+      
       toast({
         title: t("error"),
         description: error.message || t("error-changing-status"),
@@ -236,13 +260,19 @@ export default function FleetManagement() {
     return labels[status as keyof typeof labels] || status;
   };
 
-  const filteredVehicles = vehicles?.filter(vehicle => {
+  // Maintain stable sorting to prevent position changes
+  const sortedVehicles = vehicles ? [...vehicles].sort((a, b) => {
+    // Sort by creation date to maintain consistent order
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  }) : [];
+
+  const filteredVehicles = sortedVehicles.filter(vehicle => {
     const matchesSearch = vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesSearch;
-  }) || [];
+  });
 
   if (vehiclesLoading) {
     return <LoadingSpinner message={t("loading-fleet")} />;
