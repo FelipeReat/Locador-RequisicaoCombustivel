@@ -45,6 +45,12 @@ export default function ProtectedRoute({ path, children }: ProtectedRouteProps) 
       );
     
     case 'no-user':
+      // Redireciona para login se não há usuário autenticado
+      queueMicrotask(() => {
+        navigate('/');
+      });
+      return null;
+    
     case 'no-access':
       return null;
     

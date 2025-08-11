@@ -42,16 +42,25 @@ interface LoginCredentials {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const queryClient = useQueryClient();
   const [, navigate] = useLocation(); // useLocation hook for wouter navigation
 
-  // Não fazer verificação automática - usuário deve sempre fazer login
-  const isLoading = false;
-
-  // Limpar qualquer dado salvo no localStorage na inicialização
+  // Verificar se há um usuário salvo no localStorage na inicialização
   useEffect(() => {
-    localStorage.removeItem('auth-user');
-  }, []);
+    const savedUser = localStorage.getItem('auth-user');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        queryClient.setQueryData(['/api/auth/me'], parsedUser);
+      } catch (error) {
+        console.error('Erro ao carregar usuário salvo:', error);
+        localStorage.removeItem('auth-user');
+      }
+    }
+    setIsLoading(false);
+  }, [queryClient]);
 
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: LoginCredentials) => {
