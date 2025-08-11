@@ -55,7 +55,7 @@ import {
   UserX,
   Shield,
 } from "lucide-react";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 
 function UserManagement() {
