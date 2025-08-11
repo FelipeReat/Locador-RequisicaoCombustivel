@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Fuel, 
   LayoutDashboard, 
@@ -40,6 +40,20 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const { allowedPages, userRole } = usePermissions();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.classList.add('mobile-menu-open');
+    } else {
+      document.body.classList.remove('mobile-menu-open');
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('mobile-menu-open');
+    };
+  }, [isMobileMenuOpen]);
 
   const isActive = (path: string) => {
     if (path === "/" || path === "/dashboard") {
@@ -99,6 +113,8 @@ export default function Sidebar() {
         w-64 bg-white dark:bg-gray-800 shadow-lg
         transition-transform duration-300 ease-in-out
         lg:transition-none
+        flex flex-col
+        overflow-hidden
       `}>
         <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
           <h1 className="text-lg lg:text-xl font-bold text-primary flex items-center justify-center">
@@ -107,10 +123,13 @@ export default function Sidebar() {
           </h1>
         </div>
 
-        <nav className="mt-4 lg:mt-6">
+        <nav className="mt-4 lg:mt-6 flex-1 overflow-y-auto">
         {allowedPages.map((page) => (
           <Link key={page.path} href={page.path}>
-            <div className={`sidebar-link ${isActive(page.path) ? "active" : ""}`}>
+            <div 
+              className={`sidebar-link ${isActive(page.path) ? "active" : ""}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               {getIcon(page.icon)}
               {t(page.label)}
             </div>
@@ -118,7 +137,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center mb-3">
           <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
             <User className="w-4 h-4 text-white" />
@@ -133,7 +152,10 @@ export default function Sidebar() {
           </div>
         </div>
         <Button 
-          onClick={logout} 
+          onClick={() => {
+            setIsMobileMenuOpen(false);
+            logout();
+          }}
           variant="outline" 
           size="sm" 
           className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"

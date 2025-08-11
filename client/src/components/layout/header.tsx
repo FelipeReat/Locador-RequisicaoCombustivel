@@ -47,20 +47,20 @@ export default function Header({ title, subtitle }: HeaderProps) {
           <h2 className="text-xl lg:text-2xl font-semibold text-gray-800 dark:text-white truncate">{title}</h2>
           {subtitle && <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{subtitle}</p>}
         </div>
-        <div className="flex items-center space-x-2 lg:space-x-4 ml-4">
+        <div className="flex items-center space-x-1 lg:space-x-4 ml-2 lg:ml-4">
           <SyncIndicator />
           <NotificationsPopover />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-2 h-auto p-2">
-                <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+              <Button variant="ghost" className="lg:flex lg:items-center lg:space-x-2 h-auto p-1 lg:p-2">
+                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                  <User className="h-3 w-3 lg:h-4 lg:w-4 text-white" />
                 </div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <span className="hidden lg:inline text-sm font-medium text-gray-700 dark:text-gray-200">
                   {user?.fullName || user?.username || "Usuário"}
                 </span>
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+                <ChevronDown className="hidden lg:inline h-4 w-4 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
 
