@@ -250,22 +250,22 @@ export default function UserManagement() {
       <main className="flex-1 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Actions Bar */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder={t("search-users")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full sm:w-64"
                 />
               </div>
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleNew}>
+                <Button onClick={handleNew} className="w-full sm:w-auto">
                   <Plus className="mr-2 h-4 w-4" />
                   {t("new-user")}
                 </Button>
@@ -313,7 +313,7 @@ export default function UserManagement() {
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="email"
@@ -364,7 +364,7 @@ export default function UserManagement() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="position"
@@ -431,7 +431,7 @@ export default function UserManagement() {
             {filteredUsers.map((user) => (
               <Card key={user.id}>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                         <Users className="h-6 w-6 text-primary" />
@@ -443,7 +443,7 @@ export default function UserManagement() {
                         <p className="text-sm text-gray-600 dark:text-gray-300">
                           @{user.username}
                         </p>
-                        <div className="flex items-center space-x-2 mt-1">
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
                           <Badge
                             variant={getRoleBadgeVariant(user.role)}
                             className="text-xs"
@@ -461,8 +461,8 @@ export default function UserManagement() {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <div className="text-right text-sm text-gray-600 dark:text-gray-300 mr-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-2 space-y-4 lg:space-y-0">
+                      <div className="text-left lg:text-right text-sm text-gray-600 dark:text-gray-300 lg:mr-4">
                         <p>
                           <strong>{t("email")}:</strong> {user.email || t("not-informed")}
                         </p>
@@ -474,43 +474,47 @@ export default function UserManagement() {
                         </p>
                       </div>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          toggleUserStatus.mutate({
-                            id: user.id,
-                            active: user.active !== "true",
-                          })
-                        }
-                      >
-                        {user.active === "true" ? (
-                          <UserX className="h-4 w-4" />
-                        ) : (
-                          <UserCheck className="h-4 w-4" />
-                        )}
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(user)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm(t("confirm-delete-user"))) {
-                            deleteUser.mutate(user.id);
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            toggleUserStatus.mutate({
+                              id: user.id,
+                              active: user.active !== "true",
+                            })
                           }
-                        }}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                          className="flex-1 sm:flex-none"
+                        >
+                          {user.active === "true" ? (
+                            <UserX className="h-4 w-4" />
+                          ) : (
+                            <UserCheck className="h-4 w-4" />
+                          )}
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(user)}
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(t("confirm-delete-user"))) {
+                              deleteUser.mutate(user.id);
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-700 flex-1 sm:flex-none"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

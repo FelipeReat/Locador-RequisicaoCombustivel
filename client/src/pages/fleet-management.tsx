@@ -281,22 +281,22 @@ export default function FleetManagement() {
       <main className="flex-1 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Actions Bar */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder={t('search-vehicles')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full sm:w-64"
                 />
               </div>
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleNew}>
+                <Button onClick={handleNew} className="w-full sm:w-auto">
                   <Plus className="mr-2 h-4 w-4" />
                   {t('new-vehicle')}
                 </Button>
@@ -313,7 +313,7 @@ export default function FleetManagement() {
 
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="plate"
@@ -343,7 +343,7 @@ export default function FleetManagement() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="brand"
@@ -373,7 +373,7 @@ export default function FleetManagement() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="fuelType"
@@ -436,12 +436,12 @@ export default function FleetManagement() {
                     <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                       <Car className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
                       <Select
                         value={vehicle.status}
                         onValueChange={(status) => toggleVehicleStatus.mutate({ id: vehicle.id, status })}
                       >
-                        <SelectTrigger className="w-32">
+                        <SelectTrigger className="w-full sm:w-32">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -450,21 +450,24 @@ export default function FleetManagement() {
                           <SelectItem value="inactive">{t('inactive')}</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(vehicle)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteVehicle.mutate(vehicle.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(vehicle)}
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteVehicle.mutate(vehicle.id)}
+                          className="text-red-600 hover:text-red-700 flex-1 sm:flex-none"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{vehicle.plate}</CardTitle>
