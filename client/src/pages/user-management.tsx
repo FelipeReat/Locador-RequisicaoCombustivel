@@ -55,7 +55,7 @@ import {
   UserX,
   Shield,
 } from "lucide-react";
-import { Navigate } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 
 export function UserManagement() {
@@ -63,6 +63,7 @@ export function UserManagement() {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   // Check if current user is admin
   const isAdmin = currentUser?.role === "admin";
@@ -70,11 +71,9 @@ export function UserManagement() {
   // If not admin, redirect or show access denied
   useEffect(() => {
     if (currentUser && !isAdmin) {
-      // In a real app, you would navigate here using react-router-dom's navigate function.
-      // For this example, we'll assume the Navigate component handles it.
-      console.log("Redirecting non-admin user...");
+      navigate("/dashboard");
     }
-  }, [currentUser, isAdmin]);
+  }, [currentUser, isAdmin, navigate]);
 
   if (!currentUser) {
     // Render a loading spinner or null while waiting for auth data
@@ -82,7 +81,7 @@ export function UserManagement() {
   }
 
   if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return null; // Will redirect in useEffect
   }
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);

@@ -41,7 +41,7 @@ import {
   Trash2
 } from "lucide-react";
 import { MileageResetDialog } from "@/components/mileage-reset-dialog";
-import { Navigate } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 
 export function FleetManagement() {
@@ -49,6 +49,7 @@ export function FleetManagement() {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   // Check if current user is admin or manager
   const isAdminOrManager = currentUser?.role === "admin" || currentUser?.role === "manager";
@@ -56,18 +57,16 @@ export function FleetManagement() {
   // If not admin or manager, redirect or show access denied
   useEffect(() => {
     if (currentUser && !isAdminOrManager) {
-      // Handle redirect in useEffect to avoid state update during render
-      // For example: navigate('/dashboard'); but this would require useLocation and useNavigate from react-router-dom
-      // For now, we'll rely on the Navigate component below.
+      navigate("/dashboard");
     }
-  }, [currentUser, isAdminOrManager]);
+  }, [currentUser, isAdminOrManager, navigate]);
 
   if (!currentUser) {
     return <LoadingSpinner message={t("loading-fleet")} />; // Show loading state while fetching user
   }
 
   if (!isAdminOrManager) {
-    return <Navigate to="/dashboard" replace />;
+    return null; // Will redirect in useEffect
   }
 
 
