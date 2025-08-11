@@ -44,7 +44,7 @@ import { MileageResetDialog } from "@/components/mileage-reset-dialog";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 
-export function FleetManagement() {
+function FleetManagement() {
   const { user: currentUser } = useAuth();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
@@ -551,3 +551,5 @@ export function FleetManagement() {
     </>
   );
 }
+
+export default FleetManagement;

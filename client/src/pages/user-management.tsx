@@ -58,7 +58,7 @@ import {
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 
-export function UserManagement() {
+function UserManagement() {
   const { user: currentUser } = useAuth();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
@@ -563,3 +563,5 @@ export function UserManagement() {
     </>
   );
 }
+
+export default UserManagement;
