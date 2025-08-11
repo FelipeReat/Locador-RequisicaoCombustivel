@@ -1,10 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { DatabaseStorage } from "./db-storage";
+import { MemStorage } from "./storage";
 import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema } from "@shared/schema";
 
-// Use database storage instead of in-memory storage
-const storage = new DatabaseStorage();
+// Use in-memory storage for now (will switch to database storage when DATABASE_URL is available)
+const storage = new MemStorage();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes

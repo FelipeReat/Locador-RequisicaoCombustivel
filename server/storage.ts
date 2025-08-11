@@ -464,7 +464,7 @@ export class MemStorage implements IStorage {
       position: ('position' in insertUser) ? (insertUser.position || null) : null,
       role: ('role' in insertUser) ? insertUser.role || "employee" : "employee",
       active: "true",
-      hireDate: ('hireDate' in insertUser) ? insertUser.hireDate || null : null,
+      hireDate: ('hireDate' in insertUser && typeof insertUser.hireDate === 'string') ? (insertUser.hireDate || null) : null,
       createdAt: now,
       updatedAt: now,
     };
@@ -506,7 +506,7 @@ export class MemStorage implements IStorage {
     console.log(`[STORAGE] New password: ${newPassword}`);
     console.log(`[STORAGE] Excluding usernames:`, excludeUsernames);
 
-    for (const [id, user] of this.users.entries()) {
+    for (const [id, user] of Array.from(this.users.entries())) {
       if (!excludeUsernames.includes(user.username)) {
         console.log(`[STORAGE] Resetting password for user: ${user.username}`);
         const updatedUser = {
