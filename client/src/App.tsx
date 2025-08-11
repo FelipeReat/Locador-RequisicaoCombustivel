@@ -39,7 +39,7 @@ function Router() {
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col lg:ml-0 ml-0 min-w-0">
         <Switch>
           <Route path="/">
             <ProtectedRoute path="/dashboard">

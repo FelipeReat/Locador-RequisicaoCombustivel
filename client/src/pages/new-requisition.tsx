@@ -20,19 +20,19 @@ export default function NewRequisition() {
         subtitle={t('create-new-fuel-requisition')} 
       />
       
-      <main className="flex-1 p-6">
+      <main className="flex-1 mobile-container py-4 lg:py-6">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <div className="mobile-card border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white">
                 {t('requisition-form')}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 mt-1">
                 {t('fill-required-data')}
               </p>
             </div>
             
-            <div className="p-6">
+            <div className="mobile-card">
               <RequisitionForm onSuccess={handleSuccess} />
             </div>
           </div>

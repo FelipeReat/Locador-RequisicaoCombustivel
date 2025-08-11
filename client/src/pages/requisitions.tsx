@@ -179,17 +179,17 @@ export default function Requisitions() {
         subtitle={t('manage-all-fuel-requisitions')} 
       />
       
-      <main className="flex-1 p-6">
+      <main className="flex-1 mobile-container py-4 lg:py-6">
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
-              <Filter className="mr-2 h-5 w-5" />
+          <div className="mobile-card border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white flex items-center">
+              <Filter className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />
               {t('filters')}
             </h3>
           </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mobile-card">
+            <div className="mobile-form-grid">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input

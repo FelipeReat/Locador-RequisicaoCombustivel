@@ -179,8 +179,8 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
+      <div className="mobile-form-grid">
         {/* Fornecedor */}
         <div className="space-y-2">
           <Label htmlFor="supplierId">Fornecedor *</Label>

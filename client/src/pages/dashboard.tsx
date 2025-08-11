@@ -159,6 +159,10 @@ export default function Dashboard() {
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
 
+  const openRequisitionModal = (requisition: FuelRequisition) => {
+    setSelectedRequisition(requisition);
+  };
+
   if (statsLoading || requisitionsLoading || suppliersLoading) {
     return <LoadingSpinner message={t('loading-dashboard')} />;
   }
@@ -170,62 +174,61 @@ export default function Dashboard() {
         subtitle={t('fuel-requisitions-overview')} 
       />
 
-      <main className="flex-1 p-6">
+      <main className="flex-1 mobile-container py-4 lg:py-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+        <div className="mobile-stats-grid mb-6 lg:mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-3">
-                <ClipboardList className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-2 lg:p-3">
+                <ClipboardList className="h-4 w-4 lg:h-6 lg:w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">{t('total-requests')}</p>
-                <p className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <div className="ml-3 lg:ml-4 min-w-0">
+                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{t('total-requests')}</p>
+                <p className="text-lg lg:text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.totalRequests || 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="bg-yellow-100 dark:bg-yellow-900 rounded-full p-3">
-                <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+              <div className="bg-yellow-100 dark:bg-yellow-900 rounded-full p-2 lg:p-3">
+                <Clock className="h-4 w-4 lg:h-6 lg:w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">{t('pending-requests')}</p>
-                <p className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <div className="ml-3 lg:ml-4 min-w-0">
+                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{t('pending-requests')}</p>
+                <p className="text-lg lg:text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.pendingRequests || 0}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="bg-green-100 dark:bg-green-900 rounded-full p-3">
-                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className="flex items-center min-w-0">
+                <div className="bg-green-100 dark:bg-green-900 rounded-full p-2 lg:p-3">
+                  <CheckCircle className="h-4 w-4 lg:h-6 lg:w-6 text-green-600 dark:text-green-400" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{t('approved-requests')}</p>
-                  <p className="text-2xl font-semibold text-gray-800 dark:text-white">
+                <div className="ml-3 lg:ml-4 min-w-0">
+                  <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{t('approved-requests')}</p>
+                  <p className="text-lg lg:text-2xl font-semibold text-gray-800 dark:text-white">
                     {stats?.approvedRequests || 0}
                   </p>
                 </div>
               </div>
-
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="bg-red-100 dark:bg-red-900 rounded-full p-3">
-                <Fuel className="h-6 w-6 text-red-600 dark:text-red-400" />
+              <div className="bg-red-100 dark:bg-red-900 rounded-full p-2 lg:p-3">
+                <Fuel className="h-4 w-4 lg:h-6 lg:w-6 text-red-600 dark:text-red-400" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">{t('consumed-liters')}</p>
-                <p className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <div className="ml-3 lg:ml-4 min-w-0">
+                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{t('consumed-liters')}</p>
+                <p className="text-lg lg:text-2xl font-semibold text-gray-800 dark:text-white">
                   {stats?.totalLiters?.toLocaleString("pt-BR") || 0}
                 </p>
               </div>
@@ -234,12 +237,12 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{t('quick-actions')}</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 lg:mb-8">
+          <div className="mobile-card border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white">{t('quick-actions')}</h3>
           </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mobile-card">
+            <div className="mobile-button-group">
               <Button
                 onClick={() => setLocation("/new-requisition")}
                 className="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 border-none"
@@ -276,20 +279,91 @@ export default function Dashboard() {
 
         {/* Recent Requisitions */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="mobile-card border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{t('recent-requisitions')}</h3>
+              <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white">{t('recent-requisitions')}</h3>
               <Button
                 variant="link"
                 onClick={() => setLocation("/requisitions")}
-                className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
               >
                 {t('view-all')}
               </Button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile Cards View */}
+          <div className="lg:hidden">
+            {recentRequisitions.length === 0 ? (
+              <div className="mobile-card text-center text-gray-500 dark:text-gray-400">
+                {t('no-results')}
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {recentRequisitions.map((requisition) => (
+                  <div key={requisition.id} className="mobile-card">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white text-sm">
+                          #REQ{String(requisition.id).padStart(3, "0")}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(requisition.createdAt)}
+                        </div>
+                      </div>
+                      <StatusBadge status={requisition.status} />
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Responsável:</span>
+                        <span className="text-gray-900 dark:text-white">{getUserName(requisition.requesterId)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Fornecedor:</span>
+                        <span className="text-gray-900 dark:text-white">{getSupplierName(requisition.supplierId)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Combustível:</span>
+                        <span className="text-gray-900 dark:text-white">{getFuelTypeLabel(requisition.fuelType)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Quantidade:</span>
+                        <span className="text-gray-900 dark:text-white">{requisition.quantity || 'Tanque cheio'} L</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openRequisitionModal(requisition)}
+                          className="flex-1 text-xs"
+                        >
+                          <Eye className="mr-1 h-3 w-3" />
+                          Ver
+                        </Button>
+                        {userRole !== 'employee' && requisition.status === 'approved' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => confirmRequisition.mutate(requisition.id)}
+                            disabled={confirmRequisition.isPending}
+                            className="flex-1 text-xs"
+                          >
+                            <Check className="mr-1 h-3 w-3" />
+                            Confirmar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="mobile-table-container hidden lg:block">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
