@@ -43,15 +43,22 @@ export default function Sidebar() {
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.classList.add('mobile-menu-open');
-    } else {
-      document.body.classList.remove('mobile-menu-open');
-    }
+    // Use requestAnimationFrame para garantir que as mudanças no DOM sejam aplicadas de forma segura
+    const updateBodyClass = () => {
+      if (isMobileMenuOpen) {
+        document.body.classList.add('mobile-menu-open');
+      } else {
+        document.body.classList.remove('mobile-menu-open');
+      }
+    };
+
+    requestAnimationFrame(updateBodyClass);
 
     // Cleanup on unmount
     return () => {
-      document.body.classList.remove('mobile-menu-open');
+      requestAnimationFrame(() => {
+        document.body.classList.remove('mobile-menu-open');
+      });
     };
   }, [isMobileMenuOpen]);
 

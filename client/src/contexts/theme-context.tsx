@@ -27,10 +27,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const updateTheme = () => {
       const newActualTheme = theme === 'system' ? getSystemTheme() : theme;
-      setActualTheme(newActualTheme);
       
-      root.classList.remove('light', 'dark');
-      root.classList.add(newActualTheme);
+      // Use queueMicrotask to prevent state updates during render
+      queueMicrotask(() => {
+        setActualTheme(newActualTheme);
+      });
+      
+      // Update DOM classes immediately
+      requestAnimationFrame(() => {
+        root.classList.remove('light', 'dark');
+        root.classList.add(newActualTheme);
+      });
     };
 
     updateTheme();

@@ -1,7 +1,7 @@
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/auth-context';
 import { useLocation } from 'wouter';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 
 interface ProtectedRouteProps {
@@ -13,31 +13,45 @@ export default function ProtectedRoute({ path, children }: ProtectedRouteProps) 
   const { hasAccess } = usePermissions();
   const { user, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
-  const [hasCheckedAccess, setHasCheckedAccess] = useState(false);
 
-  useEffect(() => {
-    // Só verifica acesso depois que a autenticação estiver completa
-    if (!authLoading) {
-      if (user && !hasAccess(path)) {
-        // Usa setTimeout para evitar mudanças de estado durante a renderização
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 0);
-      } else {
-        setHasCheckedAccess(true);
-      }
+  // Memoriza o estado de acesso para evitar re-renders desnecessários
+  const accessState = useMemo(() => {
+    if (authLoading) {
+      return 'loading';
     }
-  }, [path, hasAccess, navigate, authLoading, user]);
+    
+    if (!user) {
+      return 'no-user';
+    }
+    
+    if (!hasAccess(path)) {
+      // Redireciona de forma segura
+      queueMicrotask(() => {
+        navigate('/dashboard');
+      });
+      return 'no-access';
+    }
+    
+    return 'allowed';
+  }, [authLoading, user, hasAccess, path, navigate]);
 
-  // Mostra loading enquanto carrega autenticação ou enquanto não verificou acesso
-  if (authLoading || !hasCheckedAccess) {
-    return <LoadingSpinner message="Verificando permissões..." />;
+  // Renderização baseada no estado
+  switch (accessState) {
+    case 'loading':
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner message="Verificando permissões..." />
+        </div>
+      );
+    
+    case 'no-user':
+    case 'no-access':
+      return null;
+    
+    case 'allowed':
+      return <>{children}</>;
+    
+    default:
+      return null;
   }
-
-  // Se não tem acesso, não renderiza nada (redirecionamento já foi feito)
-  if (!hasAccess(path)) {
-    return null;
-  }
-
-  return <>{children}</>;
 }

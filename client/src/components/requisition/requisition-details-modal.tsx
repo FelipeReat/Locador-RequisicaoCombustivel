@@ -51,62 +51,22 @@ export default function RequisitionDetailsModal({
       );
       return response.json();
     },
-    // Atualização otimista - atualiza a UI imediatamente
-    onMutate: async (data) => {
-      if (!requisition) return;
-
-      // Cancela queries em andamento para evitar conflitos
-      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
-      
-      // Salva o estado anterior para rollback se necessário
-      const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
-      
-      // Atualiza otimisticamente a lista de requisições
-      queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
-        if (!old) return old;
-        return old.map(req => 
-          req.id === requisition.id 
-            ? { 
-                ...req, 
-                status: data.status as any,
-                approvedAt: data.status === 'approved' ? new Date().toISOString() : req.approvedAt,
-                rejectionReason: data.rejectionReason || req.rejectionReason
-              }
-            : req
-        );
-      });
-
-      return { previousRequisitions };
-    },
     onSuccess: () => {
-      // Invalidação mais abrangente para garantir consistência
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
-      
       toast({
-        title: t("success"),
-        description: t("status-updated-success"),
+        title: "Sucesso",
+        description: "Status atualizado com sucesso",
       });
       onClose();
       setRejectionReason("");
       setShowRejectionInput(false);
     },
-    onError: (error, variables, context) => {
-      // Rollback em caso de erro
-      if (context?.previousRequisitions) {
-        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
-      }
-      
+    onError: (error: any) => {
       toast({
         title: "Erro",
         description: error.message || "Erro ao atualizar status",
         variant: "destructive",
       });
-    },
-    // Sempre revalida após a mutação para garantir consistência
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
     },
   });
 

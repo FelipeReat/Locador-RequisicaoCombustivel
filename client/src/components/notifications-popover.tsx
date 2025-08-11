@@ -40,19 +40,23 @@ const formatTimeAgo = (date: Date): string => {
 
 export function NotificationsPopover() {
   const [isOpen, setIsOpen] = useState(false);
-  const [readNotifications, setReadNotifications] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem('read-notifications');
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch (error) {
-      console.error("Erro ao carregar notificações lidas do localStorage:", error);
-      return new Set();
-    }
-  });
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
 
   const { data: requisitions } = useQuery<FuelRequisition[]>({
     queryKey: ["/api/fuel-requisitions"],
   });
+
+  // Load read notifications from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('read-notifications');
+      if (saved) {
+        setReadNotifications(new Set(JSON.parse(saved)));
+      }
+    } catch (error) {
+      console.error("Erro ao carregar notificações lidas do localStorage:", error);
+    }
+  }, []);
 
   const generateNotifications = (): NotificationItem[] => {
     if (!requisitions) return [];
