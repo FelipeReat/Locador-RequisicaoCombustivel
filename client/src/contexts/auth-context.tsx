@@ -54,12 +54,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [, navigate] = useLocation(); // useLocation hook for wouter navigation
 
   // Check if user is already logged in - only when user is not set and no saved user
-  const { data: currentUser, isLoading } = useQuery({
+  const { data: currentUser, isLoading, error } = useQuery({
     queryKey: ['/api/auth/me'],
     retry: false,
     refetchOnWindowFocus: false,
     enabled: !user,
     staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
   });
 
   useEffect(() => {
@@ -67,8 +68,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const userData = currentUser as User;
       setUser(userData);
       localStorage.setItem('auth-user', JSON.stringify(userData));
+    } else if (error && !user) {
+      // Se há erro na verificação e não tem usuário salvo, limpa qualquer estado inconsistente
+      localStorage.removeItem('auth-user');
     }
-  }, [currentUser, user]);
+  }, [currentUser, user, error]);
 
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: LoginCredentials) => {
