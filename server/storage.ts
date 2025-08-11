@@ -295,8 +295,42 @@ export class MemStorage implements IStorage {
       },
     ];
 
+    const daeneUser: User = {
+      id: 8,
+      username: "daene.lobato",
+      password: "blomaq123",
+      email: "daene.lobato@blomaq.com.br",
+      fullName: "Daene Chaves Lobato",
+      departmentId: null,
+      phone: "92 98527-5909",
+      position: "Gerente Operacional",
+      role: "Gerente",
+      active: "true",
+      hireDate: yesterday.toISOString(),
+      createdAt: yesterday.toISOString(),
+      updatedAt: yesterday.toISOString(),
+    };
+
+    const andreaUser: User = {
+      id: 9,
+      username: "andrea.luniere",
+      password: "blomaq123",
+      email: "aluniere@blomaq.com.br",
+      fullName: "Andréa Silva Luniére",
+      departmentId: null,
+      phone: "92 99421-3621",
+      position: "Supervisora Operacional",
+      role: "Gerente",
+      active: "true",
+      hireDate: yesterday.toISOString(),
+      createdAt: yesterday.toISOString(),
+      updatedAt: yesterday.toISOString(),
+    };
+
     sampleUsers.forEach(user => this.users.set(user.id, user));
-    this.currentUserId = 8;
+    this.users.set(daeneUser.id, daeneUser);
+    this.users.set(andreaUser.id, andreaUser);
+    this.currentUserId = 10;
 
     // Sample vehicles from provided images
     const sampleVehicles = [
@@ -453,7 +487,7 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser | InsertUserManagement): Promise<User> {
     const id = this.currentUserId++;
     const now = new Date().toISOString();
-    const user: User = { 
+    const user: User = {
       id,
       username: insertUser.username,
       password: insertUser.password,
@@ -733,7 +767,7 @@ export class MemStorage implements IStorage {
   }
 
   async getFuelRequisitions(): Promise<FuelRequisition[]> {
-    return Array.from(this.fuelRequisitions.values()).sort((a, b) => 
+    return Array.from(this.fuelRequisitions.values()).sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
