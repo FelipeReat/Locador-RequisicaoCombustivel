@@ -41,38 +41,17 @@ interface LoginCredentials {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(() => {
-    // Tentar recuperar usuário do localStorage na inicialização
-    try {
-      const savedUser = localStorage.getItem('auth-user');
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
   const [, navigate] = useLocation(); // useLocation hook for wouter navigation
 
-  // Check if user is already logged in - only when user is not set and no saved user
-  const { data: currentUser, isLoading, error } = useQuery({
-    queryKey: ['/api/auth/me'],
-    retry: false,
-    refetchOnWindowFocus: false,
-    enabled: !user,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
-  });
+  // Não fazer verificação automática - usuário deve sempre fazer login
+  const isLoading = false;
 
+  // Limpar qualquer dado salvo no localStorage na inicialização
   useEffect(() => {
-    if (currentUser && typeof currentUser === 'object' && !user) {
-      const userData = currentUser as User;
-      setUser(userData);
-      localStorage.setItem('auth-user', JSON.stringify(userData));
-    } else if (error && !user) {
-      // Se há erro na verificação e não tem usuário salvo, limpa qualquer estado inconsistente
-      localStorage.removeItem('auth-user');
-    }
-  }, [currentUser, user, error]);
+    localStorage.removeItem('auth-user');
+  }, []);
 
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: LoginCredentials) => {
