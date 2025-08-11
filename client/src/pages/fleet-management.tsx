@@ -41,7 +41,7 @@ import {
   Trash2
 } from "lucide-react";
 import { MileageResetDialog } from "@/components/mileage-reset-dialog";
-import { useLocation } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 
 function FleetManagement() {
@@ -66,14 +66,14 @@ function FleetManagement() {
   }
 
   if (!isAdminOrManager) {
-    return null; // Will redirect in useEffect
+    return <Redirect to="/dashboard" />;
   }
 
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
 
   // Hooks para atualizações em tempo real
   const { forceRefresh } = useRealTimeUpdates();

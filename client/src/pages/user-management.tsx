@@ -55,7 +55,7 @@ import {
   UserX,
   Shield,
 } from "lucide-react";
-import { useLocation } from "wouter";
+import { Redirect } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 
 function UserManagement() {
@@ -362,8 +362,8 @@ function UserManagement() {
                           <FormItem>
                             <FormLabel>{t("phone")}</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="(11) 99999-9999" 
+                              <Input
+                                placeholder="(11) 99999-9999"
                                 {...field}
                                 onChange={(e) => {
                                   const value = e.target.value.replace(/\D/g, '');
