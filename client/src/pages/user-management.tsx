@@ -55,8 +55,8 @@ import {
   UserX,
   Shield,
 } from "lucide-react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/auth-context"; // Assuming useAuth is needed for currentUser
+import { Navigate } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
 
 export function UserManagement() {
   const { user: currentUser } = useAuth();

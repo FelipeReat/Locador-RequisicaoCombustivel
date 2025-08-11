@@ -41,8 +41,8 @@ import {
   Trash2
 } from "lucide-react";
 import { MileageResetDialog } from "@/components/mileage-reset-dialog";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
+import { Navigate } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
 
 export function FleetManagement() {
   const { user: currentUser } = useAuth();
