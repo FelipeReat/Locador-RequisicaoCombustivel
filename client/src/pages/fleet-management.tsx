@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,15 +41,41 @@ import {
   Trash2
 } from "lucide-react";
 import { MileageResetDialog } from "@/components/mileage-reset-dialog";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 
-export default function FleetManagement() {
-  const { toast } = useToast();
+export function FleetManagement() {
+  const { user: currentUser } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Check if current user is admin or manager
+  const isAdminOrManager = currentUser?.role === "admin" || currentUser?.role === "manager";
+
+  // If not admin or manager, redirect or show access denied
+  useEffect(() => {
+    if (currentUser && !isAdminOrManager) {
+      // Handle redirect in useEffect to avoid state update during render
+      // For example: navigate('/dashboard'); but this would require useLocation and useNavigate from react-router-dom
+      // For now, we'll rely on the Navigate component below.
+    }
+  }, [currentUser, isAdminOrManager]);
+
+  if (!currentUser) {
+    return <LoadingSpinner message={t("loading-fleet")} />; // Show loading state while fetching user
+  }
+
+  if (!isAdminOrManager) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const { t } = useLanguage();
   
+
   // Hooks para atualizações em tempo real
   const { forceRefresh } = useRealTimeUpdates();
   const { invalidateByOperation } = useSmartInvalidation();
@@ -128,10 +154,10 @@ export default function FleetManagement() {
     onMutate: async ({ id, status }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/vehicles"] });
-      
+
       // Snapshot the previous value
       const previousVehicles = queryClient.getQueryData<Vehicle[]>(["/api/vehicles"]);
-      
+
       // Optimistically update the cache - maintain position in array
       queryClient.setQueryData<Vehicle[]>(["/api/vehicles"], (old) => {
         if (!old) return old;
@@ -141,12 +167,12 @@ export default function FleetManagement() {
             : vehicle
         );
       });
-      
+
       return { previousVehicles };
     },
     onSuccess: (data, { id, status }) => {
       console.log(`🎉 Sucesso na mutação - Veículo ${id} agora tem status ${status}`);
-      
+
       // Update with server response but maintain position
       queryClient.setQueryData<Vehicle[]>(["/api/vehicles"], (old) => {
         if (!old) return old;
@@ -154,9 +180,9 @@ export default function FleetManagement() {
           vehicle.id === id ? data : vehicle
         );
       });
-      
+
       console.log(`🔄 Cache atualizado mantendo posição`);
-      
+
       toast({
         title: t("success"),
         description: t("vehicle-status-changed"),
@@ -164,12 +190,12 @@ export default function FleetManagement() {
     },
     onError: (error, variables, context) => {
       console.error(`❌ Erro na mutação:`, error);
-      
+
       // Revert to previous state if mutation fails
       if (context?.previousVehicles) {
         queryClient.setQueryData(["/api/vehicles"], context.previousVehicles);
       }
-      
+
       toast({
         title: t("error"),
         description: error.message || t("error-changing-status"),

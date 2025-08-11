@@ -20,16 +20,18 @@ export function SyncIndicator() {
     const handleOnline = () => setSyncStatus('online');
     const handleOffline = () => setSyncStatus('offline');
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
 
-    // Verifica status inicial
-    setSyncStatus(navigator.onLine ? 'online' : 'offline');
+      // Verifica status inicial
+      setSyncStatus(navigator.onLine ? 'online' : 'offline');
 
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
   }, []);
 
   // Monitora queries em execução
@@ -109,7 +111,7 @@ export function SyncIndicator() {
           {getStatusText()}
         </span>
       </div>
-      
+
       {syncStatus !== 'syncing' && (
         <Button
           variant="ghost"
@@ -121,7 +123,7 @@ export function SyncIndicator() {
           <RefreshCw className="h-3 w-3" />
         </Button>
       )}
-      
+
       {lastSync && syncStatus !== 'offline' && (
         <span className="text-xs text-gray-500 dark:text-gray-400">
           {lastSync.toLocaleTimeString('pt-BR', { 

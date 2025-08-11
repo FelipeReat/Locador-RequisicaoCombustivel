@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,14 +55,40 @@ import {
   UserX,
   Shield,
 } from "lucide-react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/auth-context"; // Assuming useAuth is needed for currentUser
 
-export default function UserManagement() {
-  const { toast } = useToast();
+export function UserManagement() {
+  const { user: currentUser } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // Check if current user is admin
+  const isAdmin = currentUser?.role === "admin";
+
+  // If not admin, redirect or show access denied
+  useEffect(() => {
+    if (currentUser && !isAdmin) {
+      // In a real app, you would navigate here using react-router-dom's navigate function.
+      // For this example, we'll assume the Navigate component handles it.
+      console.log("Redirecting non-admin user...");
+    }
+  }, [currentUser, isAdmin]);
+
+  if (!currentUser) {
+    // Render a loading spinner or null while waiting for auth data
+    return <LoadingSpinner message={t("loading-auth-data")} />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const { t } = useLanguage();
+
 
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
@@ -123,8 +149,6 @@ export default function UserManagement() {
         description: t("user-updated-success"),
       });
       setIsDialogOpen(false);
-      setEditingUser(null);
-      form.reset();
       setEditingUser(null);
       form.reset();
     },
