@@ -255,7 +255,7 @@ export default function RequisitionDetailsModal({
 
             <div>
               <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Responsável</Label>
-              <p className="text-gray-900 dark:text-white mt-1">{getUserName(requisition.requesterId)}</p>
+              <p className="text-gray-900 dark:text-white mt-1">{users.find(u => u.id === requisition.requesterId)?.username || 'Usuário não encontrado'}</p>
             </div>
 
             <div>

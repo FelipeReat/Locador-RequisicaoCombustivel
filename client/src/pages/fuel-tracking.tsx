@@ -294,7 +294,7 @@ export default function FuelTracking() {
                 <SelectContent>
                   <SelectItem value="all">Todos os veículos</SelectItem>
                   {uniqueVehicles.filter(plate => plate && plate.trim() !== '').map(plate => (
-                    <SelectItem key={plate} value={plate}>{plate}</SelectItem>
+                    <SelectItem key={plate} value={plate || 'unknown'}>{plate}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -309,7 +309,7 @@ export default function FuelTracking() {
                 <SelectContent>
                   <SelectItem value="all">Todos os tipos</SelectItem>
                   {uniqueFuelTypes.filter(fuelType => fuelType && fuelType.trim() !== '').map(fuelType => (
-                    <SelectItem key={fuelType} value={fuelType}>{fuelType}</SelectItem>
+                    <SelectItem key={fuelType} value={fuelType || 'unknown'}>{fuelType}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
