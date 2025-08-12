@@ -52,7 +52,15 @@ export default function RequisitionDetailsModal({
       return response.json();
     },
     onSuccess: () => {
+      // Invalida todas as queries relacionadas às requisições
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats"] });
+      
+      // Força atualização imediata
+      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      
       toast({
         title: "Sucesso",
         description: "Status atualizado com sucesso",
@@ -206,7 +214,7 @@ export default function RequisitionDetailsModal({
   });
 
   // Fetch vehicles
-  const { data: vehicles } = useQuery<Vehicle[]>({
+  const { data: vehicles } = useQuery<any[]>({
     queryKey: ["vehicles"],
     queryFn: async () => {
       const response = await fetch("/api/vehicles");
@@ -247,7 +255,7 @@ export default function RequisitionDetailsModal({
 
             <div>
               <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Responsável</Label>
-              <p className="text-gray-900 dark:text-white mt-1">{requisition.responsavel}</p>
+              <p className="text-gray-900 dark:text-white mt-1">{getUserName(requisition.requesterId)}</p>
             </div>
 
             <div>

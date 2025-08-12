@@ -102,12 +102,18 @@ export default function Requisitions() {
       return { previousRequisitions, previousStats };
     },
     onSuccess: () => {
+      // Invalida e força atualização de todas as queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats"] });
+      
+      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      
       toast({
         title: "Sucesso",
         description: "Requisição confirmada como realizada",
       });
-      // Usa invalidação inteligente
-      invalidateByOperation('requisition');
     },
     onError: (error: any, variables, context) => {
       // Rollback em caso de erro
@@ -126,7 +132,8 @@ export default function Requisitions() {
     },
     // Sempre revalida para garantir consistência
     onSettled: () => {
-      invalidateByOperation('requisition');
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
     }
   });
 

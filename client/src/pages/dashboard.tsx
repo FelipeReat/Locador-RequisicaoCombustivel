@@ -107,12 +107,18 @@ export default function Dashboard() {
       return { previousRequisitions, previousStats };
     },
     onSuccess: () => {
+      // Invalida e força atualização de todas as queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats"] });
+      
+      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      
       toast({
         title: "Sucesso",
         description: "Requisição confirmada como realizada",
       });
-      // Usa invalidação inteligente
-      invalidateByOperation('requisition');
     },
     onError: (error: any, variables, context) => {
       // Rollback em caso de erro
@@ -311,7 +317,7 @@ export default function Dashboard() {
                           {formatDate(requisition.createdAt)}
                         </div>
                       </div>
-                      <StatusBadge status={requisition.status} />
+                      <StatusBadge status={requisition.status as any} />
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
