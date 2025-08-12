@@ -303,7 +303,7 @@ function FleetManagement() {
         subtitle={t('manage-company-vehicles')} 
       />
 
-      <main className="flex-1 mobile-content">
+      <main className="flex-1 mobile-content py-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Actions Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

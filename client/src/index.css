@@ -79,7 +79,7 @@
   }
   
   .mobile-content {
-    @apply pl-12 pr-4 sm:px-6 lg:px-8 pt-4 lg:pt-6;
+    @apply pl-12 pr-4 pt-4 sm:px-6 lg:px-8 lg:pt-6;
   }
   
   .mobile-grid {
