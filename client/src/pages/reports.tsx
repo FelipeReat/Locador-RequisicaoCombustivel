@@ -196,7 +196,7 @@ export default function Reports() {
         subtitle={t('fuel-consumption-analysis')} 
       />
       
-      <main className="flex-1 p-6">
+      <main className="flex-1 mobile-content">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white dark:bg-gray-800">

@@ -180,7 +180,7 @@ export default function Dashboard() {
         subtitle={t('fuel-requisitions-overview')} 
       />
 
-      <main className="flex-1 mobile-container py-4 lg:py-6">
+      <main className="flex-1 mobile-content py-4 lg:py-6">
         {/* Stats Cards */}
         <div className="mobile-stats-grid mb-6 lg:mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">

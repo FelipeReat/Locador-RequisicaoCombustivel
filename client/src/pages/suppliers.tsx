@@ -185,7 +185,7 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="mobile-container space-y-4 lg:space-y-6">
+    <div className="mobile-content space-y-4 lg:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white">{t('suppliers')}</h1>
