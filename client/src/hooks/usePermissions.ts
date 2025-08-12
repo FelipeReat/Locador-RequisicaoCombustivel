@@ -37,6 +37,12 @@ export const PERMISSIONS: Permission[] = [
     allowedRoles: ['manager', 'admin'], // Apenas gerentes e admins têm acesso aos relatórios
   },
   {
+    path: '/fuel-tracking',
+    label: 'fuel-tracking',
+    icon: 'Calculator',
+    allowedRoles: ['employee', 'manager', 'admin'], // Todos podem usar o controle de combustível
+  },
+  {
     path: '/user-management',
     label: 'users',
     icon: 'Users',

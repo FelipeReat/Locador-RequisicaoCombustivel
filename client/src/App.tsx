@@ -12,6 +12,7 @@ import Dashboard from "@/pages/dashboard";
 import Requisitions from "@/pages/requisitions";
 import NewRequisition from "@/pages/new-requisition";
 import Reports from "@/pages/reports";
+import FuelTracking from "@/pages/fuel-tracking";
 import UserManagement from "@/pages/user-management";
 import FleetManagement from "@/pages/fleet-management";
 import Settings from "@/pages/settings";
@@ -64,6 +65,11 @@ function Router() {
           <Route path="/reports">
             <ProtectedRoute path="/reports">
               <Reports />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/fuel-tracking">
+            <ProtectedRoute path="/fuel-tracking">
+              <FuelTracking />
             </ProtectedRoute>
           </Route>
           <Route path="/user-management">

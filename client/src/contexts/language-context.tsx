@@ -15,6 +15,7 @@ const translations: Record<Language, Record<string, string>> = {
     'requisitions': 'Requisições',
     'new-requisition': 'Nova Requisição',
     'reports': 'Relatórios',
+    'fuel-tracking': 'Controle de Combustível',
     'settings': 'Configurações',
 
     // Ações
