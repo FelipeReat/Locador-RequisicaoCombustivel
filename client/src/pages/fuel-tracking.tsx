@@ -91,8 +91,8 @@ export default function FuelTracking() {
     return matchesSearch && matchesVehicle && matchesFuelType;
   });
 
-  const uniqueVehicles = [...new Set(fuelRecords.map(record => record.vehiclePlate))];
-  const uniqueFuelTypes = [...new Set(fuelRecords.map(record => record.fuelType))];
+  const uniqueVehicles = Array.from(new Set(fuelRecords.map(record => record.vehiclePlate)));
+  const uniqueFuelTypes = Array.from(new Set(fuelRecords.map(record => record.fuelType)));
 
   const handleNewFuelRecord = () => {
     if (!newFuelRecord.vehiclePlate || !newFuelRecord.fuelType || !newFuelRecord.quantity || 
@@ -144,22 +144,23 @@ export default function FuelTracking() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="mobile-container space-y-4 lg:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t('fuel-tracking')}</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white">{t('fuel-tracking')}</h1>
+          <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">
             Controle e monitoramento de abastecimentos
           </p>
         </div>
         <Dialog open={isNewFuelModalOpen} onOpenChange={setIsNewFuelModalOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              Novo Abastecimento
+              <span className="hidden sm:inline">Novo Abastecimento</span>
+              <span className="sm:hidden">Novo</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl mobile-container">
             <DialogHeader>
               <DialogTitle>Novo Registro de Abastecimento</DialogTitle>
               <DialogDescription>
@@ -167,7 +168,7 @@ export default function FuelTracking() {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="mobile-form-grid py-4">
               <div className="space-y-2">
                 <Label htmlFor="vehicle-plate">Placa do Veículo *</Label>
                 <Input
@@ -249,11 +250,11 @@ export default function FuelTracking() {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setIsNewFuelModalOpen(false)}>
+            <div className="mobile-button-group pt-4">
+              <Button variant="outline" onClick={() => setIsNewFuelModalOpen(false)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
-              <Button onClick={handleNewFuelRecord}>
+              <Button onClick={handleNewFuelRecord} className="w-full sm:w-auto">
                 Salvar Abastecimento
               </Button>
             </div>
@@ -270,7 +271,7 @@ export default function FuelTracking() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="search">{t('search')}</Label>
               <div className="relative">
@@ -326,30 +327,30 @@ export default function FuelTracking() {
       </Card>
 
       {/* Estatísticas Rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="mobile-stats-grid">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="mobile-card">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
                 <div className="w-6 h-6 bg-blue-600 rounded"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total de Abastecimentos</p>
-                <p className="text-2xl font-bold">{fuelRecords.length}</p>
+                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300">Total de Abastecimentos</p>
+                <p className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">{fuelRecords.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="mobile-card">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
+              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
                 <div className="w-6 h-6 bg-green-600 rounded"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total em Litros</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300">Total em Litros</p>
+                <p className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
                   {fuelRecords.reduce((acc, record) => acc + record.quantity, 0).toFixed(1)}L
                 </p>
               </div>
@@ -358,14 +359,14 @@ export default function FuelTracking() {
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="mobile-card">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
                 <div className="w-6 h-6 bg-yellow-600 rounded"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Custo Total</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300">Custo Total</p>
+                <p className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
                   R$ {fuelRecords.reduce((acc, record) => acc + record.totalCost, 0).toFixed(2)}
                 </p>
               </div>
@@ -374,14 +375,14 @@ export default function FuelTracking() {
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="mobile-card">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
                 <div className="w-6 h-6 bg-purple-600 rounded"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Preço Médio/L</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300">Preço Médio/L</p>
+                <p className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
                   R$ {fuelRecords.length > 0 
                     ? (fuelRecords.reduce((acc, record) => acc + record.pricePerLiter, 0) / fuelRecords.length).toFixed(2)
                     : '0.00'
@@ -402,7 +403,7 @@ export default function FuelTracking() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="mobile-table-container">
             <Table>
               <TableHeader>
                 <TableRow>

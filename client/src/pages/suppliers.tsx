@@ -185,17 +185,18 @@ export default function Suppliers() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="mobile-container space-y-4 lg:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t('suppliers')}</h1>
-          <p className="text-muted-foreground">{t('supplier-management')}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white">{t('suppliers')}</h1>
+          <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300">{t('supplier-management')}</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              {t('new-supplier')}
+              <span className="hidden sm:inline">{t('new-supplier')}</span>
+              <span className="sm:hidden">Novo</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
@@ -296,11 +297,11 @@ export default function Suppliers() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <div className="mobile-button-group">
+                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="w-full sm:w-auto">
                   {t('cancel')}
                 </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
+                <Button type="submit" disabled={createMutation.isPending} className="w-full sm:w-auto">
                   {createMutation.isPending ? t('loading') : t('create')}
                 </Button>
               </div>
@@ -326,7 +327,7 @@ export default function Suppliers() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="mobile-table-container">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -352,20 +353,22 @@ export default function Suppliers() {
                       <TableCell>{supplier.responsavel}</TableCell>
                       <TableCell>{supplier.phone ? formatPhone(supplier.phone) : "-"}</TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-1 lg:gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleEdit(supplier)}
+                            className="h-8 w-8 p-0"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="h-3 w-3 lg:h-4 lg:w-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDelete(supplier.id)}
+                            className="h-8 w-8 p-0"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -478,11 +481,11 @@ export default function Suppliers() {
                 />
               </div>
             </div>
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <div className="mobile-button-group">
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} className="w-full sm:w-auto">
                 {t('cancel')}
               </Button>
-              <Button type="submit" disabled={updateMutation.isPending}>
+              <Button type="submit" disabled={updateMutation.isPending} className="w-full sm:w-auto">
                 {updateMutation.isPending ? t('loading') : t('update')}
               </Button>
             </div>
