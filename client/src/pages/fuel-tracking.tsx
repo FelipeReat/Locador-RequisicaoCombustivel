@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Plus, Search, Filter, Download } from 'lucide-react';
 
 interface FuelRecord {
@@ -31,6 +32,18 @@ export default function FuelTracking() {
   const [filterVehicle, setFilterVehicle] = useState('all');
   const [filterFuelType, setFilterFuelType] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewFuelModalOpen, setIsNewFuelModalOpen] = useState(false);
+
+  // New fuel record form states
+  const [newFuelRecord, setNewFuelRecord] = useState({
+    vehiclePlate: '',
+    fuelType: '',
+    quantity: '',
+    pricePerLiter: '',
+    odometer: '',
+    location: '',
+    operator: ''
+  });
 
   useEffect(() => {
     // Simular carregamento de dados
@@ -81,6 +94,44 @@ export default function FuelTracking() {
   const uniqueVehicles = [...new Set(fuelRecords.map(record => record.vehiclePlate))];
   const uniqueFuelTypes = [...new Set(fuelRecords.map(record => record.fuelType))];
 
+  const handleNewFuelRecord = () => {
+    if (!newFuelRecord.vehiclePlate || !newFuelRecord.fuelType || !newFuelRecord.quantity || 
+        !newFuelRecord.pricePerLiter || !newFuelRecord.odometer || !newFuelRecord.location || !newFuelRecord.operator) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const quantity = parseFloat(newFuelRecord.quantity);
+    const pricePerLiter = parseFloat(newFuelRecord.pricePerLiter);
+    const totalCost = quantity * pricePerLiter;
+
+    const newRecord: FuelRecord = {
+      id: Math.max(...fuelRecords.map(r => r.id), 0) + 1,
+      vehicleId: Math.random(), // In real app, this would come from vehicle selection
+      vehiclePlate: newFuelRecord.vehiclePlate,
+      fuelType: newFuelRecord.fuelType,
+      quantity: quantity,
+      pricePerLiter: pricePerLiter,
+      totalCost: totalCost,
+      odometer: parseInt(newFuelRecord.odometer),
+      date: new Date().toISOString().split('T')[0],
+      location: newFuelRecord.location,
+      operator: newFuelRecord.operator
+    };
+
+    setFuelRecords([...fuelRecords, newRecord]);
+    setNewFuelRecord({
+      vehiclePlate: '',
+      fuelType: '',
+      quantity: '',
+      pricePerLiter: '',
+      odometer: '',
+      location: '',
+      operator: ''
+    });
+    setIsNewFuelModalOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -101,10 +152,113 @@ export default function FuelTracking() {
             Controle e monitoramento de abastecimentos
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Abastecimento
-        </Button>
+        <Dialog open={isNewFuelModalOpen} onOpenChange={setIsNewFuelModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Abastecimento
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Novo Registro de Abastecimento</DialogTitle>
+              <DialogDescription>
+                Registre um novo abastecimento de combustível
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="vehicle-plate">Placa do Veículo *</Label>
+                <Input
+                  id="vehicle-plate"
+                  placeholder="Ex: ABC-1234"
+                  value={newFuelRecord.vehiclePlate}
+                  onChange={(e) => setNewFuelRecord({...newFuelRecord, vehiclePlate: e.target.value.toUpperCase()})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="fuel-type">Tipo de Combustível *</Label>
+                <Select value={newFuelRecord.fuelType} onValueChange={(value) => setNewFuelRecord({...newFuelRecord, fuelType: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o combustível" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Gasolina">Gasolina</SelectItem>
+                    <SelectItem value="Diesel">Diesel</SelectItem>
+                    <SelectItem value="Etanol">Etanol</SelectItem>
+                    <SelectItem value="Diesel S10">Diesel S10</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="quantity">Quantidade (Litros) *</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  step="0.1"
+                  placeholder="Ex: 45.5"
+                  value={newFuelRecord.quantity}
+                  onChange={(e) => setNewFuelRecord({...newFuelRecord, quantity: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="price-per-liter">Preço por Litro (R$) *</Label>
+                <Input
+                  id="price-per-liter"
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 5.89"
+                  value={newFuelRecord.pricePerLiter}
+                  onChange={(e) => setNewFuelRecord({...newFuelRecord, pricePerLiter: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="odometer">Odômetro (KM) *</Label>
+                <Input
+                  id="odometer"
+                  type="number"
+                  placeholder="Ex: 15430"
+                  value={newFuelRecord.odometer}
+                  onChange={(e) => setNewFuelRecord({...newFuelRecord, odometer: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="operator">Operador *</Label>
+                <Input
+                  id="operator"
+                  placeholder="Ex: João Silva"
+                  value={newFuelRecord.operator}
+                  onChange={(e) => setNewFuelRecord({...newFuelRecord, operator: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="location">Local do Abastecimento *</Label>
+                <Input
+                  id="location"
+                  placeholder="Ex: Posto Shell - Centro"
+                  value={newFuelRecord.location}
+                  onChange={(e) => setNewFuelRecord({...newFuelRecord, location: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setIsNewFuelModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleNewFuelRecord}>
+                Salvar Abastecimento
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filtros e Busca */}
@@ -139,7 +293,7 @@ export default function FuelTracking() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os veículos</SelectItem>
-                  {uniqueVehicles.map(plate => (
+                  {uniqueVehicles.filter(plate => plate && plate.trim() !== '').map(plate => (
                     <SelectItem key={plate} value={plate}>{plate}</SelectItem>
                   ))}
                 </SelectContent>
@@ -154,7 +308,7 @@ export default function FuelTracking() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os tipos</SelectItem>
-                  {uniqueFuelTypes.map(fuelType => (
+                  {uniqueFuelTypes.filter(fuelType => fuelType && fuelType.trim() !== '').map(fuelType => (
                     <SelectItem key={fuelType} value={fuelType}>{fuelType}</SelectItem>
                   ))}
                 </SelectContent>
