@@ -445,6 +445,27 @@ export class DatabaseStorage implements IStorage {
       totalLiters: row.totalLiters || 0,
     }));
   }
+
+  async getFuelEfficiencyStats(): Promise<{ vehiclePlate: string; vehicleModel: string; totalKmRodado: number; totalLiters: number; kmPerLiter: number }[]> {
+    const result = await db.select({
+      vehiclePlate: vehicles.plate,
+      vehicleModel: vehicles.model,
+      totalKmRodado: sql<number>`sum(cast(fuel_requisitions.km_rodado as decimal))`,
+      totalLiters: sql<number>`sum(cast(fuel_requisitions.quantity as decimal))`,
+    }).from(fuelRequisitions)
+    .innerJoin(vehicles, sql`${fuelRequisitions.vehicleId} = ${vehicles.id}`)
+    .where(sql`${fuelRequisitions.status} IN ('approved', 'fulfilled') AND ${fuelRequisitions.quantity} IS NOT NULL AND ${fuelRequisitions.kmRodado} IS NOT NULL`)
+    .groupBy(vehicles.plate, vehicles.model, fuelRequisitions.vehicleId)
+    .having(sql`sum(cast(fuel_requisitions.quantity as decimal)) > 0`);
+
+    return result.map(row => ({
+      vehiclePlate: row.vehiclePlate,
+      vehicleModel: row.vehicleModel,
+      totalKmRodado: row.totalKmRodado || 0,
+      totalLiters: row.totalLiters || 0,
+      kmPerLiter: row.totalLiters > 0 ? parseFloat((row.totalKmRodado / row.totalLiters).toFixed(2)) : 0
+    })).sort((a, b) => b.kmPerLiter - a.kmPerLiter);
+  }
   
   // Data cleanup methods - Optimized to avoid unnecessary SELECT before DELETE
   async cleanupRequisitions(): Promise<number> {

@@ -56,6 +56,7 @@ export interface IStorage {
 
   getRequisitionsByDepartment(): Promise<{ department: string; count: number; totalLiters: number }[]>;
   getRequisitionsByFuelType(): Promise<{ fuelType: string; count: number; totalLiters: number }[]>;
+  getFuelEfficiencyStats(): Promise<{ vehiclePlate: string; vehicleModel: string; totalKmRodado: number; totalLiters: number; kmPerLiter: number }[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -925,6 +926,43 @@ export class MemStorage implements IStorage {
       fuelType,
       ...data,
     }));
+  }
+
+  async getFuelEfficiencyStats(): Promise<{ vehiclePlate: string; vehicleModel: string; totalKmRodado: number; totalLiters: number; kmPerLiter: number }[]> {
+    const requisitions = Array.from(this.fuelRequisitions.values()).filter(
+      req => req.status === "approved" || req.status === "fulfilled"
+    );
+    const vehicles = Array.from(this.vehicles.values());
+    const vehicleMap = new Map<number, { totalKmRodado: number; totalLiters: number; plate: string; model: string }>();
+
+    requisitions.forEach(req => {
+      if (!req.quantity || !req.kmRodado) return;
+      
+      const vehicle = vehicles.find(v => v.id === req.vehicleId);
+      if (!vehicle) return;
+
+      const current = vehicleMap.get(req.vehicleId) || { 
+        totalKmRodado: 0, 
+        totalLiters: 0, 
+        plate: vehicle.plate,
+        model: vehicle.model 
+      };
+      
+      current.totalKmRodado += parseFloat(req.kmRodado);
+      current.totalLiters += parseFloat(req.quantity);
+      vehicleMap.set(req.vehicleId, current);
+    });
+
+    return Array.from(vehicleMap.values())
+      .filter(data => data.totalLiters > 0)
+      .map(data => ({
+        vehiclePlate: data.plate,
+        vehicleModel: data.model,
+        totalKmRodado: data.totalKmRodado,
+        totalLiters: data.totalLiters,
+        kmPerLiter: parseFloat((data.totalKmRodado / data.totalLiters).toFixed(2))
+      }))
+      .sort((a, b) => b.kmPerLiter - a.kmPerLiter);
   }
 
   // Data cleanup methods

@@ -256,6 +256,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/fuel-requisitions/stats/fuel-efficiency", async (req, res) => {
+    try {
+      const stats = await storage.getFuelEfficiencyStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar estatísticas de eficiência de combustível" });
+    }
+  });
+
   // Supplier routes
   app.get("/api/suppliers", async (req, res) => {
     try {

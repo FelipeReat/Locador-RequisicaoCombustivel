@@ -40,8 +40,12 @@ export default function Reports() {
 
 
 
-  const { data: fuelTypeStats, isLoading: fuelTypeLoading } = useQuery({
+  const { data: fuelTypeStats, isLoading: fuelTypeLoading } = useQuery<{fuelType: string; count: number; totalLiters: number}[]>({
     queryKey: ["/api/fuel-requisitions/stats/fuel-type"],
+  });
+
+  const { data: fuelEfficiencyStats, isLoading: efficiencyLoading } = useQuery<{vehiclePlate: string; vehicleModel: string; totalKmRodado: number; totalLiters: number; kmPerLiter: number}[]>({
+    queryKey: ["/api/fuel-requisitions/stats/fuel-efficiency"],
   });
 
   const { data: allRequisitions, isLoading: requisitionsLoading } = useQuery<FuelRequisition[]>({
@@ -181,7 +185,7 @@ export default function Reports() {
 
   const monthlyTrendData = generateMonthlyTrend();
 
-  if (statsLoading || fuelTypeLoading || requisitionsLoading) {
+  if (statsLoading || fuelTypeLoading || requisitionsLoading || efficiencyLoading) {
     return <LoadingSpinner message={t('loading-reports')} />;
   }
 
@@ -385,7 +389,7 @@ export default function Reports() {
         </Card>
 
         {/* Fuel Type Details Table */}
-        <Card>
+        <Card className="mb-8">
           <CardHeader>
             <CardTitle>{t('fuel-type-details')}</CardTitle>
           </CardHeader>
@@ -414,6 +418,114 @@ export default function Reports() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Fuel Efficiency Report */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Relatório de Eficiência de Combustível (Km/Litro)
+            </CardTitle>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Média de quilômetros por litro de cada veículo com base nas requisições aprovadas
+            </p>
+          </CardHeader>
+          <CardContent>
+            {fuelEfficiencyStats && fuelEfficiencyStats.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-2">Placa</th>
+                      <th className="text-left py-3 px-2">Modelo</th>
+                      <th className="text-right py-3 px-2">Km Total</th>
+                      <th className="text-right py-3 px-2">Litros Total</th>
+                      <th className="text-right py-3 px-2">Km/Litro</th>
+                      <th className="text-right py-3 px-2">Eficiência</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fuelEfficiencyStats.map((stat, index) => (
+                      <tr key={stat.vehiclePlate} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="py-3 px-2 font-medium">{stat.vehiclePlate}</td>
+                        <td className="py-3 px-2">{stat.vehicleModel}</td>
+                        <td className="text-right py-3 px-2">
+                          {stat.totalKmRodado.toLocaleString("pt-BR")} km
+                        </td>
+                        <td className="text-right py-3 px-2">
+                          {stat.totalLiters.toLocaleString("pt-BR")} L
+                        </td>
+                        <td className="text-right py-3 px-2 font-semibold">
+                          {stat.kmPerLiter.toFixed(2)} km/L
+                        </td>
+                        <td className="text-right py-3 px-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            stat.kmPerLiter >= 15 ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                            stat.kmPerLiter >= 10 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' :
+                            'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
+                          }`}>
+                            {stat.kmPerLiter >= 15 ? 'Excelente' :
+                             stat.kmPerLiter >= 10 ? 'Boa' : 'Baixa'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500 dark:text-gray-400">
+                  Não há dados suficientes para calcular a eficiência de combustível.
+                  <br />
+                  É necessário ter requisições aprovadas com dados de quilometragem e quantidade de combustível.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Fuel Efficiency Chart */}
+        {fuelEfficiencyStats && fuelEfficiencyStats.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Gráfico de Eficiência por Veículo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={fuelEfficiencyStats} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="vehiclePlate" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={0}
+                  />
+                  <YAxis 
+                    label={{ value: 'Km/Litro', angle: -90, position: 'insideLeft' }}
+                  />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [`${value.toFixed(2)} km/L`, 'Eficiência']}
+                    labelFormatter={(label: string) => `Veículo: ${label}`}
+                  />
+                  <Bar 
+                    dataKey="kmPerLiter" 
+                    fill="#1976D2"
+                    name="Km/Litro"
+                  >
+                    {fuelEfficiencyStats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={
+                        entry.kmPerLiter >= 15 ? '#4CAF50' :
+                        entry.kmPerLiter >= 10 ? '#FF9800' : '#F44336'
+                      } />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </>
   );

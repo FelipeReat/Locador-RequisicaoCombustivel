@@ -10,6 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 12, 2025 - Fuel Efficiency Report Implementation**
+- Successfully created comprehensive fuel efficiency reporting feature in reports page
+- Added new API endpoint `/api/fuel-requisitions/stats/fuel-efficiency` for vehicle efficiency data
+- Implemented fuel efficiency calculations (km/liter) based on approved requisitions
+- Created detailed table showing vehicle plate, model, total km, total liters, and efficiency rating
+- Added visual efficiency chart with color-coded performance indicators (Excellent/Good/Low)
+- Integrated efficiency categories: Excellent (≥15 km/L), Good (≥10 km/L), Low (<10 km/L)
+- Enhanced reports page with professional styling and responsive design
+- All data calculations use only approved and fulfilled requisitions for accuracy
+
 **August 04, 2025 - Security and Access Control Implementation**
 - Successfully implemented role-based access control in dashboard
 - Disabled action buttons for employees in dashboard quick actions and table actions
