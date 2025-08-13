@@ -166,8 +166,8 @@ export default function Companies() {
 
   return (
     <div className="mobile-content space-y-4 lg:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white">{t("companies")}</h1>
           <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">
             {t("manage-client-companies")}
@@ -176,7 +176,7 @@ export default function Companies() {
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingCompany(null)} className="w-full sm:w-auto">
+            <Button onClick={() => setEditingCompany(null)} className="shrink-0">
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">{t("new-company")}</span>
               <span className="sm:hidden">Nova</span>
