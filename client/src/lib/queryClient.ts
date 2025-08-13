@@ -66,23 +66,22 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      staleTime: 2 * 60 * 1000, // 2 minutos para dados menos críticos
-      gcTime: 1000 * 60 * 2, // 2 minutos (reduzido de 5 minutos)
-      refetchOnWindowFocus: false, // Reduzir refetch automático
-      refetchOnReconnect: true,
-      refetchOnMount: true, // Sempre refetch ao montar componente
+      staleTime: 2 * 60 * 1000, // 2 minutos - balanceio entre performance e dados frescos
+      gcTime: 1000 * 60 * 5, // 5 minutos no cache
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false, // Usa cache sempre que disponível
+      refetchInterval: false, // Desabilita polling automático
       retry: (failureCount, error: any) => {
-        // Não tenta novamente para erros 401 (não autorizado)
         if (error?.status === 401) {
           return false;
         }
-        return failureCount < 3;
+        return failureCount < 1; // Apenas 1 tentativa para ser mais rápido
       },
     },
     mutations: {
       retry: false,
-      // Configurações para melhor UX em mutações
-      networkMode: 'online', // Só executa quando online
+      networkMode: 'online',
     },
   },
 });

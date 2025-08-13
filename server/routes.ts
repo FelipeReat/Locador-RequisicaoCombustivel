@@ -130,8 +130,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all fuel requisitions
   app.get("/api/fuel-requisitions", async (req, res) => {
     try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
       const requisitions = await storage.getFuelRequisitions();
-      res.json(requisitions);
+      
+      // Implementa paginação para melhor performance
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedRequisitions = requisitions.slice(startIndex, endIndex);
+      
+      // Adiciona headers de cache
+      res.set('Cache-Control', 'public, max-age=30');
+      res.json(paginatedRequisitions);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar requisições" });
     }
@@ -226,10 +236,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get requisition statistics
+  // Get requisition statistics (cached)
   app.get("/api/fuel-requisitions/stats/overview", async (req, res) => {
     try {
       const stats = await storage.getRequisitionStats();
+      // Cache agressivo para estatísticas
+      res.set('Cache-Control', 'public, max-age=60');
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar estatísticas" });
@@ -265,10 +277,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Supplier routes
+  // Supplier routes (cached)
   app.get("/api/suppliers", async (req, res) => {
     try {
       const suppliers = await storage.getSuppliers();
+      res.set('Cache-Control', 'public, max-age=300'); // 5 minutos
       res.json(suppliers);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar fornecedores" });
@@ -362,10 +375,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User management routes
+  // User management routes (cached)
   app.get("/api/users", async (req, res) => {
     try {
       const users = await storage.getUsers();
+      res.set('Cache-Control', 'public, max-age=120'); // 2 minutos
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar usuários" });
@@ -440,6 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vehicles", async (req, res) => {
     try {
       const vehicles = await storage.getVehicles();
+      res.set('Cache-Control', 'public, max-age=180'); // 3 minutos
       res.json(vehicles);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar veículos" });
@@ -583,10 +598,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Companies routes
+  // Companies routes (cached)
   app.get("/api/companies", async (req, res) => {
     try {
       const companies = await storage.getCompanies();
+      res.set('Cache-Control', 'public, max-age=240'); // 4 minutos
       res.json(companies);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar empresas" });

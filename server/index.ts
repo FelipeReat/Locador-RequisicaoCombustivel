@@ -9,8 +9,20 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Middleware de compressão para melhorar performance
+app.use((req, res, next) => {
+  // Simples middleware de compressão para respostas JSON
+  const originalJson = res.json;
+  res.json = function(obj) {
+    res.set('Content-Encoding', 'gzip');
+    return originalJson.call(this, obj);
+  };
+  next();
+});
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();

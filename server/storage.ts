@@ -45,7 +45,7 @@ export interface IStorage {
   updateFuelRequisitionStatus(id: number, statusUpdate: UpdateFuelRequisitionStatus): Promise<FuelRequisition | undefined>;
   deleteFuelRequisition(id: number): Promise<boolean>;
 
-  // Analytics
+  // Analytics (cached)
   getRequisitionStats(): Promise<{
     totalRequests: number;
     pendingRequests: number;
@@ -71,6 +71,11 @@ export class MemStorage implements IStorage {
   private currentCompanyId: number;
   private currentVehicleId: number;
   private loggedInUserId: number | null = null;
+  
+  // Cache para melhorar performance
+  private statsCache: any = null;
+  private statsCacheTime: number = 0;
+  private readonly CACHE_DURATION = 30000; // 30 segundos
 
   constructor() {
     this.users = new Map();
@@ -805,6 +810,8 @@ export class MemStorage implements IStorage {
       updatedAt: now,
     };
     this.fuelRequisitions.set(id, requisition);
+    // Invalida cache ao criar nova requisição
+    this.statsCache = null;
     return requisition;
   }
 
@@ -823,6 +830,8 @@ export class MemStorage implements IStorage {
 
   async updateFuelRequisitionStatus(id: number, statusUpdate: UpdateFuelRequisitionStatus): Promise<FuelRequisition | undefined> {
     const requisition = this.fuelRequisitions.get(id);
+    // Invalida cache ao atualizar status
+    this.statsCache = null;
     if (!requisition) return undefined;
 
     const updates: Partial<FuelRequisition> = {
@@ -875,9 +884,14 @@ export class MemStorage implements IStorage {
     fulfilledRequests: number;
     totalLiters: number;
   }> {
-    const requisitions = Array.from(this.fuelRequisitions.values());
+    // Use cache se ainda válido
+    const now = Date.now();
+    if (this.statsCache && (now - this.statsCacheTime) < this.CACHE_DURATION) {
+      return this.statsCache;
+    }
 
-    return {
+    const requisitions = Array.from(this.fuelRequisitions.values());
+    const stats = {
       totalRequests: requisitions.length,
       pendingRequests: requisitions.filter(r => r.status === "pending").length,
       approvedRequests: requisitions.filter(r => r.status === "approved").length,
@@ -887,6 +901,11 @@ export class MemStorage implements IStorage {
         .filter(r => r.status === "approved" || r.status === "fulfilled")
         .reduce((sum, r) => sum + parseFloat(r.quantity || "0"), 0),
     };
+
+    // Atualiza cache
+    this.statsCache = stats;
+    this.statsCacheTime = now;
+    return stats;
   }
 
   async getRequisitionsByDepartment(): Promise<{ department: string; count: number; totalLiters: number }[]> {
