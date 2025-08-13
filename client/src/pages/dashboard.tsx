@@ -180,17 +180,17 @@ export default function Dashboard() {
         subtitle={t('fuel-requisitions-overview')} 
       />
 
-      <main className="flex-1 mobile-content py-0 lg:py-6">
+      <main className="flex-1 mobile-content pt-12 sm:pt-4 lg:pt-6">
         {/* Stats Cards */}
-        <div className="mobile-stats-grid mb-6 lg:mb-8">
+        <div className="mobile-stats-grid mb-4 sm:mb-6 lg:mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-2 lg:p-3">
-                <ClipboardList className="h-4 w-4 lg:h-6 lg:w-6 text-blue-600 dark:text-blue-400" />
+              <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-2 sm:p-3">
+                <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{t('total-requests')}</p>
-                <p className="text-lg lg:text-2xl font-semibold text-gray-800 dark:text-white">
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="mobile-text-sm text-gray-600 dark:text-gray-300 truncate">{t('total-requests')}</p>
+                <p className="mobile-text-lg font-semibold text-gray-800 dark:text-white">
                   {stats?.totalRequests || 0}
                 </p>
               </div>

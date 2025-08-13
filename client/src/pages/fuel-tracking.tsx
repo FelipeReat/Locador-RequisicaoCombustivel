@@ -331,12 +331,12 @@ export default function FuelTracking() {
         <Card>
           <CardContent className="mobile-card">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                <div className="w-6 h-6 bg-blue-600 rounded"></div>
+              <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-blue-600 rounded"></div>
               </div>
-              <div className="ml-4">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300">Total de Abastecimentos</p>
-                <p className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">{fuelRecords.length}</p>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="mobile-text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Total de Abastecimentos</p>
+                <p className="mobile-text-lg font-bold text-gray-800 dark:text-white">{fuelRecords.length}</p>
               </div>
             </div>
           </CardContent>

@@ -93,14 +93,14 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-2 left-2 z-50">
         <Button
           variant="outline"
           size="sm"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="bg-white dark:bg-gray-800 shadow-lg border-gray-300 dark:border-gray-600 h-8 w-8 p-0"
+          className="bg-white dark:bg-gray-800 shadow-lg border-gray-300 dark:border-gray-600 h-10 w-10 p-0 rounded-lg"
         >
-          {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 
@@ -146,16 +146,16 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex items-center mb-3">
-          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
-            <User className="w-4 h-4 text-white" />
+      <div className="flex-shrink-0 mobile-sidebar-content border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center mb-3 sm:mb-4">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-500 rounded-full flex items-center justify-center mr-3">
+            <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate">
               {user?.fullName || user?.username}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
               {getRoleLabel(user?.role || 'employee')}
             </p>
           </div>
@@ -167,10 +167,10 @@ export default function Sidebar() {
           }}
           variant="outline" 
           size="sm" 
-          className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
+          className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20 h-10 sm:h-11"
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          Sair do sistema
+          <LogOut className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="text-sm sm:text-base">Sair do sistema</span>
         </Button>
       </div>
     </div>

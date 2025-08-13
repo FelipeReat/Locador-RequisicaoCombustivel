@@ -186,24 +186,24 @@ export default function Requisitions() {
         subtitle={t('manage-all-fuel-requisitions')} 
       />
       
-      <main className="flex-1 mobile-container py-4 lg:py-6">
+      <main className="flex-1 mobile-content pt-12 sm:pt-4 lg:pt-6">
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-4 sm:mb-6">
           <div className="mobile-card border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white flex items-center">
-              <Filter className="mr-2 h-4 w-4 lg:h-5 lg:w-5" />
+            <h3 className="mobile-text-base font-semibold text-gray-800 dark:text-white flex items-center">
+              <Filter className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               {t('filters')}
             </h3>
           </div>
           <div className="mobile-card">
-            <div className="mobile-form-grid">
+            <div className="mobile-spacing">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder={t('search-requisitions')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-10 sm:h-11"
                 />
               </div>
               

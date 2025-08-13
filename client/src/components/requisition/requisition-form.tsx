@@ -179,22 +179,22 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
+    <form onSubmit={handleSubmit} className="mobile-spacing">
       <div className="mobile-form-grid">
         {/* Fornecedor */}
-        <div className="space-y-2">
-          <Label htmlFor="supplierId">Fornecedor *</Label>
+        <div className="mobile-spacing">
+          <Label htmlFor="supplierId" className="mobile-text-sm font-medium">Fornecedor *</Label>
           <Select 
             value={formData.supplierId?.toString()} 
             onValueChange={(value) => handleInputChange("supplierId", parseInt(value))}
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-10 sm:h-11">
               <SelectValue placeholder="Selecione um fornecedor" />
             </SelectTrigger>
             <SelectContent>
               {suppliers.map((supplier) => (
                 <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                  {supplier.fantasia} - {supplier.cnpj} ({supplier.responsavel})
+                  <span className="mobile-text-sm">{supplier.fantasia} - {supplier.cnpj} ({supplier.responsavel})</span>
                 </SelectItem>
               ))}
             </SelectContent>
