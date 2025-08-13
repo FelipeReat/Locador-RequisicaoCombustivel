@@ -145,18 +145,18 @@ export default function FuelTracking() {
 
   return (
     <div className="mobile-content space-y-4 lg:space-y-6">
-      <div className="flex items-center justify-between gap-3 sm:gap-4">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white truncate">{t('fuel-tracking')}</h1>
-          <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1 hidden sm:block">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1 min-w-0 ml-4 sm:ml-0">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white">{t('fuel-tracking')}</h1>
+          <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">
             Controle e monitoramento de abastecimentos
           </p>
         </div>
         <Dialog open={isNewFuelModalOpen} onOpenChange={setIsNewFuelModalOpen}>
           <DialogTrigger asChild>
-            <Button className="shrink-0 h-8 sm:h-10">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Novo Abastecimento</span>
+            <Button className="shrink-0 hidden sm:flex">
+              <Plus className="h-4 w-4 mr-2" />
+              <span>Novo Abastecimento</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl mobile-container">
