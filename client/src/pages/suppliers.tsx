@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -181,7 +182,14 @@ export default function Suppliers() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">{t('loading')}</div>;
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>{t('loading')}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -189,7 +197,7 @@ export default function Suppliers() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white">{t('suppliers')}</h1>
-          <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300">{t('supplier-management')}</p>
+          <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">{t('supplier-management')}</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -199,200 +207,15 @@ export default function Suppliers() {
               <span className="sm:hidden">Novo</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="mobile-container max-w-lg">
             <DialogHeader>
               <DialogTitle>{t('new-supplier')}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">{t('supplier-name')} *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Nome empresarial completo"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fantasia">{t('supplier-fantasia')} *</Label>
-                  <Input
-                    id="fantasia"
-                    value={formData.fantasia}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fantasia: e.target.value }))}
-                    placeholder="Nome fantasia do posto"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cnpj">{t('supplier-cnpj')} *</Label>
-                  <Input
-                    id="cnpj"
-                    value={formData.cnpj}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      let formattedValue = value;
-
-                      if (value.length > 2) {
-                        formattedValue = value.slice(0, 2) + '.' + value.slice(2);
-                      }
-                      if (value.length > 5) {
-                        formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5);
-                      }
-                      if (value.length > 8) {
-                        formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5, 8) + '/' + value.slice(8);
-                      }
-                      if (value.length > 12) {
-                        formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5, 8) + '/' + value.slice(8, 12) + '-' + value.slice(12, 14);
-                      }
-
-                      setFormData(prev => ({ ...prev, cnpj: formattedValue }));
-                    }}
-                    placeholder="00.000.000/0000-00"
-                    required
-                    maxLength={18}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="responsavel">{t('supplier-responsible')} *</Label>
-                  <Input
-                    id="responsavel"
-                    value={formData.responsavel}
-                    onChange={(e) => setFormData(prev => ({ ...prev, responsavel: e.target.value }))}
-                    placeholder={t('supplier-responsible')}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t('supplier-phone')}</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone || ""}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      let formattedValue = value;
-
-                      if (value.length > 2) {
-                        formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2);
-                      }
-                      if (value.length > 7) {
-                        formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
-                      }
-
-                      setFormData(prev => ({ ...prev, phone: formattedValue }));
-                    }}
-                    placeholder="(11) 99999-9999"
-                    maxLength={15}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">{t('supplier-address')}</Label>
-                  <Input
-                    id="address"
-                    value={formData.address || ""}
-                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder={t('supplier-address')}
-                  />
-                </div>
-              </div>
-              <div className="mobile-button-group">
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="w-full sm:w-auto">
-                  {t('cancel')}
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending} className="w-full sm:w-auto">
-                  {createMutation.isPending ? t('loading') : t('create')}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('suppliers-list')}</CardTitle>
-          <CardDescription>
-            {t('supplier-management')}
-          </CardDescription>
-          <div className="flex items-center space-x-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('search-suppliers')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="mobile-table-container">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('supplier-fantasia')}</TableHead>
-                  <TableHead>{t('supplier-cnpj')}</TableHead>
-                  <TableHead>{t('supplier-responsible')}</TableHead>
-                  <TableHead>{t('supplier-phone')}</TableHead>
-                  <TableHead>{t('actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSuppliers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      {t('no-suppliers')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredSuppliers.map((supplier) => (
-                    <TableRow key={supplier.id}>
-                      <TableCell className="font-medium">{supplier.fantasia}</TableCell>
-                      <TableCell>{formatCNPJ(supplier.cnpj)}</TableCell>
-                      <TableCell>{supplier.responsavel}</TableCell>
-                      <TableCell>{supplier.phone ? formatPhone(supplier.phone) : "-"}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 lg:gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(supplier)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Pencil className="h-3 w-3 lg:h-4 lg:w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(supplier.id)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{t('edit-supplier')}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">{t('supplier-name')} *</Label>
+                <Label htmlFor="name">{t('supplier-name')} *</Label>
                 <Input
-                  id="edit-name"
+                  id="name"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Nome empresarial completo"
@@ -400,9 +223,9 @@ export default function Suppliers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-fantasia">{t('supplier-fantasia')} *</Label>
+                <Label htmlFor="fantasia">{t('supplier-fantasia')} *</Label>
                 <Input
-                  id="edit-fantasia"
+                  id="fantasia"
                   value={formData.fantasia}
                   onChange={(e) => setFormData(prev => ({ ...prev, fantasia: e.target.value }))}
                   placeholder="Nome fantasia do posto"
@@ -410,9 +233,9 @@ export default function Suppliers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-cnpj">{t('supplier-cnpj')} *</Label>
+                <Label htmlFor="cnpj">{t('supplier-cnpj')} *</Label>
                 <Input
-                  id="edit-cnpj"
+                  id="cnpj"
                   value={formData.cnpj}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '');
@@ -439,9 +262,9 @@ export default function Suppliers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-responsavel">{t('supplier-responsible')} *</Label>
+                <Label htmlFor="responsavel">{t('supplier-responsible')} *</Label>
                 <Input
-                  id="edit-responsavel"
+                  id="responsavel"
                   value={formData.responsavel}
                   onChange={(e) => setFormData(prev => ({ ...prev, responsavel: e.target.value }))}
                   placeholder={t('supplier-responsible')}
@@ -450,9 +273,9 @@ export default function Suppliers() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="edit-phone">{t('supplier-phone')}</Label>
+                <Label htmlFor="phone">{t('supplier-phone')}</Label>
                 <Input
-                  id="edit-phone"
+                  id="phone"
                   value={formData.phone || ""}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '');
@@ -472,16 +295,197 @@ export default function Suppliers() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-address">{t('supplier-address')}</Label>
+                <Label htmlFor="address">{t('supplier-address')}</Label>
                 <Input
-                  id="edit-address"
+                  id="address"
                   value={formData.address || ""}
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                   placeholder={t('supplier-address')}
                 />
               </div>
+              <div className="mobile-button-group pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="w-full sm:w-auto">
+                  {t('cancel')}
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending} className="w-full sm:w-auto">
+                  {createMutation.isPending ? t('loading') : t('create')}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <CardHeader className="mobile-card">
+          <CardTitle className="mobile-text-lg">{t('suppliers-list')}</CardTitle>
+          <CardDescription className="mobile-text-sm">
+            {t('supplier-management')}
+          </CardDescription>
+          <div className="flex items-center space-x-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('search-suppliers')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="mobile-card pt-0">
+          <div className="mobile-table-container">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="mobile-text-sm">{t('supplier-fantasia')}</TableHead>
+                  <TableHead className="mobile-text-sm">{t('supplier-cnpj')}</TableHead>
+                  <TableHead className="mobile-text-sm">{t('supplier-responsible')}</TableHead>
+                  <TableHead className="mobile-text-sm">{t('supplier-phone')}</TableHead>
+                  <TableHead className="mobile-text-sm">{t('actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredSuppliers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground mobile-text-sm py-8">
+                      {t('no-suppliers')}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredSuppliers.map((supplier) => (
+                    <TableRow key={supplier.id}>
+                      <TableCell className="font-medium mobile-text-sm">{supplier.fantasia}</TableCell>
+                      <TableCell className="mobile-text-sm">{formatCNPJ(supplier.cnpj)}</TableCell>
+                      <TableCell className="mobile-text-sm">{supplier.responsavel}</TableCell>
+                      <TableCell className="mobile-text-sm">{supplier.phone ? formatPhone(supplier.phone) : "-"}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 lg:gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(supplier)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Pencil className="h-3 w-3 lg:h-4 lg:w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(supplier.id)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="mobile-container max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t('edit-supplier')}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdate} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">{t('supplier-name')} *</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Nome empresarial completo"
+                required
+              />
             </div>
-            <div className="mobile-button-group">
+            <div className="space-y-2">
+              <Label htmlFor="edit-fantasia">{t('supplier-fantasia')} *</Label>
+              <Input
+                id="edit-fantasia"
+                value={formData.fantasia}
+                onChange={(e) => setFormData(prev => ({ ...prev, fantasia: e.target.value }))}
+                placeholder="Nome fantasia do posto"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-cnpj">{t('supplier-cnpj')} *</Label>
+              <Input
+                id="edit-cnpj"
+                value={formData.cnpj}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  let formattedValue = value;
+
+                  if (value.length > 2) {
+                    formattedValue = value.slice(0, 2) + '.' + value.slice(2);
+                  }
+                  if (value.length > 5) {
+                    formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5);
+                  }
+                  if (value.length > 8) {
+                    formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5, 8) + '/' + value.slice(8);
+                  }
+                  if (value.length > 12) {
+                    formattedValue = value.slice(0, 2) + '.' + value.slice(2, 5) + '.' + value.slice(5, 8) + '/' + value.slice(8, 12) + '-' + value.slice(12, 14);
+                  }
+
+                  setFormData(prev => ({ ...prev, cnpj: formattedValue }));
+                }}
+                placeholder="00.000.000/0000-00"
+                required
+                maxLength={18}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-responsavel">{t('supplier-responsible')} *</Label>
+              <Input
+                id="edit-responsavel"
+                value={formData.responsavel}
+                onChange={(e) => setFormData(prev => ({ ...prev, responsavel: e.target.value }))}
+                placeholder={t('supplier-responsible')}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">{t('supplier-phone')}</Label>
+              <Input
+                id="edit-phone"
+                value={formData.phone || ""}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  let formattedValue = value;
+
+                  if (value.length > 2) {
+                    formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2);
+                  }
+                  if (value.length > 7) {
+                    formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
+                  }
+
+                  setFormData(prev => ({ ...prev, phone: formattedValue }));
+                }}
+                placeholder="(11) 99999-9999"
+                maxLength={15}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-address">{t('supplier-address')}</Label>
+              <Input
+                id="edit-address"
+                value={formData.address || ""}
+                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                placeholder={t('supplier-address')}
+              />
+            </div>
+            <div className="mobile-button-group pt-4">
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} className="w-full sm:w-auto">
                 {t('cancel')}
               </Button>

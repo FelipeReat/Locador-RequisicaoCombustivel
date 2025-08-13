@@ -264,14 +264,14 @@ export default function FuelTracking() {
 
       {/* Filtros e Busca */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Filter className="h-5 w-5 mr-2" />
+        <CardHeader className="mobile-card">
+          <CardTitle className="mobile-text-lg flex items-center">
+            <Filter className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
             {t('filters')}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className="mobile-card pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <Label htmlFor="search">{t('search')}</Label>
               <div className="relative">
@@ -345,12 +345,12 @@ export default function FuelTracking() {
         <Card>
           <CardContent className="mobile-card">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <div className="w-6 h-6 bg-green-600 rounded"></div>
+              <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-green-600 rounded"></div>
               </div>
-              <div className="ml-4">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300">Total em Litros</p>
-                <p className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="mobile-text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Total em Litros</p>
+                <p className="mobile-text-lg font-bold text-gray-800 dark:text-white">
                   {fuelRecords.reduce((acc, record) => acc + record.quantity, 0).toFixed(1)}L
                 </p>
               </div>
@@ -361,12 +361,12 @@ export default function FuelTracking() {
         <Card>
           <CardContent className="mobile-card">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                <div className="w-6 h-6 bg-yellow-600 rounded"></div>
+              <div className="p-2 sm:p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-yellow-600 rounded"></div>
               </div>
-              <div className="ml-4">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300">Custo Total</p>
-                <p className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="mobile-text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Custo Total</p>
+                <p className="mobile-text-lg font-bold text-gray-800 dark:text-white">
                   R$ {fuelRecords.reduce((acc, record) => acc + record.totalCost, 0).toFixed(2)}
                 </p>
               </div>
@@ -377,12 +377,12 @@ export default function FuelTracking() {
         <Card>
           <CardContent className="mobile-card">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                <div className="w-6 h-6 bg-purple-600 rounded"></div>
+              <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-purple-600 rounded"></div>
               </div>
-              <div className="ml-4">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300">Preço Médio/L</p>
-                <p className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="mobile-text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Preço Médio/L</p>
+                <p className="mobile-text-lg font-bold text-gray-800 dark:text-white">
                   R$ {fuelRecords.length > 0 
                     ? (fuelRecords.reduce((acc, record) => acc + record.pricePerLiter, 0) / fuelRecords.length).toFixed(2)
                     : '0.00'
@@ -396,46 +396,46 @@ export default function FuelTracking() {
 
       {/* Tabela de Registros */}
       <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Abastecimentos</CardTitle>
-          <CardDescription>
+        <CardHeader className="mobile-card">
+          <CardTitle className="mobile-text-lg">Histórico de Abastecimentos</CardTitle>
+          <CardDescription className="mobile-text-sm">
             {filteredRecords.length} registro{filteredRecords.length !== 1 ? 's' : ''} encontrado{filteredRecords.length !== 1 ? 's' : ''}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mobile-card pt-0">
           <div className="mobile-table-container">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Veículo</TableHead>
-                  <TableHead>Combustível</TableHead>
-                  <TableHead>Quantidade</TableHead>
-                  <TableHead>Preço/L</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Odômetro</TableHead>
-                  <TableHead>Local</TableHead>
-                  <TableHead>Operador</TableHead>
+                  <TableHead className="mobile-text-sm">Data</TableHead>
+                  <TableHead className="mobile-text-sm">Veículo</TableHead>
+                  <TableHead className="mobile-text-sm">Combustível</TableHead>
+                  <TableHead className="mobile-text-sm">Quantidade</TableHead>
+                  <TableHead className="mobile-text-sm">Preço/L</TableHead>
+                  <TableHead className="mobile-text-sm">Total</TableHead>
+                  <TableHead className="mobile-text-sm">Odômetro</TableHead>
+                  <TableHead className="mobile-text-sm">Local</TableHead>
+                  <TableHead className="mobile-text-sm">Operador</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRecords.map((record) => (
                   <TableRow key={record.id}>
-                    <TableCell>
+                    <TableCell className="mobile-text-sm">
                       {new Date(record.date).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{record.vehiclePlate}</Badge>
+                      <Badge variant="outline" className="mobile-text-sm">{record.vehiclePlate}</Badge>
                     </TableCell>
-                    <TableCell>{record.fuelType}</TableCell>
-                    <TableCell>{record.quantity.toFixed(1)}L</TableCell>
-                    <TableCell>R$ {record.pricePerLiter.toFixed(2)}</TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="mobile-text-sm">{record.fuelType}</TableCell>
+                    <TableCell className="mobile-text-sm">{record.quantity.toFixed(1)}L</TableCell>
+                    <TableCell className="mobile-text-sm">R$ {record.pricePerLiter.toFixed(2)}</TableCell>
+                    <TableCell className="font-medium mobile-text-sm">
                       R$ {record.totalCost.toFixed(2)}
                     </TableCell>
-                    <TableCell>{record.odometer.toLocaleString()} km</TableCell>
-                    <TableCell>{record.location}</TableCell>
-                    <TableCell>{record.operator}</TableCell>
+                    <TableCell className="mobile-text-sm">{record.odometer.toLocaleString()} km</TableCell>
+                    <TableCell className="mobile-text-sm">{record.location}</TableCell>
+                    <TableCell className="mobile-text-sm">{record.operator}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -444,7 +444,7 @@ export default function FuelTracking() {
           
           {filteredRecords.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-500">Nenhum registro encontrado com os filtros aplicados.</p>
+              <p className="text-gray-500 mobile-text-sm">Nenhum registro encontrado com os filtros aplicados.</p>
             </div>
           )}
         </CardContent>
