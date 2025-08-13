@@ -15,9 +15,9 @@ interface NotificationContextProps {
 }
 
 const defaultSettings: NotificationSettings = {
-  newRequisitions: true,
-  pendingApprovals: true,
-  requisitionStatus: true,
+  newRequisitions: false,
+  pendingApprovals: false,
+  requisitionStatus: false,
   monthlyReports: false,
 };
 
