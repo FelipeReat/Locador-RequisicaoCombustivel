@@ -194,17 +194,16 @@ export default function Suppliers() {
 
   return (
     <div className="mobile-content space-y-4 lg:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-center justify-between gap-3 sm:gap-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white">{t('suppliers')}</h1>
-          <p className="text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1">{t('supplier-management')}</p>
+          <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white truncate">{t('suppliers')}</h1>
+          <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1 hidden sm:block">{t('supplier-management')}</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="shrink-0">
-              <Plus className="h-4 w-4 mr-2" />
+            <Button className="shrink-0 h-8 sm:h-10">
+              <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">{t('new-supplier')}</span>
-              <span className="sm:hidden">Novo</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="mobile-container max-w-lg">
