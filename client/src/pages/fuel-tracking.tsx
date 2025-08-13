@@ -327,30 +327,36 @@ export default function FuelTracking() {
       </Card>
 
       {/* Estatísticas Rápidas */}
-      <div className="mobile-stats-grid">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <Card>
-          <CardContent className="mobile-card">
-            <div className="flex items-center">
-              <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-blue-600 rounded"></div>
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0 p-2 lg:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-blue-600 rounded"></div>
               </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="mobile-text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Total de Abastecimentos</p>
-                <p className="mobile-text-lg font-bold text-gray-800 dark:text-white">{fuelRecords.length}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Total de Abastecimentos
+                </p>
+                <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white">
+                  {fuelRecords.length}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="mobile-card">
-            <div className="flex items-center">
-              <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-green-600 rounded"></div>
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0 p-2 lg:p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-green-600 rounded"></div>
               </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="mobile-text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Total em Litros</p>
-                <p className="mobile-text-lg font-bold text-gray-800 dark:text-white">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Total em Litros
+                </p>
+                <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white">
                   {fuelRecords.reduce((acc, record) => acc + record.quantity, 0).toFixed(1)}L
                 </p>
               </div>
@@ -359,14 +365,16 @@ export default function FuelTracking() {
         </Card>
 
         <Card>
-          <CardContent className="mobile-card">
-            <div className="flex items-center">
-              <div className="p-2 sm:p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-yellow-600 rounded"></div>
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0 p-2 lg:p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-yellow-600 rounded"></div>
               </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="mobile-text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Custo Total</p>
-                <p className="mobile-text-lg font-bold text-gray-800 dark:text-white">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Custo Total
+                </p>
+                <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white">
                   R$ {fuelRecords.reduce((acc, record) => acc + record.totalCost, 0).toFixed(2)}
                 </p>
               </div>
@@ -375,14 +383,16 @@ export default function FuelTracking() {
         </Card>
 
         <Card>
-          <CardContent className="mobile-card">
-            <div className="flex items-center">
-              <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-purple-600 rounded"></div>
+          <CardContent className="p-4 lg:p-6">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0 p-2 lg:p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-purple-600 rounded"></div>
               </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="mobile-text-sm font-medium text-gray-600 dark:text-gray-300 truncate">Preço Médio/L</p>
-                <p className="mobile-text-lg font-bold text-gray-800 dark:text-white">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Preço Médio/L
+                </p>
+                <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white">
                   R$ {fuelRecords.length > 0 
                     ? (fuelRecords.reduce((acc, record) => acc + record.pricePerLiter, 0) / fuelRecords.length).toFixed(2)
                     : '0.00'
