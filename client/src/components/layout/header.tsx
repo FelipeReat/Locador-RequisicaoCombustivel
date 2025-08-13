@@ -44,7 +44,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
       <div className="mobile-header">
         <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0 ml-12 lg:ml-0">
+          <div className="flex-1 min-w-0 ml-14 sm:ml-12 lg:ml-0">
             <h1 className="mobile-text-lg font-bold text-gray-800 dark:text-white truncate">
               {title}
             </h1>
