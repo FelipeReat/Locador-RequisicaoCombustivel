@@ -21,7 +21,7 @@ import Sidebar from "@/components/layout/sidebar";
 import Suppliers from "@/pages/suppliers";
 import Companies from "@/pages/companies";
 import Login from "@/pages/login";
-import PerformanceMonitor from "@/components/ui/performance-monitor";
+
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -115,7 +115,6 @@ function App() {
               <TooltipProvider>
                 <Toaster />
                 <Router />
-                <PerformanceMonitor />
               </TooltipProvider>
             </NotificationProvider>
           </LanguageProvider>

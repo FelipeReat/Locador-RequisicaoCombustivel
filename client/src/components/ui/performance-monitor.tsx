@@ -13,23 +13,28 @@ export default function PerformanceMonitor() {
     // Monitor inicial page load
     const loadTime = performance.now();
     
-    // Monitor API response times
+    // Monitor API response times - versão mais segura
     const originalFetch = window.fetch;
     let apiStartTime: number;
     
     window.fetch = async (...args) => {
-      apiStartTime = performance.now();
-      const response = await originalFetch(...args);
-      const apiResponseTime = performance.now() - apiStartTime;
-      
-      setMetrics(prev => ({
-        ...prev,
-        loadTime: loadTime,
-        apiResponseTime: Math.round(apiResponseTime),
-        renderTime: prev?.renderTime || 0
-      }));
-      
-      return response;
+      try {
+        apiStartTime = performance.now();
+        const response = await originalFetch(...args);
+        const apiResponseTime = performance.now() - apiStartTime;
+        
+        setMetrics(prev => ({
+          ...prev,
+          loadTime: loadTime,
+          apiResponseTime: Math.round(apiResponseTime),
+          renderTime: prev?.renderTime || 0
+        }));
+        
+        return response;
+      } catch (error) {
+        // Não interfere com erros de fetch
+        return originalFetch(...args);
+      }
     };
 
     // Monitor render time

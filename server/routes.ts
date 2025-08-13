@@ -139,8 +139,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const endIndex = startIndex + limit;
       const paginatedRequisitions = requisitions.slice(startIndex, endIndex);
       
-      // Adiciona headers de cache
-      res.set('Cache-Control', 'public, max-age=30');
+      // Headers de cache mais conservadores
+      res.set('Cache-Control', 'public, max-age=10');
       res.json(paginatedRequisitions);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar requisições" });
@@ -240,8 +240,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/fuel-requisitions/stats/overview", async (req, res) => {
     try {
       const stats = await storage.getRequisitionStats();
-      // Cache agressivo para estatísticas
-      res.set('Cache-Control', 'public, max-age=60');
+      // Cache moderado para estatísticas
+      res.set('Cache-Control', 'public, max-age=20');
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar estatísticas" });
@@ -281,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/suppliers", async (req, res) => {
     try {
       const suppliers = await storage.getSuppliers();
-      res.set('Cache-Control', 'public, max-age=300'); // 5 minutos
+      res.set('Cache-Control', 'public, max-age=60'); // 1 minuto
       res.json(suppliers);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar fornecedores" });
@@ -379,7 +379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", async (req, res) => {
     try {
       const users = await storage.getUsers();
-      res.set('Cache-Control', 'public, max-age=120'); // 2 minutos
+      res.set('Cache-Control', 'public, max-age=30'); // 30 segundos
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar usuários" });
@@ -454,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vehicles", async (req, res) => {
     try {
       const vehicles = await storage.getVehicles();
-      res.set('Cache-Control', 'public, max-age=180'); // 3 minutos
+      res.set('Cache-Control', 'public, max-age=45'); // 45 segundos
       res.json(vehicles);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar veículos" });
@@ -602,7 +602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/companies", async (req, res) => {
     try {
       const companies = await storage.getCompanies();
-      res.set('Cache-Control', 'public, max-age=240'); // 4 minutos
+      res.set('Cache-Control', 'public, max-age=60'); // 1 minuto
       res.json(companies);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar empresas" });
