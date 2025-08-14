@@ -161,12 +161,14 @@ export default function Suppliers() {
     }
   };
 
-  const filteredSuppliers = suppliers.filter(supplier =>
-    supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    supplier.fantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    supplier.cnpj.includes(searchTerm) ||
-    supplier.responsavel.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSuppliers = suppliers
+    .filter(supplier =>
+      supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supplier.fantasia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supplier.cnpj.includes(searchTerm) ||
+      supplier.responsavel.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.fantasia.localeCompare(b.fantasia, 'pt-BR'));
 
   const formatCNPJ = (cnpj: string) => {
     const cleaned = cnpj.replace(/\D/g, "");
@@ -335,45 +337,62 @@ export default function Suppliers() {
           <div className="mobile-table-container">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="mobile-text-sm">{t('supplier-fantasia')}</TableHead>
-                  <TableHead className="mobile-text-sm">{t('supplier-cnpj')}</TableHead>
-                  <TableHead className="mobile-text-sm">{t('supplier-responsible')}</TableHead>
-                  <TableHead className="mobile-text-sm">{t('supplier-phone')}</TableHead>
-                  <TableHead className="mobile-text-sm">{t('actions')}</TableHead>
+                <TableRow className="border-b-2">
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
+                    {t('supplier-fantasia')} 
+                    <span className="text-xs text-muted-foreground ml-1">(A-Z)</span>
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">{t('supplier-cnpj')}</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">{t('supplier-responsible')}</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">{t('supplier-phone')}</TableHead>
+                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-center">{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground mobile-text-sm py-8">
-                      {t('no-suppliers')}
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="text-4xl">📋</div>
+                        <p className="text-lg font-medium">{t('no-suppliers')}</p>
+                        <p className="text-sm">Adicione fornecedores para começar</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredSuppliers.map((supplier) => (
-                    <TableRow key={supplier.id}>
-                      <TableCell className="font-medium mobile-text-sm">{supplier.fantasia}</TableCell>
-                      <TableCell className="mobile-text-sm">{formatCNPJ(supplier.cnpj)}</TableCell>
-                      <TableCell className="mobile-text-sm">{supplier.responsavel}</TableCell>
-                      <TableCell className="mobile-text-sm">{supplier.phone ? formatPhone(supplier.phone) : "-"}</TableCell>
+                  filteredSuppliers.map((supplier, index) => (
+                    <TableRow key={supplier.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${index % 2 === 0 ? 'bg-gray-25 dark:bg-gray-900/20' : ''}`}>
+                      <TableCell className="font-medium text-gray-900 dark:text-gray-100 py-4">
+                        {supplier.fantasia}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 font-mono text-sm">
+                        {formatCNPJ(supplier.cnpj)}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300">
+                        {supplier.responsavel}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 font-mono text-sm">
+                        {supplier.phone ? formatPhone(supplier.phone) : <span className="text-muted-foreground">-</span>}
+                      </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1 lg:gap-2">
+                        <div className="flex items-center justify-center gap-2">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(supplier)}
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                            title="Editar fornecedor"
                           >
-                            <Pencil className="h-3 w-3 lg:h-4 lg:w-4" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(supplier.id)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100"
+                            title="Excluir fornecedor"
                           >
-                            <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

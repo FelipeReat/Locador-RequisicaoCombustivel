@@ -267,6 +267,15 @@ function FleetManagement() {
     return a.model.localeCompare(b.model, 'pt-BR');
   }) : [];
 
+  // Group vehicles by status for better organization
+  const groupedVehicles = sortedVehicles.reduce((acc, vehicle) => {
+    if (!acc[vehicle.status]) {
+      acc[vehicle.status] = [];
+    }
+    acc[vehicle.status].push(vehicle);
+    return acc;
+  }, {} as Record<string, typeof sortedVehicles>);
+
   const filteredVehicles = sortedVehicles.filter(vehicle => {
     const matchesSearch = vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -435,13 +444,60 @@ function FleetManagement() {
             </Dialog>
           </div>
 
+          {/* Vehicles Statistics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {groupedVehicles.active?.length || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">{t('active')}</div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {groupedVehicles.maintenance?.length || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">{t('maintenance')}</div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">
+                  {groupedVehicles.inactive?.length || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">{t('inactive')}</div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {filteredVehicles.length}
+                </div>
+                <div className="text-sm text-muted-foreground">Total</div>
+              </div>
+            </Card>
+          </div>
+
           {/* Vehicles List */}
+          <div className="space-y-4 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Veículos por Modelo (A-Z)
+              </h3>
+              <div className="text-sm text-muted-foreground">
+                {filteredVehicles.length} veículos encontrados
+              </div>
+            </div>
+          </div>
+          
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredVehicles.map((vehicle) => (
-              <Card key={vehicle.id} className="hover:shadow-lg transition-shadow">
+              <Card key={vehicle.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center ring-2 ring-primary/20">
                       <Car className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
@@ -449,21 +505,22 @@ function FleetManagement() {
                         value={vehicle.status}
                         onValueChange={(status) => toggleVehicleStatus.mutate({ id: vehicle.id, status })}
                       >
-                        <SelectTrigger className="w-full sm:w-32">
+                        <SelectTrigger className="w-full sm:w-32 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="active">{t('active')}</SelectItem>
-                          <SelectItem value="maintenance">{t('maintenance')}</SelectItem>
-                          <SelectItem value="inactive">{t('inactive')}</SelectItem>
+                          <SelectItem value="active">✓ {t('active')}</SelectItem>
+                          <SelectItem value="maintenance">⚠️ {t('maintenance')}</SelectItem>
+                          <SelectItem value="inactive">✗ {t('inactive')}</SelectItem>
                         </SelectContent>
                       </Select>
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(vehicle)}
-                          className="flex-1 sm:flex-none"
+                          className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                          title="Editar veículo"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -471,47 +528,72 @@ function FleetManagement() {
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteVehicle.mutate(vehicle.id)}
-                          className="text-red-600 hover:text-red-700 flex-1 sm:flex-none"
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100"
+                          title="Excluir veículo"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                   </div>
-                  <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{vehicle.plate}</CardTitle>
-                  <CardDescription className="text-sm text-gray-600 dark:text-gray-300">
+                  <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+                    {vehicle.plate}
+                  </CardTitle>
+                  <CardDescription className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                     {vehicle.brand} {vehicle.model} ({vehicle.year})
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Fuel className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      <strong>{t('fuel')}:</strong> {getFuelTypeLabel(vehicle.fuelType)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Gauge className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      <strong>KM:</strong> {vehicle.mileage ? parseFloat(vehicle.mileage).toLocaleString("pt-BR") : "0"}
-                    </span>
-                  </div>
-
-                  {vehicle.lastMaintenance && (
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        <strong>{t('last-maintenance')}:</strong> {new Date(vehicle.lastMaintenance).toLocaleDateString("pt-BR")}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                      <div className="flex items-center space-x-2">
+                        <Fuel className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {t('fuel')}:
+                        </span>
+                      </div>
+                      <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                        {getFuelTypeLabel(vehicle.fuelType)}
                       </span>
                     </div>
-                  )}
 
-                  <div className="flex items-center justify-between pt-2">
-                    <Badge variant={getStatusBadgeVariant(vehicle.status)}>
-                      {getStatusLabel(vehicle.status)}
+                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                      <div className="flex items-center space-x-2">
+                        <Gauge className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          KM:
+                        </span>
+                      </div>
+                      <span className="text-sm text-gray-900 dark:text-gray-100 font-mono">
+                        {vehicle.mileage ? parseFloat(vehicle.mileage).toLocaleString("pt-BR") : "0"}
+                      </span>
+                    </div>
+
+                    {vehicle.lastMaintenance && (
+                      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Última manutenção:
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-gray-100">
+                          {new Date(vehicle.lastMaintenance).toLocaleDateString("pt-BR")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-center pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <Badge 
+                      variant={getStatusBadgeVariant(vehicle.status)}
+                      className="px-3 py-1 text-xs font-medium"
+                    >
+                      {vehicle.status === 'active' && '✓'} 
+                      {vehicle.status === 'maintenance' && '⚠️'} 
+                      {vehicle.status === 'inactive' && '✗'} 
+                      {' '}{getStatusLabel(vehicle.status)}
                     </Badge>
-
                   </div>
                 </CardContent>
               </Card>

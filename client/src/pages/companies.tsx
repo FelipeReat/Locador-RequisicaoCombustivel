@@ -30,7 +30,7 @@ export default function Companies() {
   });
 
   // Fetch companies
-  const { data: companies = [], isLoading } = useQuery<Company[]>({
+  const { data: companiesData = [], isLoading } = useQuery<Company[]>({
     queryKey: ["companies"],
     queryFn: async () => {
       const response = await fetch("/api/companies");
@@ -38,6 +38,9 @@ export default function Companies() {
       return response.json();
     },
   });
+
+  // Sort companies alphabetically by name
+  const companies = companiesData.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCompany) => {
@@ -285,78 +288,85 @@ export default function Companies() {
           </div>
         </div>
       ) : (
-        <div className="mobile-grid">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {companies.map((company) => (
-            <Card key={company.id} className="relative">
-              <CardHeader className="mobile-card pb-3">
+            <Card key={company.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/20">
+              <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <div className="min-w-0 flex-1 pr-4">
-                    <CardTitle className="mobile-text-lg truncate">{company.name}</CardTitle>
-                    <p className="mobile-text-sm text-muted-foreground mt-1 truncate">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate mb-1">
+                      {company.name}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
                       CNPJ: {company.cnpj}
                     </p>
                   </div>
-                  <Badge variant={company.active === "true" ? "default" : "secondary"} className="shrink-0">
+                  <Badge 
+                    variant={company.active === "true" ? "default" : "secondary"} 
+                    className="shrink-0 text-xs"
+                  >
                     {company.active === "true" ? t("active") : t("inactive")}
                   </Badge>
                 </div>
               </CardHeader>
 
-              <CardContent className="mobile-card pt-0 space-y-2">
-                <div>
-                  <p className="mobile-text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("company-full-name")}:
-                  </p>
-                  <p className="mobile-text-sm text-gray-600 dark:text-gray-400 truncate">
-                    {company.fullName}
-                  </p>
+              <CardContent className="pt-0 space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-0">
+                      {t("company-full-name")}:
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 ml-2 text-right">
+                      {company.fullName}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("contact")}:
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {company.contact}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t("phone")}:
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {company.phone}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start justify-between">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-0">
+                      {t("email")}:
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 ml-2 text-right truncate">
+                      {company.email}
+                    </span>
+                  </div>
                 </div>
 
-                <div>
-                  <p className="mobile-text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("contact")}:
-                  </p>
-                  <p className="mobile-text-sm text-gray-600 dark:text-gray-400">
-                    {company.contact}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="mobile-text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("phone")}:
-                  </p>
-                  <p className="mobile-text-sm text-gray-600 dark:text-gray-400">
-                    {company.phone}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="mobile-text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t("email")}:
-                  </p>
-                  <p className="mobile-text-sm text-gray-600 dark:text-gray-400 truncate">
-                    {company.email}
-                  </p>
-                </div>
-
-                <div className="mobile-button-group pt-3">
+                <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(company)}
-                    className="flex-1"
+                    className="flex-1 text-xs"
                   >
-                    <Edit className="h-4 w-4 mr-1" />
+                    <Edit className="h-3 w-3 mr-1" />
                     Editar
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => deleteMutation.mutate(company.id)}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 px-3"
                     disabled={deleteMutation.isPending}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               </CardContent>

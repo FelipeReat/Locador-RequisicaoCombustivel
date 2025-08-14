@@ -239,7 +239,7 @@ function UserManagement() {
         user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+    ).sort((a, b) => (a.fullName || a.username).localeCompare(b.fullName || b.username, 'pt-BR')) || [];
 
   const getRoleLabel = (role: string) => {
     const labels = {
@@ -450,26 +450,29 @@ function UserManagement() {
           </div>
 
           {/* Users List */}
-          <div className="grid gap-4">
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground mb-4">
+              Usuários ordenados alfabeticamente ({filteredUsers.length} total)
+            </div>
             {filteredUsers.map((user) => (
-              <Card key={user.id}>
-                <CardContent className="p-6">
+              <Card key={user.id} className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/30">
+                <CardContent className="p-4">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                     <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center ring-2 ring-primary/20">
                         <Users className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
                           {user.fullName}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                           @{user.username}
                         </p>
-                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Badge
                             variant={getRoleBadgeVariant(user.role)}
-                            className="text-xs"
+                            className="text-xs font-medium"
                           >
                             <Shield className="w-3 h-3 mr-1" />
                             {getRoleLabel(user.role)}
@@ -478,28 +481,47 @@ function UserManagement() {
                             variant={user.active === "true" ? "default" : "secondary"}
                             className="text-xs"
                           >
-                            {user.active === "true" ? t("active") : t("inactive")}
+                            {user.active === "true" ? (
+                              <>✓ {t("active")}</>
+                            ) : (
+                              <>✗ {t("inactive")}</>
+                            )}
                           </Badge>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-2 space-y-4 lg:space-y-0">
-                      <div className="text-left lg:text-right text-sm text-gray-600 dark:text-gray-300 lg:mr-4">
-                        <p>
-                          <strong>{t("email")}:</strong> {user.email || t("not-informed")}
-                        </p>
-                        <p>
-                          <strong>{t("position")}:</strong> {user.position || t("not-informed")}
-                        </p>
-                        <p>
-                          <strong>{t("phone")}:</strong> {user.phone || t("not-informed")}
-                        </p>
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-6 space-y-4 lg:space-y-0">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 lg:gap-4 text-sm">
+                        <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                          <p className="font-medium text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide">
+                            {t("email")}
+                          </p>
+                          <p className="text-gray-900 dark:text-gray-100 truncate">
+                            {user.email || <span className="text-muted-foreground italic">Não informado</span>}
+                          </p>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                          <p className="font-medium text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide">
+                            {t("position")}
+                          </p>
+                          <p className="text-gray-900 dark:text-gray-100">
+                            {user.position || <span className="text-muted-foreground italic">Não informado</span>}
+                          </p>
+                        </div>
+                        <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                          <p className="font-medium text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide">
+                            {t("phone")}
+                          </p>
+                          <p className="text-gray-900 dark:text-gray-100">
+                            {user.phone || <span className="text-muted-foreground italic">Não informado</span>}
+                          </p>
+                        </div>
                       </div>
 
                       <div className="flex space-x-2">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() =>
                             toggleUserStatus.mutate({
@@ -507,7 +529,8 @@ function UserManagement() {
                               active: user.active !== "true",
                             })
                           }
-                          className="flex-1 sm:flex-none"
+                          className={`px-3 py-2 ${user.active === "true" ? 'hover:bg-orange-100 hover:text-orange-600' : 'hover:bg-green-100 hover:text-green-600'}`}
+                          title={user.active === "true" ? "Desativar usuário" : "Ativar usuário"}
                         >
                           {user.active === "true" ? (
                             <UserX className="h-4 w-4" />
@@ -517,23 +540,25 @@ function UserManagement() {
                         </Button>
 
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(user)}
-                          className="flex-1 sm:flex-none"
+                          className="px-3 py-2 hover:bg-blue-100 hover:text-blue-600"
+                          title="Editar usuário"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
 
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             if (confirm(t("confirm-delete-user"))) {
                               deleteUser.mutate(user.id);
                             }
                           }}
-                          className="text-red-600 hover:text-red-700 flex-1 sm:flex-none"
+                          className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-100"
+                          title="Excluir usuário"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
