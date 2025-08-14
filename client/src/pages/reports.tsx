@@ -141,7 +141,7 @@ export default function Reports() {
     // Simulate fetching data for the selected date range
     setTimeout(() => {
       setIsGeneratingReport(false);
-      
+
       // Placeholder for actual data fetching logic based on startDate and endDate
       const mockReportData = {
         totalRequests: Math.floor(Math.random() * 100) + 10,
@@ -232,11 +232,11 @@ export default function Reports() {
       <Card className="border-l-4 border-l-blue-500/30 mb-8">
         <CardHeader className="mobile-card pb-3">
           <CardTitle className="mobile-text-lg text-gray-800 dark:text-gray-100">
-            📅 {t('date-range')}
-          </CardTitle>
-          <CardDescription className="mobile-text-sm text-gray-600 dark:text-gray-300">
-            Selecione o período para geração dos relatórios • Dados organizados cronologicamente
-          </CardDescription>
+              📅 Período dos Dados
+            </CardTitle>
+            <CardDescription className="mobile-text-sm text-gray-600 dark:text-gray-300">
+              Selecione o período para geração dos relatórios • Dados organizados cronologicamente
+            </CardDescription>
         </CardHeader>
         <CardContent className="mobile-card pt-0">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -533,7 +533,7 @@ export default function Reports() {
         {/* Fuel Type Chart */}
         <Card className="bg-white dark:bg-gray-800 mb-8">
           <CardHeader>
-            <CardTitle className="text-gray-800 dark:text-white">{t('distribution-by-fuel-type')}</CardTitle>
+            <CardTitle className="text-gray-800 dark:text-white">Distribuição por Tipo de Combustível</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

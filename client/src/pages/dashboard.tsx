@@ -288,8 +288,8 @@ export default function Dashboard() {
                       <Plus className="h-5 w-5" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-base">{t('new-requisition')}</div>
-                      <div className="text-sm text-blue-100">{t('create-fuel-request')}</div>
+                      <div className="font-semibold text-base">Nova Requisição</div>
+                      <div className="text-sm text-blue-100">Criar solicitação de combustível</div>
                     </div>
                   </a>
                 </Button>
@@ -302,8 +302,8 @@ export default function Dashboard() {
                       <FileText className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('view-requisitions')}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('manage-requests')}</div>
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Ver Requisições</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Gerenciar solicitações</div>
                     </div>
                   </a>
                 </Button>
@@ -316,8 +316,8 @@ export default function Dashboard() {
                       <Truck className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('fleet-management')}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('manage-vehicles')}</div>
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Gestão de Frota</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Gerenciar veículos</div>
                     </div>
                   </a>
                 </Button>
@@ -330,8 +330,8 @@ export default function Dashboard() {
                       <Building className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('suppliers')}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('manage-suppliers')}</div>
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Fornecedores</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Gerenciar fornecedores</div>
                     </div>
                   </a>
                 </Button>
@@ -344,8 +344,8 @@ export default function Dashboard() {
                       <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('companies')}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('manage-companies')}</div>
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Empresas</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Gerenciar empresas</div>
                     </div>
                   </a>
                 </Button>
@@ -358,8 +358,8 @@ export default function Dashboard() {
                       <BarChart className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('reports')}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('view-analytics')}</div>
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Relatórios</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Ver análises</div>
                     </div>
                   </a>
                 </Button>
@@ -468,19 +468,19 @@ export default function Dashboard() {
                     FORNECEDOR
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('fuel-type')}
+                    TIPO DE COMBUSTÍVEL
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('quantity')}
+                    QUANTIDADE
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('status')}
+                    STATUS
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('date')}
+                    DATA
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    {t('actions')}
+                    AÇÕES
                   </th>
                 </tr>
               </thead>
