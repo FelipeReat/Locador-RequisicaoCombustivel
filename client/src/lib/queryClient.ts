@@ -66,8 +66,8 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      staleTime: 1 * 60 * 1000, // 1 minuto - mais conservador
-      gcTime: 1000 * 60 * 3, // 3 minutos no cache
+      staleTime: 10 * 1000, // 10 segundos apenas
+      gcTime: 1000 * 30, // 30 segundos no cache
       refetchOnWindowFocus: false,
       refetchOnReconnect: true, // Reativa para melhor confiabilidade
       refetchOnMount: true, // Reativa para garantir dados frescos

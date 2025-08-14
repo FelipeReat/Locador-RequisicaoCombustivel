@@ -27,7 +27,7 @@ import { IStorage } from './storage';
 export class DatabaseStorage implements IStorage {
   private loggedInUserId: number | null = null;
   private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
-  private readonly DEFAULT_TTL = 10000; // 10 seconds cache para melhor responsividade
+  private readonly DEFAULT_TTL = 2000; // 2 segundos apenas para reduzir latência
 
   private getCacheKey(method: string, params?: any): string {
     return `${method}:${params ? JSON.stringify(params) : 'all'}`;
@@ -51,6 +51,8 @@ export class DatabaseStorage implements IStorage {
       this.cache.clear();
       return;
     }
+    
+    // Limpeza agressiva e imediata do cache
     const keys = Array.from(this.cache.keys());
     keys.forEach(key => {
       if (key.includes(pattern)) {
@@ -300,7 +302,7 @@ export class DatabaseStorage implements IStorage {
     if (cached) return cached;
 
     const result = await db.select().from(fuelRequisitions).orderBy(desc(fuelRequisitions.createdAt));
-    this.setCache(cacheKey, result, 10000); // Cache por 10 segundos
+    this.setCache(cacheKey, result, 1000); // Cache mínimo de 1 segundo
     return result;
   }
 
@@ -371,9 +373,8 @@ export class DatabaseStorage implements IStorage {
       .where(eq(fuelRequisitions.id, id))
       .returning();
     
-    // Invalidar cache relacionado às requisições após atualizar status
-    this.invalidateCache('fuelRequisitions');
-    this.invalidateCache('requisitionStats');
+    // Limpeza imediata e agressiva do cache para status updates
+    this.cache.clear();
     
     return result[0];
   }
@@ -414,7 +415,7 @@ export class DatabaseStorage implements IStorage {
       totalLiters: result.totalLiters || 0,
     };
 
-    this.setCache(cacheKey, stats, 15000); // Cache por 15 segundos
+    this.setCache(cacheKey, stats, 1000); // Cache mínimo de 1 segundo
     return stats;
   }
 

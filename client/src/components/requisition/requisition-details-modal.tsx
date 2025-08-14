@@ -51,15 +51,18 @@ export default function RequisitionDetailsModal({
       );
       return response.json();
     },
-    onSuccess: () => {
-      // Invalida todas as queries relacionadas às requisições
+    onSuccess: (updatedRequisition) => {
+      // Atualização otimizada - apenas invalida sem refetch forçado
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions", "stats"] });
       
-      // Força atualização imediata
-      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions"] });
-      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      // Atualização otimista dos dados em cache
+      queryClient.setQueryData(["/api/fuel-requisitions"], (old: any) => {
+        if (!old) return old;
+        return old.map((req: any) => 
+          req.id === updatedRequisition.id ? updatedRequisition : req
+        );
+      });
       
       toast({
         title: "Sucesso",
@@ -255,7 +258,7 @@ export default function RequisitionDetailsModal({
 
             <div>
               <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Responsável</Label>
-              <p className="text-gray-900 dark:text-white mt-1">{users.find(u => u.id === requisition.requesterId)?.username || 'Usuário não encontrado'}</p>
+              <p className="text-gray-900 dark:text-white mt-1">{users?.find(u => u.id === requisition.requesterId)?.username || 'Usuário não encontrado'}</p>
             </div>
 
             <div>

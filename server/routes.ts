@@ -139,8 +139,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const endIndex = startIndex + limit;
       const paginatedRequisitions = requisitions.slice(startIndex, endIndex);
       
-      // Headers de cache mais conservadores
-      res.set('Cache-Control', 'public, max-age=10');
+      // Cache muito baixo para dados críticos
+      res.set('Cache-Control', 'public, max-age=2');
       res.json(paginatedRequisitions);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar requisições" });
@@ -199,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update requisition status (approve/reject)
+  // Update requisition status (approve/reject) - Otimizado para resposta imediata
   app.patch("/api/fuel-requisitions/:id/status", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -210,6 +210,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
 
+      // Headers para evitar cache em status updates críticos
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(requisition);
     } catch (error) {
       if (error instanceof Error) {
