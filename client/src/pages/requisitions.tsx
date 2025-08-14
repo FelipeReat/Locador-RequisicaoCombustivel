@@ -32,7 +32,6 @@ export default function Requisitions() {
   const [editingRequisition, setEditingRequisition] = useState<FuelRequisition | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all"); // Added priority filter state
   const [supplierFilter, setSupplierFilter] = useState<string>("all"); // Added supplier filter state
   const { t } = useLanguage();
   const { userRole, hasPermission } = usePermissions();
@@ -151,10 +150,9 @@ export default function Requisitions() {
       (req.fuelType || "").toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = !statusFilter || statusFilter === "all" || req.status === statusFilter;
-    const matchesPriority = !priorityFilter || priorityFilter === "all" || req.priority === priorityFilter;
     const matchesSupplier = !supplierFilter || supplierFilter === "all" || req.supplierId.toString() === supplierFilter;
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesSupplier;
+    return matchesSearch && matchesStatus && matchesSupplier;
   }) || [];
 
   // Sort by created date descending (most recent first)
@@ -229,13 +227,12 @@ export default function Requisitions() {
                 Filtrar requisições • {filteredRequisitions.length} resultados
               </CardDescription>
             </div>
-            {(statusFilter !== 'all' || priorityFilter !== 'all' || supplierFilter !== 'all' || searchTerm) && (
+            {(statusFilter !== 'all' || supplierFilter !== 'all' || searchTerm) && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => {
                   setStatusFilter('all');
-                  setPriorityFilter('all');
                   setSupplierFilter('all');
                   setSearchTerm('');
                 }}
@@ -247,7 +244,7 @@ export default function Requisitions() {
           </div>
         </CardHeader>
         <CardContent className="mobile-card pt-0">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="status-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Status
@@ -262,24 +259,6 @@ export default function Requisitions() {
                   <SelectItem value="approved">✅ Aprovado</SelectItem>
                   <SelectItem value="rejected">❌ Rejeitado</SelectItem>
                   <SelectItem value="fulfilled">🏁 Realizado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Prioridade
-              </Label>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger id="priority-filter" className="bg-white dark:bg-gray-800">
-                  <SelectValue placeholder="Todas as prioridades" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">📊 Todas as prioridades</SelectItem>
-                  <SelectItem value="urgent">🔴 Urgente</SelectItem>
-                  <SelectItem value="high">🟠 Alta</SelectItem>
-                  <SelectItem value="medium">🟡 Média</SelectItem>
-                  <SelectItem value="low">🟢 Baixa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -348,9 +327,6 @@ export default function Requisitions() {
                     ID <span className="text-xs text-muted-foreground">(#)</span>
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    Prioridade
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
                     Status
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
@@ -379,7 +355,7 @@ export default function Requisitions() {
               <TableBody>
                 {paginatedRequisitions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-12">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
                       <div className="flex flex-col items-center space-y-2">
                         <div className="text-4xl">📋</div>
                         <p className="text-lg font-medium">Nenhuma requisição encontrada</p>
@@ -397,9 +373,6 @@ export default function Requisitions() {
                     >
                       <TableCell className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
                         #{requisition.id}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge type="priority" value={requisition.priority} />
                       </TableCell>
                       <TableCell>
                         <StatusBadge type="status" value={requisition.status} />
