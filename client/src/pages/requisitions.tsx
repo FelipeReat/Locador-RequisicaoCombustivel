@@ -375,7 +375,7 @@ export default function Requisitions() {
                         #{requisition.id}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge type="status" value={requisition.status} />
+                        <StatusBadge status={requisition.status as any} />
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300">
                         {getUserName(requisition.requesterId)}

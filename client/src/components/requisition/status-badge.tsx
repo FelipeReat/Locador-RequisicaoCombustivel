@@ -14,27 +14,27 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     switch (status) {
       case "pending":
         return {
-          label: t('pending'),
+          label: "Pendente",
           variant: "secondary" as const,
-          className: "bg-yellow-100 text-yellow-800",
+          className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
         };
       case "approved":
         return {
-          label: t('approved'),
+          label: "Aprovado",
           variant: "secondary" as const,
-          className: "bg-green-100 text-green-800",
+          className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         };
       case "rejected":
         return {
-          label: t('rejected'),
+          label: "Rejeitado",
           variant: "destructive" as const,
-          className: "bg-red-100 text-red-800",
+          className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
         };
       case "fulfilled":
         return {
-          label: t('fulfilled'),
+          label: "Realizado",
           variant: "secondary" as const,
-          className: "bg-blue-100 text-blue-800",
+          className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
         };
       default:
         return {
