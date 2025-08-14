@@ -203,7 +203,7 @@ export default function Dashboard() {
               <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                 {stats.totalRequests || 0}
               </div>
-              <p className="text-xs text-muted-foreground">{t('all-time')} • Sistema completo</p>
+              <p className="text-xs text-muted-foreground">Todo o período • Sistema completo</p>
             </CardContent>
           </Card>
 
@@ -220,7 +220,7 @@ export default function Dashboard() {
               <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">
                 {stats.pendingRequests || 0}
               </div>
-              <p className="text-xs text-muted-foreground">{t('awaiting-approval')} • Ação necessária</p>
+              <p className="text-xs text-muted-foreground">Aguardando aprovação • Ação necessária</p>
               {(stats.pendingRequests || 0) > 0 && (
                 <div className="mt-2">
                   <Badge variant="secondary" className="text-xs">
@@ -244,7 +244,7 @@ export default function Dashboard() {
               <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
                 {stats.approvedRequests || 0}
               </div>
-              <p className="text-xs text-muted-foreground">{t('this-month')} • Processadas com sucesso</p>
+              <p className="text-xs text-muted-foreground">Este mês • Processadas com sucesso</p>
             </CardContent>
           </Card>
 
@@ -261,7 +261,7 @@ export default function Dashboard() {
               <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
                 {stats.totalLiters ? parseFloat(stats.totalLiters).toLocaleString('pt-BR') : '0'}L
               </div>
-              <p className="text-xs text-muted-foreground">{t('total-approved')} • Consumo autorizado</p>
+              <p className="text-xs text-muted-foreground">Total aprovado • Consumo autorizado</p>
             </CardContent>
           </Card>
         </div>
@@ -273,7 +273,7 @@ export default function Dashboard() {
               ⚡ {t('quick-actions')}
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300">
-              {t('common-tasks-shortcuts')} • Acesso rápido às principais funcionalidades
+              Atalhos para tarefas comuns • Acesso rápido às principais funcionalidades
             </CardDescription>
           </CardHeader>
           <CardContent>

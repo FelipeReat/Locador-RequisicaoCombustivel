@@ -257,11 +257,11 @@ export default function Requisitions() {
                   <SelectValue placeholder={t('all-status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">📋 {t('all-status')}</SelectItem>
-                  <SelectItem value="pending">⏳ {t('pending')}</SelectItem>
-                  <SelectItem value="approved">✅ {t('approved')}</SelectItem>
-                  <SelectItem value="rejected">❌ {t('rejected')}</SelectItem>
-                  <SelectItem value="fulfilled">🏁 {t('fulfilled')}</SelectItem>
+                  <SelectItem value="all">📋 Todos os status</SelectItem>
+                  <SelectItem value="pending">⏳ Pendente</SelectItem>
+                  <SelectItem value="approved">✅ Aprovado</SelectItem>
+                  <SelectItem value="rejected">❌ Rejeitado</SelectItem>
+                  <SelectItem value="fulfilled">🏁 Realizado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -275,11 +275,11 @@ export default function Requisitions() {
                   <SelectValue placeholder={t('all-priorities')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">📊 {t('all-priorities')}</SelectItem>
-                  <SelectItem value="urgent">🔴 {t('urgent')}</SelectItem>
-                  <SelectItem value="high">🟠 {t('high')}</SelectItem>
-                  <SelectItem value="medium">🟡 {t('medium')}</SelectItem>
-                  <SelectItem value="low">🟢 {t('low')}</SelectItem>
+                  <SelectItem value="all">📊 Todas as prioridades</SelectItem>
+                  <SelectItem value="urgent">🔴 Urgente</SelectItem>
+                  <SelectItem value="high">🟠 Alta</SelectItem>
+                  <SelectItem value="medium">🟡 Média</SelectItem>
+                  <SelectItem value="low">🟢 Baixa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -293,7 +293,7 @@ export default function Requisitions() {
                   <SelectValue placeholder={t('all-suppliers')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">🏪 {t('all-suppliers')}</SelectItem>
+                  <SelectItem value="all">🏪 Todos os fornecedores</SelectItem>
                   {suppliers?.sort((a, b) => a.fantasia.localeCompare(b.fantasia, 'pt-BR')).map((supplier) => (
                     <SelectItem key={supplier.id} value={supplier.id.toString()}>
                       {supplier.fantasia}
@@ -348,31 +348,31 @@ export default function Requisitions() {
                     ID <span className="text-xs text-muted-foreground">(#)</span>
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    {t('priority')}
+                    Prioridade
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    {t('status')}
+                    Status
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    {t('requester')}
+                    Solicitante
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    {t('supplier')}
+                    Fornecedor
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    {t('vehicle')}
+                    Veículo
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    {t('fuel')}
+                    Combustível
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    {t('quantity')}
+                    Quantidade
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
-                    {t('created-date')} <span className="text-xs text-muted-foreground">(↓ Recente)</span>
+                    Data de Criação <span className="text-xs text-muted-foreground">(↓ Recente)</span>
                   </TableHead>
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300 text-center">
-                    {t('actions')}
+                    Ações
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -382,7 +382,7 @@ export default function Requisitions() {
                     <TableCell colSpan={10} className="text-center text-muted-foreground py-12">
                       <div className="flex flex-col items-center space-y-2">
                         <div className="text-4xl">📋</div>
-                        <p className="text-lg font-medium">{t('no-requisitions-found')}</p>
+                        <p className="text-lg font-medium">Nenhuma requisição encontrada</p>
                         <p className="text-sm">Ajuste os filtros ou crie uma nova requisição</p>
                       </div>
                     </TableCell>
@@ -412,7 +412,7 @@ export default function Requisitions() {
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 font-mono text-sm">
                         {vehicles?.find(vehicle => vehicle.id === requisition.vehicleId)?.plate || 
-                         <span className="text-muted-foreground italic">{t('unknown')}</span>}
+                         <span className="text-muted-foreground italic">Desconhecido</span>}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300">
                         {getFuelTypeLabel(requisition.fuelType || "")}
