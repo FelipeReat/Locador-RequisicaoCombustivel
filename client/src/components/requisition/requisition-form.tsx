@@ -182,13 +182,13 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
     <form onSubmit={handleSubmit} className="mobile-spacing">
       <div className="mobile-form-grid">
         {/* Fornecedor */}
-        <div className="mobile-spacing">
-          <Label htmlFor="supplierId" className="mobile-text-sm font-medium">Fornecedor *</Label>
+        <div className="space-y-2">
+          <Label htmlFor="supplierId">Fornecedor *</Label>
           <Select 
             value={formData.supplierId?.toString()} 
             onValueChange={(value) => handleInputChange("supplierId", parseInt(value))}
           >
-            <SelectTrigger className="h-11">
+            <SelectTrigger>
               <SelectValue placeholder="Selecione um fornecedor" />
             </SelectTrigger>
             <SelectContent>
