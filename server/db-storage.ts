@@ -27,7 +27,7 @@ import { IStorage } from './storage';
 export class DatabaseStorage implements IStorage {
   private loggedInUserId: number | null = null;
   private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
-  private readonly DEFAULT_TTL = 2000; // 2 segundos apenas para reduzir latência
+  private readonly DEFAULT_TTL = 1000; // 1 segundo apenas para máxima responsividade
 
   private getCacheKey(method: string, params?: any): string {
     return `${method}:${params ? JSON.stringify(params) : 'all'}`;
@@ -247,7 +247,7 @@ export class DatabaseStorage implements IStorage {
     if (cached) return cached;
 
     const result = await db.select().from(vehicles).orderBy(desc(vehicles.createdAt));
-    this.setCache(cacheKey, result);
+    this.setCache(cacheKey, result, 500); // Cache ultra baixo de 500ms
     return result;
   }
 
@@ -263,7 +263,9 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
-    this.invalidateCache('vehicles');
+    
+    // Limpeza agressiva do cache para criação de veículos
+    this.cache.clear();
     return result[0];
   }
 
@@ -275,6 +277,9 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(vehicles.id, id))
       .returning();
+    
+    // Limpeza do cache para updates de veículos
+    this.cache.clear();
     return result[0];
   }
 
@@ -286,7 +291,10 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(vehicles.id, id))
       .returning();
-    this.invalidateCache('vehicles');
+    
+    // Limpeza agressiva e imediata do cache para status updates críticos
+    this.cache.clear();
+    
     return result[0];
   }
 
@@ -373,7 +381,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(fuelRequisitions.id, id))
       .returning();
     
-    // Limpeza imediata e agressiva do cache para status updates
+    // Limpeza imediata e agressiva do cache para status updates críticos dos veículos
     this.cache.clear();
     
     return result[0];

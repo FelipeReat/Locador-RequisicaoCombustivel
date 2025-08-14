@@ -150,29 +150,14 @@ function FleetManagement() {
       console.log(`✅ Resposta do servidor:`, result);
       return result;
     },
-    onMutate: async ({ id, status }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/vehicles"] });
-
-      // Snapshot the previous value
-      const previousVehicles = queryClient.getQueryData<Vehicle[]>(["/api/vehicles"]);
-
-      // Optimistically update the cache - maintain position in array
-      queryClient.setQueryData<Vehicle[]>(["/api/vehicles"], (old) => {
-        if (!old) return old;
-        return old.map(vehicle => 
-          vehicle.id === id 
-            ? { ...vehicle, status, updatedAt: new Date().toISOString() }
-            : vehicle
-        );
-      });
-
-      return { previousVehicles };
-    },
     onSuccess: (data, { id, status }) => {
       console.log(`🎉 Sucesso na mutação - Veículo ${id} agora tem status ${status}`);
 
-      // Update with server response but maintain position
+      // Invalidação agressiva e refetch imediato para garantir dados atualizados
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      queryClient.refetchQueries({ queryKey: ["/api/vehicles"] });
+
+      // Atualização otimista adicional com dados do servidor
       queryClient.setQueryData<Vehicle[]>(["/api/vehicles"], (old) => {
         if (!old) return old;
         return old.map(vehicle => 
@@ -180,20 +165,18 @@ function FleetManagement() {
         );
       });
 
-      console.log(`🔄 Cache atualizado mantendo posição`);
+      console.log(`🔄 Cache invalidado e atualizado com força`);
 
       toast({
         title: t("success"),
         description: t("vehicle-status-changed"),
       });
     },
-    onError: (error, variables, context) => {
+    onError: (error) => {
       console.error(`❌ Erro na mutação:`, error);
 
-      // Revert to previous state if mutation fails
-      if (context?.previousVehicles) {
-        queryClient.setQueryData(["/api/vehicles"], context.previousVehicles);
-      }
+      // Forçar refresh dos dados para garantir consistência
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
 
       toast({
         title: t("error"),

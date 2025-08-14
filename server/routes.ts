@@ -458,7 +458,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vehicles", async (req, res) => {
     try {
       const vehicles = await storage.getVehicles();
-      res.set('Cache-Control', 'public, max-age=45'); // 45 segundos
+      // Cache ultra baixo para garantir dados atualizados imediatamente
+      res.set('Cache-Control', 'public, max-age=1');
       res.json(vehicles);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar veículos" });
@@ -525,6 +526,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedVehicle = await storage.updateVehicleStatus(id, status);
+      
+      // Headers para evitar cache em status updates críticos
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(updatedVehicle);
     } catch (error) {
       res.status(500).json({ message: "Erro ao atualizar status do veículo" });
