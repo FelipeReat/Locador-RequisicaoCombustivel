@@ -138,10 +138,33 @@ export function usePermissions() {
     return userRole === 'manager' || userRole === 'admin';
   };
 
+  // Alias para compatibilidade com componentes existentes
+  const hasPermission = (action: string): boolean => {
+    switch (action) {
+      case 'create_fuel_requisition':
+        return hasAccess('/new-requisition');
+      case 'read_fuel_requisition':
+        return hasAccess('/requisitions');
+      case 'read_vehicle':
+        return hasAccess('/fleet-management');
+      case 'read_supplier':
+        return hasAccess('/suppliers');
+      case 'read_company':
+        return hasAccess('/companies');
+      case 'read_user':
+        return hasAccess('/user-management');
+      case 'view_reports':
+        return hasAccess('/reports');
+      default:
+        return false;
+    }
+  };
+
   return {
     userRole,
     allowedPages: getAllowedPages(),
     hasAccess,
+    hasPermission, // Adicionando função para compatibilidade
     canEdit,
     canDelete,
     canApprove,

@@ -351,17 +351,19 @@ export default function Dashboard() {
                 </Button>
               )}
 
-              <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                <a href="/reports" className="flex items-center space-x-4">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
-                    <BarChart className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('reports')}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('view-analytics')}</div>
-                  </div>
-                </a>
-              </Button>
+              {hasPermission('view_reports') && (
+                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <a href="/reports" className="flex items-center space-x-4">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+                      <BarChart className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('reports')}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('view-analytics')}</div>
+                    </div>
+                  </a>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
