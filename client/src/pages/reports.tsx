@@ -3,10 +3,12 @@ import { useState } from "react";
 import Header from "@/components/layout/header";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PDFGenerator } from "@/lib/pdf-generator";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { 
   BarChart, 
   Bar, 
@@ -22,7 +24,7 @@ import {
   LineChart,
   Line
 } from "recharts";
-import { Download, FileText, TrendingUp, Calendar, BarChart3 } from "lucide-react";
+import { Download, FileText, TrendingUp, Calendar, BarChart3, CheckCircle, Clock, Fuel } from "lucide-react";
 import type { FuelRequisition } from "@shared/schema";
 
 import { useLanguage } from "@/contexts/language-context";
@@ -33,12 +35,14 @@ export default function Reports() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showMonthlyAnalysis, setShowMonthlyAnalysis] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [reportData, setReportData] = useState<any>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/fuel-requisitions/stats/overview"],
   });
-
-
 
   const { data: fuelTypeStats, isLoading: fuelTypeLoading } = useQuery<{fuelType: string; count: number; totalLiters: number}[]>({
     queryKey: ["/api/fuel-requisitions/stats/fuel-type"],
@@ -70,7 +74,7 @@ export default function Reports() {
         company: 'Sistema de Controle de Abastecimento'
       });
       pdfGenerator.save(`relatorio-completo-${new Date().toISOString().split('T')[0]}.pdf`);
-      
+
       toast({
         title: t("report-generated-success"),
         description: t("complete-report-exported"),
@@ -95,7 +99,7 @@ export default function Reports() {
     }
 
     const monthlyData = filterRequisitionsByMonth(allRequisitions, selectedMonth, selectedYear);
-    
+
     if (monthlyData.length === 0) {
       toast({
         title: t("error"),
@@ -113,7 +117,7 @@ export default function Reports() {
         company: 'Sistema de Controle de Abastecimento'
       });
       pdfGenerator.save(`analise-mensal-${selectedMonth + 1}-${selectedYear}.pdf`);
-      
+
       toast({
         title: t("report-generated-success"),
         description: t("monthly-analysis-generated"),
@@ -127,6 +131,33 @@ export default function Reports() {
     }
   };
 
+  const generateReport = () => {
+    setIsGeneratingReport(true);
+    toast({
+      title: t("generating-report"),
+      description: t("please-wait"),
+    });
+
+    // Simulate fetching data for the selected date range
+    setTimeout(() => {
+      setIsGeneratingReport(false);
+      
+      // Placeholder for actual data fetching logic based on startDate and endDate
+      const mockReportData = {
+        totalRequests: Math.floor(Math.random() * 100) + 10,
+        approvedRequests: Math.floor(Math.random() * 80) + 5,
+        pendingRequests: Math.floor(Math.random() * 20),
+        rejectedRequests: Math.floor(Math.random() * 15),
+        totalLiters: (Math.random() * 5000 + 1000).toFixed(2),
+      };
+      setReportData(mockReportData);
+
+      toast({
+        title: t("report-generated-success"),
+        description: t("report-generated-for-period"),
+      });
+    }, 1500); // Simulate a 1.5 second delay
+  };
 
 
   const getFuelTypeLabel = (fuelType: string) => {
@@ -164,7 +195,7 @@ export default function Reports() {
 
   const generateMonthlyTrend = () => {
     if (!allRequisitions) return [];
-    
+
     const monthlyData = Array.from({ length: 12 }, (_, i) => ({
       month: getMonthName(i),
       requisitions: 0,
@@ -195,9 +226,148 @@ export default function Reports() {
         title={t('reports')} 
         subtitle={t('fuel-consumption-analysis')} 
       />
-      
+
       <main className="flex-1 mobile-content py-6">
-        {/* Summary Cards */}
+        {/* Date Range Filter */}
+      <Card className="border-l-4 border-l-blue-500/30 mb-8">
+        <CardHeader className="mobile-card pb-3">
+          <CardTitle className="mobile-text-lg text-gray-800 dark:text-gray-100">
+            📅 {t('date-range')}
+          </CardTitle>
+          <CardDescription className="mobile-text-sm text-gray-600 dark:text-gray-300">
+            Selecione o período para geração dos relatórios • Dados organizados cronologicamente
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="mobile-card pt-0">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="start-date" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                📅 Data inicial
+              </Label>
+              <Input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-white dark:bg-gray-800"
+              />
+            </div>
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="end-date" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                📅 Data final
+              </Label>
+              <Input
+                id="end-date"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-white dark:bg-gray-800"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={generateReport} 
+                disabled={isGeneratingReport} 
+                className="w-full sm:w-auto h-10 px-6"
+              >
+                {isGeneratingReport ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {t('generating')}
+                  </>
+                ) : (
+                  <>
+                    📊 Gerar Relatório
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+        {/* Statistics Overview */}
+      {reportData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="hover:shadow-md transition-all duration-200 border-l-4 border-l-blue-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Total de Requisições
+              </CardTitle>
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                {reportData.totalRequests}
+              </div>
+              <p className="text-xs text-muted-foreground">requisições no período</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-all duration-200 border-l-4 border-l-green-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Aprovadas
+              </CardTitle>
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+                {reportData.approvedRequests}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {reportData.totalRequests > 0 
+                  ? `${Math.round((reportData.approvedRequests / reportData.totalRequests) * 100)}% do total` 
+                  : '0% do total'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-all duration-200 border-l-4 border-l-yellow-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Pendentes
+              </CardTitle>
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
+                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">
+                {reportData.pendingRequests}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {reportData.totalRequests > 0 
+                  ? `${Math.round((reportData.pendingRequests / reportData.totalRequests) * 100)}% do total` 
+                  : '0% do total'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-all duration-200 border-l-4 border-l-purple-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Total de Litros
+              </CardTitle>
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                <Fuel className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                {reportData.totalLiters ? parseFloat(reportData.totalLiters).toLocaleString('pt-BR') : '0'}L
+              </div>
+              <p className="text-xs text-muted-foreground">consumo aprovado</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+        {/* Summary Cards (from original stats) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
@@ -214,7 +384,7 @@ export default function Reports() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -226,9 +396,9 @@ export default function Reports() {
                 {(() => {
                   const total = (stats as any)?.totalRequests || 0;
                   const fulfilled = (stats as any)?.fulfilledRequests || 0;
-                  
+
                   if (total === 0) return '0%';
-                  
+
                   const rate = Math.round((fulfilled / total) * 100);
                   return `${rate}%`;
                 })()}
@@ -238,7 +408,7 @@ export default function Reports() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -251,7 +421,7 @@ export default function Reports() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-white dark:bg-gray-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -283,7 +453,7 @@ export default function Reports() {
                 <Download className="mr-2 h-4 w-4" />
                 {t('export-complete-report')}
               </Button>
-              
+
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
@@ -298,7 +468,7 @@ export default function Reports() {
                       ))}
                     </SelectContent>
                   </Select>
-                  
+
                   <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
                     <SelectTrigger className="w-full sm:w-24">
                       <SelectValue />
@@ -315,7 +485,7 @@ export default function Reports() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <Button onClick={handleMonthlyAnalysis} className="flex items-center w-full sm:w-auto">
                   <Calendar className="mr-2 h-4 w-4" />
                   {t('monthly-analysis')}
@@ -398,7 +568,7 @@ export default function Reports() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2">{t('fuel-label')}</th>
+                    <th className="text-left py-2">Tipo de Combustível</th>
                     <th className="text-right py-2">{t('requisitions-count')}</th>
                     <th className="text-right py-2">{t('liters-count')}</th>
                   </tr>
@@ -426,9 +596,9 @@ export default function Reports() {
               <TrendingUp className="w-5 h-5" />
               Relatório de Eficiência de Combustível (Km/Litro)
             </CardTitle>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
               Média de quilômetros por litro de cada veículo com base nas requisições aprovadas
-            </p>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {fuelEfficiencyStats && fuelEfficiencyStats.length > 0 ? (

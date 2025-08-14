@@ -6,16 +6,21 @@ import RequisitionDetailsModal from "@/components/requisition/requisition-detail
 import EditApprovedRequisitionModal from "@/components/requisition/edit-approved-requisition-modal";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { 
-  ClipboardList, 
-  Clock, 
-  CheckCircle, 
-  Fuel, 
-  Plus, 
-  BarChart3, 
+import {
+  ClipboardList,
+  Clock,
+  CheckCircle,
+  Fuel,
+  Plus,
+  BarChart3,
   Eye,
   Edit,
-  Check
+  Check,
+  FileText,
+  Truck,
+  Building,
+  Users,
+  BarChart
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -23,16 +28,18 @@ import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useToast } from "@/hooks/use-toast";
 import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
   const [editingRequisition, setEditingRequisition] = useState<FuelRequisition | null>(null);
   const { t } = useLanguage();
-  const { userRole, canApprove } = usePermissions();
+  const { userRole, canApprove, hasPermission } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Hooks para atualizações em tempo real
   const { forceRefresh } = useRealTimeUpdates();
   const { invalidateByOperation } = useSmartInvalidation();
@@ -79,16 +86,16 @@ export default function Dashboard() {
     onMutate: async (requisitionId: number) => {
       // Cancela queries em andamento
       await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
-      
+
       // Salva estado anterior
       const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
       const previousStats = queryClient.getQueryData(["/api/fuel-requisitions/stats/overview"]);
-      
+
       // Atualiza otimisticamente a lista
       queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
         if (!old) return old;
-        return old.map(req => 
-          req.id === requisitionId 
+        return old.map(req =>
+          req.id === requisitionId
             ? { ...req, status: 'fulfilled' as any, fulfilledAt: new Date().toISOString() }
             : req
         );
@@ -111,10 +118,10 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats"] });
-      
+
       queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
-      
+
       toast({
         title: "Sucesso",
         description: "Requisição confirmada como realizada",
@@ -128,7 +135,7 @@ export default function Dashboard() {
       if (context?.previousStats) {
         queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], context.previousStats);
       }
-      
+
       toast({
         title: "Erro",
         description: error.message || "Erro ao confirmar requisição",
@@ -175,117 +182,193 @@ export default function Dashboard() {
 
   return (
     <>
-      <Header 
-        title={t('dashboard')} 
-        subtitle={t('fuel-requisitions-overview')} 
+      <Header
+        title={t('dashboard')}
+        subtitle={t('fuel-requisitions-overview')}
       />
 
       <main className="flex-1 mobile-content pt-12 sm:pt-4 lg:pt-6">
-        {/* Stats Cards */}
-        <div className="mobile-stats-grid mb-4 sm:mb-6 lg:mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
-              <div className="bg-blue-100 dark:bg-blue-900 rounded-full p-2 sm:p-3">
-                <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600 dark:text-blue-400" />
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('total-requests')}
+              </CardTitle>
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <p className="mobile-text-sm text-gray-600 dark:text-gray-300 truncate">{t('total-requests')}</p>
-                <p className="mobile-text-lg font-semibold text-gray-800 dark:text-white">
-                  {stats?.totalRequests || 0}
-                </p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                {stats.totalRequests || 0}
               </div>
-            </div>
-          </div>
+              <p className="text-xs text-muted-foreground">{t('all-time')} • Sistema completo</p>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
-              <div className="bg-yellow-100 dark:bg-yellow-900 rounded-full p-2 lg:p-3">
-                <Clock className="h-4 w-4 lg:h-6 lg:w-6 text-yellow-600 dark:text-yellow-400" />
+          <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-yellow-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('pending-requests')}
+              </CardTitle>
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
+                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
               </div>
-              <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{t('pending-requests')}</p>
-                <p className="text-lg lg:text-2xl font-semibold text-gray-800 dark:text-white">
-                  {stats?.pendingRequests || 0}
-                </p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">
+                {stats.pendingRequests || 0}
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center min-w-0">
-                <div className="bg-green-100 dark:bg-green-900 rounded-full p-2 lg:p-3">
-                  <CheckCircle className="h-4 w-4 lg:h-6 lg:w-6 text-green-600 dark:text-green-400" />
+              <p className="text-xs text-muted-foreground">{t('awaiting-approval')} • Ação necessária</p>
+              {(stats.pendingRequests || 0) > 0 && (
+                <div className="mt-2">
+                  <Badge variant="secondary" className="text-xs">
+                    Requer atenção
+                  </Badge>
                 </div>
-                <div className="ml-3 lg:ml-4 min-w-0">
-                  <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{t('approved-requests')}</p>
-                  <p className="text-lg lg:text-2xl font-semibold text-gray-800 dark:text-white">
-                    {stats?.approvedRequests || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mobile-card border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
-              <div className="bg-red-100 dark:bg-red-900 rounded-full p-2 lg:p-3">
-                <Fuel className="h-4 w-4 lg:h-6 lg:w-6 text-red-600 dark:text-red-400" />
+          <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('approved-requests')}
+              </CardTitle>
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
-              <div className="ml-3 lg:ml-4 min-w-0">
-                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 truncate">{t('consumed-liters')}</p>
-                <p className="text-lg lg:text-2xl font-semibold text-gray-800 dark:text-white">
-                  {stats?.totalLiters?.toLocaleString("pt-BR") || 0}
-                </p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
+                {stats.approvedRequests || 0}
               </div>
-            </div>
-          </div>
+              <p className="text-xs text-muted-foreground">{t('this-month')} • Processadas com sucesso</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-purple-500/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('total-liters')}
+              </CardTitle>
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                <Fuel className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                {stats.totalLiters ? parseFloat(stats.totalLiters).toLocaleString('pt-BR') : '0'}L
+              </div>
+              <p className="text-xs text-muted-foreground">{t('total-approved')} • Consumo autorizado</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 lg:mb-8">
-          <div className="mobile-card border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white">{t('quick-actions')}</h3>
-          </div>
-          <div className="mobile-card">
-            <div className="mobile-button-group">
-              <Button
-                onClick={() => setLocation("/new-requisition")}
-                className="flex items-center justify-center p-4 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 border-none"
-                variant="outline"
-              >
-                <Plus className="mr-3 h-5 w-5" />
-                {t('new-requisition')}
+        <Card className="border-l-4 border-l-indigo-500/30 mt-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl text-gray-800 dark:text-gray-100">
+              ⚡ {t('quick-actions')}
+            </CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-300">
+              {t('common-tasks-shortcuts')} • Acesso rápido às principais funcionalidades
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {hasPermission('create_fuel_requisition') && (
+                <Button
+                  asChild
+                  className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 bg-gradient-to-r from-blue-600 to-blue-700"
+                >
+                  <a href="/requisitions/new" className="flex items-center space-x-4">
+                    <div className="p-2 bg-white/20 rounded-full">
+                      <Plus className="h-5 w-5" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-base">{t('new-requisition')}</div>
+                      <div className="text-sm text-blue-100">{t('create-fuel-request')}</div>
+                    </div>
+                  </a>
+                </Button>
+              )}
+
+              {hasPermission('read_fuel_requisition') && (
+                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <a href="/requisitions" className="flex items-center space-x-4">
+                    <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+                      <FileText className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('view-requisitions')}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('manage-requests')}</div>
+                    </div>
+                  </a>
+                </Button>
+              )}
+
+              {hasPermission('read_vehicle') && (
+                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <a href="/fleet" className="flex items-center space-x-4">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                      <Truck className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('fleet-management')}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('manage-vehicles')}</div>
+                    </div>
+                  </a>
+                </Button>
+              )}
+
+              {hasPermission('read_supplier') && (
+                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <a href="/suppliers" className="flex items-center space-x-4">
+                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+                      <Building className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('suppliers')}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('manage-suppliers')}</div>
+                    </div>
+                  </a>
+                </Button>
+              )}
+
+              {hasPermission('read_company') && (
+                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <a href="/companies" className="flex items-center space-x-4">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                      <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('companies')}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('manage-companies')}</div>
+                    </div>
+                  </a>
+                </Button>
+              )}
+
+              <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                <a href="/reports" className="flex items-center space-x-4">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+                    <BarChart className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{t('reports')}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('view-analytics')}</div>
+                  </div>
+                </a>
               </Button>
-
-              {canApprove() && (
-                <Button
-                  onClick={() => setLocation("/requisitions?filter=pending")}
-                  className="flex items-center justify-center p-4 bg-yellow-50 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-800 border-none"
-                  variant="outline"
-                >
-                  <Clock className="mr-3 h-5 w-5" />
-                  {t('approve-pending')}
-                </Button>
-              )}
-
-              {userRole !== 'employee' && (
-                <Button
-                  onClick={() => setLocation("/reports")}
-                  className="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800 border-none"
-                  variant="outline"
-                >
-                  <BarChart3 className="mr-3 h-5 w-5" />
-                  {t('generate-report')}
-                </Button>
-              )}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Recent Requisitions */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div className="mobile-card border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mt-6">
+          <div className="mobile-card border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white">{t('recent-requisitions')}</h3>
               <Button
@@ -301,13 +384,13 @@ export default function Dashboard() {
           {/* Mobile Cards View */}
           <div className="lg:hidden">
             {recentRequisitions.length === 0 ? (
-              <div className="mobile-card text-center text-gray-500 dark:text-gray-400">
+              <div className="mobile-card px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                 {t('no-results')}
               </div>
             ) : (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {recentRequisitions.map((requisition) => (
-                  <div key={requisition.id} className="mobile-card">
+                  <div key={requisition.id} className="mobile-card px-6 py-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <div className="font-medium text-gray-900 dark:text-white text-sm">
@@ -334,7 +417,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Quantidade:</span>
-                        <span className="text-gray-900 dark:text-white">{requisition.quantity || 'Tanque cheio'} L</span>
+                        <span className="text-gray-900 dark:text-white">{requisition.tanqueCheio === "true" ? "Tanque Cheio" : `${requisition.quantity || '0'} L`}</span>
                       </div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
