@@ -285,7 +285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/suppliers", async (req, res) => {
     try {
       const suppliers = await storage.getSuppliers();
-      res.set('Cache-Control', 'public, max-age=60'); // 1 minuto
+      // Cache ultra baixo para garantir dados atualizados nas edições
+      res.set('Cache-Control', 'public, max-age=1');
       res.json(suppliers);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar fornecedores" });
@@ -331,6 +332,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Fornecedor não encontrado" });
       }
 
+      // Headers anti-cache para edições críticas
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(supplier);
     } catch (error) {
       if (error instanceof Error) {
@@ -383,7 +388,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", async (req, res) => {
     try {
       const users = await storage.getUsers();
-      res.set('Cache-Control', 'public, max-age=30'); // 30 segundos
+      // Cache ultra baixo para garantir dados atualizados nas edições
+      res.set('Cache-Control', 'public, max-age=1');
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar usuários" });
@@ -429,6 +435,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
 
+      // Headers anti-cache para edições críticas
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(user);
     } catch (error) {
       if (error instanceof Error) {
@@ -612,7 +622,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/companies", async (req, res) => {
     try {
       const companies = await storage.getCompanies();
-      res.set('Cache-Control', 'public, max-age=60'); // 1 minuto
+      // Cache ultra baixo para garantir dados atualizados nas edições
+      res.set('Cache-Control', 'public, max-age=1');
       res.json(companies);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar empresas" });
@@ -658,6 +669,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Empresa não encontrada" });
       }
 
+      // Headers anti-cache para edições críticas
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(company);
     } catch (error) {
       if (error instanceof Error) {

@@ -94,6 +94,9 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
+    
+    // Limpeza agressiva do cache para edições de usuários
+    this.cache.clear();
     return result[0];
   }
 
@@ -110,6 +113,9 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
+    
+    // Limpeza do cache para atualizações de perfil
+    this.cache.clear();
     return result[0];
   }
 
@@ -168,7 +174,7 @@ export class DatabaseStorage implements IStorage {
     if (cached) return cached;
 
     const result = await db.select().from(suppliers).orderBy(desc(suppliers.createdAt));
-    this.setCache(cacheKey, result);
+    this.setCache(cacheKey, result, 500); // Cache ultra baixo de 500ms
     return result;
   }
 
@@ -184,7 +190,9 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
-    this.invalidateCache('suppliers');
+    
+    // Limpeza agressiva do cache para criação de fornecedores
+    this.cache.clear();
     return result[0];
   }
 
@@ -196,6 +204,9 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(suppliers.id, id))
       .returning();
+    
+    // Limpeza agressiva do cache para edições de fornecedores
+    this.cache.clear();
     return result[0];
   }
 
@@ -204,9 +215,15 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // Companies
+  // Companies with caching otimizado
   async getCompanies(): Promise<Company[]> {
-    return await db.select().from(companies).orderBy(desc(companies.createdAt));
+    const cacheKey = this.getCacheKey('companies');
+    const cached = this.getFromCache<Company[]>(cacheKey);
+    if (cached) return cached;
+
+    const result = await db.select().from(companies).orderBy(desc(companies.createdAt));
+    this.setCache(cacheKey, result, 500); // Cache ultra baixo de 500ms
+    return result;
   }
 
   async getCompany(id: number): Promise<Company | undefined> {
@@ -221,6 +238,9 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
+    
+    // Limpeza agressiva do cache para criação de empresas
+    this.cache.clear();
     return result[0];
   }
 
@@ -232,6 +252,9 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(companies.id, id))
       .returning();
+    
+    // Limpeza agressiva do cache para edições de empresas
+    this.cache.clear();
     return result[0];
   }
 
