@@ -185,10 +185,10 @@ export default function Requisitions() {
 
   const getFuelTypeLabel = (fuelType: string) => {
     const labels = {
-      gasolina: t('gasoline'),
-      etanol: t('ethanol'),
-      diesel: t('diesel'),
-      diesel_s10: t('diesel-s10'),
+      gasolina: 'Gasolina',
+      etanol: 'Etanol',
+      diesel: 'Diesel',
+      diesel_s10: 'Diesel S10',
     };
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
@@ -200,20 +200,20 @@ export default function Requisitions() {
   const generatePDF = (requisition: FuelRequisition) => {
     // Placeholder for PDF generation logic
     toast({
-      title: "Download PDF",
+      title: "Baixar PDF",
       description: `Gerando PDF para requisição ${requisition.id}`,
     });
   };
 
   if (isLoading || suppliersLoading) {
-    return <LoadingSpinner message={t('loading-data')} />;
+    return <LoadingSpinner message="Carregando dados..." />;
   }
 
   return (
     <>
       <Header 
-        title={t('requisitions')} 
-        subtitle={t('manage-all-fuel-requisitions')} 
+        title="Requisições" 
+        subtitle="Gerenciar todas as requisições de combustível" 
       />
 
       <main className="flex-1 mobile-content pt-12 sm:pt-4 lg:pt-6">
@@ -223,10 +223,10 @@ export default function Requisitions() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="mobile-text-lg text-gray-800 dark:text-gray-100">
-                🔍 {t('filters')}
+                🔍 Filtros
               </CardTitle>
               <CardDescription className="mobile-text-sm text-gray-600 dark:text-gray-300">
-                {t('filter-requisitions')} • {filteredRequisitions.length} resultados
+                Filtrar requisições • {filteredRequisitions.length} resultados
               </CardDescription>
             </div>
             {(statusFilter !== 'all' || priorityFilter !== 'all' || supplierFilter !== 'all' || searchTerm) && (
@@ -250,11 +250,11 @@ export default function Requisitions() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="status-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('status')}
+                Status
               </Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger id="status-filter" className="bg-white dark:bg-gray-800">
-                  <SelectValue placeholder={t('all-status')} />
+                  <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">📋 Todos os status</SelectItem>
@@ -268,11 +268,11 @@ export default function Requisitions() {
 
             <div className="space-y-2">
               <Label htmlFor="priority-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('priority')}
+                Prioridade
               </Label>
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                 <SelectTrigger id="priority-filter" className="bg-white dark:bg-gray-800">
-                  <SelectValue placeholder={t('all-priorities')} />
+                  <SelectValue placeholder="Todas as prioridades" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">📊 Todas as prioridades</SelectItem>
@@ -286,11 +286,11 @@ export default function Requisitions() {
 
             <div className="space-y-2">
               <Label htmlFor="supplier-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('supplier')}
+                Fornecedor
               </Label>
               <Select value={supplierFilter} onValueChange={setSupplierFilter}>
                 <SelectTrigger id="supplier-filter" className="bg-white dark:bg-gray-800">
-                  <SelectValue placeholder={t('all-suppliers')} />
+                  <SelectValue placeholder="Todos os fornecedores" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">🏪 Todos os fornecedores</SelectItem>
@@ -305,13 +305,13 @@ export default function Requisitions() {
 
             <div className="space-y-2">
               <Label htmlFor="search" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('search')}
+                Pesquisar
               </Label>
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder={t('search-requisitions')}
+                  placeholder="Pesquisar requisições..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 bg-white dark:bg-gray-800"
@@ -328,10 +328,10 @@ export default function Requisitions() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="mobile-text-lg text-gray-800 dark:text-gray-100">
-                📋 {t('requisitions')}
+                📋 Requisições
               </CardTitle>
               <CardDescription className="mobile-text-sm text-gray-600 dark:text-gray-300">
-                {t('manage-fuel-requisitions')} • Organizadas por data (mais recentes primeiro)
+                Gerenciar requisições de combustível • Organizadas por data (mais recentes primeiro)
               </CardDescription>
             </div>
             <div className="text-sm text-muted-foreground">
@@ -441,7 +441,7 @@ export default function Requisitions() {
                               size="sm"
                               onClick={() => generatePDF(requisition)}
                               className="h-8 w-8 p-0 hover:bg-green-100 hover:text-green-600"
-                              title="Download PDF"
+                              title="Baixar PDF"
                             >
                               <Download className="h-4 w-4" />
                             </Button>
