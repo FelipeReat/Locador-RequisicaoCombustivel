@@ -50,6 +50,9 @@ function FleetManagement() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Check if current user is admin or manager
   const isAdminOrManager = currentUser?.role === "admin" || currentUser?.role === "manager";
@@ -68,11 +71,6 @@ function FleetManagement() {
   if (!isAdminOrManager) {
     return <Redirect to="/dashboard" />;
   }
-
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
 
   // Hooks para atualizações em tempo real

@@ -229,62 +229,7 @@ export default function Reports() {
 
       <main className="flex-1 mobile-content py-6">
         {/* Date Range Filter */}
-      <Card className="border-l-4 border-l-blue-500/30 mb-8">
-        <CardHeader className="mobile-card pb-3">
-          <CardTitle className="mobile-text-lg text-gray-800 dark:text-gray-100">
-              📅 Período dos Dados
-            </CardTitle>
-            <CardDescription className="mobile-text-sm text-gray-600 dark:text-gray-300">
-              Selecione o período para geração dos relatórios • Dados organizados cronologicamente
-            </CardDescription>
-        </CardHeader>
-        <CardContent className="mobile-card pt-0">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="start-date" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                📅 Data inicial
-              </Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-white dark:bg-gray-800"
-              />
-            </div>
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="end-date" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                📅 Data final
-              </Label>
-              <Input
-                id="end-date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-white dark:bg-gray-800"
-              />
-            </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={generateReport} 
-                disabled={isGeneratingReport} 
-                className="w-full sm:w-auto h-10 px-6"
-              >
-                {isGeneratingReport ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {t('generating')}
-                  </>
-                ) : (
-                  <>
-                    📊 Gerar Relatório
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
 
         {/* Statistics Overview */}
       {reportData && (

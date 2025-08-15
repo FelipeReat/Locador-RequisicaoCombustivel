@@ -316,7 +316,7 @@ export default function FuelTracking() {
             </div>
 
             <div className="flex items-end">
-              <Button variant="outline" className="w-full">
+              <Button onClick={handleExportCombustiveis} className="w-full bg-blue-600 hover:bg-blue-700">
                 <Download className="h-4 w-4 mr-2" />
                 Exportar
               </Button>

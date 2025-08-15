@@ -64,6 +64,9 @@ function UserManagement() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Check if current user is admin
   const isAdmin = currentUser?.role === "admin";
@@ -83,10 +86,6 @@ function UserManagement() {
   if (!isAdmin) {
     return null; // Will redirect in useEffect
   }
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
 
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
@@ -229,7 +228,14 @@ function UserManagement() {
 
   const handleNew = () => {
     setEditingUser(null);
-    form.reset();
+    form.reset({
+      username: "",
+      email: "",
+      fullName: "",
+      phone: "",
+      position: "",
+      role: "employee",
+    });
     setIsDialogOpen(true);
   };
 

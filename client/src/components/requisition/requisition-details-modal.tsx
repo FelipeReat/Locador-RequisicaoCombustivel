@@ -362,7 +362,7 @@ export default function RequisitionDetailsModal({
               <Button
                 variant="outline"
                 onClick={() => onEditRequisition(requisition)}
-                className="flex items-center"
+                className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
                 data-testid="button-edit-values"
               >
                 <Edit className="mr-1 h-4 w-4" />

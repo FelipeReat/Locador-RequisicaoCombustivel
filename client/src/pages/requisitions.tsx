@@ -490,7 +490,7 @@ export default function Requisitions() {
         onClose={() => setSelectedRequisition(null)}
         onEdit={(req) => {
           setSelectedRequisition(null);
-          setLocation("/new-requisition"); // Assuming this navigates to a new requisition form
+          setLocation(`/new-requisition?edit=${req.id}`); // Pass requisition ID for editing
         }}
         onEditRequisition={(req) => {
           setSelectedRequisition(null);

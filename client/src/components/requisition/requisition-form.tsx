@@ -14,9 +14,11 @@ import type { InsertFuelRequisition, Supplier, Vehicle, User } from "@shared/sch
 interface RequisitionFormProps {
   onSuccess?: () => void;
   initialData?: Partial<InsertFuelRequisition>;
+  isEditing?: boolean;
+  editingId?: number | null;
 }
 
-export default function RequisitionForm({ onSuccess, initialData }: RequisitionFormProps) {
+export default function RequisitionForm({ onSuccess, initialData, isEditing = false, editingId }: RequisitionFormProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
@@ -67,23 +69,35 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertFuelRequisition) => {
-      const response = await fetch("/api/fuel-requisitions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create requisition");
-      
-      // Update vehicle mileage after creating requisition
-      if (data.vehicleId && data.kmAtual) {
-        await fetch(`/api/vehicles/${data.vehicleId}`, {
+      if (isEditing && editingId) {
+        // Update existing requisition
+        const response = await fetch(`/api/fuel-requisitions/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mileage: data.kmAtual }),
+          body: JSON.stringify(data),
         });
+        if (!response.ok) throw new Error("Failed to update requisition");
+        return response.json();
+      } else {
+        // Create new requisition
+        const response = await fetch("/api/fuel-requisitions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error("Failed to create requisition");
+        
+        // Update vehicle mileage after creating requisition
+        if (data.vehicleId && data.kmAtual) {
+          await fetch(`/api/vehicles/${data.vehicleId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mileage: data.kmAtual }),
+          });
+        }
+        
+        return response.json();
       }
-      
-      return response.json();
     },
     // Atualização otimística para mostrar a requisição imediatamente
     onMutate: async (newRequisition) => {
@@ -128,9 +142,26 @@ export default function RequisitionForm({ onSuccess, initialData }: RequisitionF
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       
+      if (!isEditing) {
+        // Reset form only for new requisitions
+        setFormData({
+          requesterId: 1,
+          supplierId: undefined,
+          client: "BBM Serviços",
+          vehicleId: undefined,
+          kmAtual: "",
+          kmAnterior: "",
+          kmRodado: "",
+          tanqueCheio: "false",
+          quantity: "",
+          fuelType: "diesel",
+        });
+        setIsTanqueCheio(false);
+      }
+      
       toast({
-        title: t('requisition-created-success'),
-        description: "A requisição foi criada com sucesso.",
+        title: isEditing ? t('requisition-updated-success') : t('requisition-created-success'),
+        description: isEditing ? "A requisição foi atualizada com sucesso." : "A requisição foi criada com sucesso.",
       });
       onSuccess?.();
     },
