@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { DatabaseStorage } from "./db-storage";
+import { MemStorage } from "./storage";
 import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema } from "@shared/schema";
 
-// Use database storage with PostgreSQL
-const storage = new DatabaseStorage();
+// Use memory storage temporarily until database is fixed
+const storage = new MemStorage();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
