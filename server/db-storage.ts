@@ -100,6 +100,20 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateUserActive(id: number, active: string): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({
+        active,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
+    // Limpeza agressiva do cache para alterações de status
+    this.cache.clear();
+    return result[0];
+  }
+
   async deleteUser(id: number): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
     // Limpeza agressiva do cache após exclusão

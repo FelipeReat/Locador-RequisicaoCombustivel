@@ -223,12 +223,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Requisição não encontrada após a verificação" });
       }
 
-      // Ensure the status remains 'pending' if it was edited in validatedData
-      // Or if the update was just a status change that should be handled by the patch endpoint
-      // For this PUT endpoint, we are focusing on data edits, not status changes.
-      if (validatedData.status && validatedData.status !== 'pending') {
-        return res.status(400).json({ message: "O status da requisição não pode ser alterado por este endpoint. Use o endpoint de status." });
-      }
+      // Ensure the status remains 'pending' - PUT endpoint doesn't handle status changes
+      // Status changes should be handled by the PATCH endpoint
 
       res.json(requisition);
     } catch (error) {
@@ -499,7 +495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert boolean to string for database
       const activeStatus = typeof active === 'boolean' ? active.toString() : active;
 
-      const user = await storage.updateUser(id, { active: activeStatus });
+      const user = await (storage as any).updateUserActive(id, activeStatus);
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
