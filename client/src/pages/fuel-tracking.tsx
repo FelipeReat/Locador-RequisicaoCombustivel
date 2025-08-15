@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/language-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -84,10 +83,10 @@ export default function FuelTracking() {
     const matchesSearch = record.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          record.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          record.operator.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesVehicle = filterVehicle === 'all' || record.vehiclePlate === filterVehicle;
     const matchesFuelType = filterFuelType === 'all' || record.fuelType === filterFuelType;
-    
+
     return matchesSearch && matchesVehicle && matchesFuelType;
   });
 
@@ -95,7 +94,7 @@ export default function FuelTracking() {
   const uniqueFuelTypes = Array.from(new Set(fuelRecords.map(record => record.fuelType)));
 
   const handleNewFuelRecord = () => {
-    if (!newFuelRecord.vehiclePlate || !newFuelRecord.fuelType || !newFuelRecord.quantity || 
+    if (!newFuelRecord.vehiclePlate || !newFuelRecord.fuelType || !newFuelRecord.quantity ||
         !newFuelRecord.pricePerLiter || !newFuelRecord.odometer || !newFuelRecord.location || !newFuelRecord.operator) {
       alert('Por favor, preencha todos os campos obrigatórios.');
       return;
@@ -132,6 +131,17 @@ export default function FuelTracking() {
     setIsNewFuelModalOpen(false);
   };
 
+  const handleExport = () => {
+    // Export functionality will be implemented here
+    console.log('Exporting fuel data...');
+  };
+
+  const handleExportCombustiveis = () => {
+    // Export combustíveis functionality
+    console.log('Exporting combustíveis data...');
+    // You can implement specific export logic here
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -166,7 +176,7 @@ export default function FuelTracking() {
                 Registre um novo abastecimento de combustível
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="mobile-form-grid py-4">
               <div className="space-y-2">
                 <Label htmlFor="vehicle-plate">Placa do Veículo *</Label>
@@ -284,7 +294,7 @@ export default function FuelTracking() {
                 />
               </div>
             </div>
-            
+
             <div>
               <Label htmlFor="vehicle-filter">Veículo</Label>
               <Select value={filterVehicle} onValueChange={setFilterVehicle}>
@@ -392,7 +402,7 @@ export default function FuelTracking() {
                   Preço Médio/L
                 </p>
                 <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white">
-                  R$ {fuelRecords.length > 0 
+                  R$ {fuelRecords.length > 0
                     ? (fuelRecords.reduce((acc, record) => acc + record.pricePerLiter, 0) / fuelRecords.length).toFixed(2)
                     : '0.00'
                   }
@@ -450,7 +460,7 @@ export default function FuelTracking() {
               </TableBody>
             </Table>
           </div>
-          
+
           {filteredRecords.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-500 mobile-text-sm">Nenhum registro encontrado com os filtros aplicados.</p>
