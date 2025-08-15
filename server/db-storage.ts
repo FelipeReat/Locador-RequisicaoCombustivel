@@ -524,6 +524,9 @@ export class DatabaseStorage implements IStorage {
       await db.delete(fuelRequisitions);
     }
 
+    // Limpar cache após deletar
+    this.cache.clear();
+    
     return count;
   }
 

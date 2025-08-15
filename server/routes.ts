@@ -4,8 +4,8 @@ import { DatabaseStorage } from "./db-storage";
 import { MemStorage } from "./storage";
 import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema } from "@shared/schema";
 
-// Use memory storage temporarily until database is fixed
-const storage = new MemStorage();
+// Use database storage for persistent data
+const storage = new DatabaseStorage();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -646,6 +646,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cleanup/requisitions", async (req, res) => {
     try {
       const deletedCount = await storage.cleanupRequisitions();
+      
+      // Headers para forçar limpeza de cache
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
       res.json({ deletedCount, message: "Requisições removidas com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao remover requisições" });
@@ -676,6 +682,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ deletedCount, message: "Empresas removidas com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao remover empresas" });
+    }
+  });
+
+  // Endpoint para limpar cache manualmente
+  app.post("/api/admin/clear-cache", async (req, res) => {
+    try {
+      if (storage instanceof DatabaseStorage) {
+        (storage as any).cache?.clear();
+      }
+      
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache'); 
+      res.set('Expires', '0');
+      
+      res.json({ message: "Cache limpo com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao limpar cache" });
     }
   });
 
