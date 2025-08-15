@@ -312,7 +312,7 @@ export default function Dashboard() {
 
               {hasPermission('read_vehicle') && (
                 <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <a href="/fleet" className="flex items-center space-x-4">
+                  <a href="/fleet-management" className="flex items-center space-x-4">
                     <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
                       <Truck className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
