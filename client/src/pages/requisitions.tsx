@@ -441,6 +441,17 @@ export default function Requisitions() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {requisition.status === "approved" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingRequisition(requisition)}
+                              className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
+                              title="Editar valores após aprovação"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

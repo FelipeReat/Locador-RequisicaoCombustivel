@@ -53,6 +53,7 @@ function FleetManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Check if current user is admin or manager
   const isAdminOrManager = currentUser?.role === "admin" || currentUser?.role === "manager";
@@ -279,7 +280,9 @@ function FleetManagement() {
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesSearch;
+    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
   });
 
   if (vehiclesLoading) {
@@ -444,7 +447,12 @@ function FleetManagement() {
 
           {/* Vehicles Statistics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <Card className="p-4">
+            <Card 
+              className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                statusFilter === "active" ? "ring-2 ring-green-500 bg-green-50 dark:bg-green-900/20" : ""
+              }`}
+              onClick={() => setStatusFilter(statusFilter === "active" ? "all" : "active")}
+            >
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
                   {groupedVehicles.active?.length || 0}
@@ -452,7 +460,12 @@ function FleetManagement() {
                 <div className="text-sm text-muted-foreground">{t('active')}</div>
               </div>
             </Card>
-            <Card className="p-4">
+            <Card 
+              className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                statusFilter === "maintenance" ? "ring-2 ring-yellow-500 bg-yellow-50 dark:bg-yellow-900/20" : ""
+              }`}
+              onClick={() => setStatusFilter(statusFilter === "maintenance" ? "all" : "maintenance")}
+            >
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600">
                   {groupedVehicles.maintenance?.length || 0}
@@ -460,7 +473,12 @@ function FleetManagement() {
                 <div className="text-sm text-muted-foreground">{t('maintenance')}</div>
               </div>
             </Card>
-            <Card className="p-4">
+            <Card 
+              className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                statusFilter === "inactive" ? "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20" : ""
+              }`}
+              onClick={() => setStatusFilter(statusFilter === "inactive" ? "all" : "inactive")}
+            >
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">
                   {groupedVehicles.inactive?.length || 0}
@@ -468,10 +486,15 @@ function FleetManagement() {
                 <div className="text-sm text-muted-foreground">{t('inactive')}</div>
               </div>
             </Card>
-            <Card className="p-4">
+            <Card 
+              className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                statusFilter === "all" ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""
+              }`}
+              onClick={() => setStatusFilter("all")}
+            >
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">
-                  {filteredVehicles.length}
+                  {vehicles?.length || 0}
                 </div>
                 <div className="text-sm text-muted-foreground">Total</div>
               </div>
@@ -481,9 +504,29 @@ function FleetManagement() {
           {/* Vehicles List */}
           <div className="space-y-4 mb-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Veículos por Modelo (A-Z)
-              </h3>
+              <div className="flex items-center space-x-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Veículos por Modelo (A-Z)
+                </h3>
+                {statusFilter !== "all" && (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-muted-foreground">Filtrando por:</span>
+                    <Badge variant="outline" className="capitalize">
+                      {statusFilter === "active" && "✓ Ativo"}
+                      {statusFilter === "maintenance" && "⚠️ Manutenção"}
+                      {statusFilter === "inactive" && "✗ Inativo"}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setStatusFilter("all")}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Limpar
+                    </Button>
+                  </div>
+                )}
+              </div>
               <div className="text-sm text-muted-foreground">
                 {filteredVehicles.length} veículos encontrados
               </div>
