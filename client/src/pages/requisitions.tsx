@@ -510,10 +510,6 @@ export default function Requisitions() {
         requisition={selectedRequisition}
         isOpen={!!selectedRequisition}
         onClose={() => setSelectedRequisition(null)}
-        onEdit={(req) => {
-          setSelectedRequisition(null);
-          setLocation(`/new-requisition?edit=${req.id}`); // Pass requisition ID for editing
-        }}
         onEditRequisition={(req) => {
           setSelectedRequisition(null);
           setEditingRequisition(req); // Open the modal to edit approved requisitions

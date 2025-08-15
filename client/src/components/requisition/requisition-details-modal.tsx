@@ -23,7 +23,6 @@ interface RequisitionDetailsModalProps {
   requisition: FuelRequisition | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit?: (requisition: FuelRequisition) => void;
   onEditRequisition?: (requisition: FuelRequisition) => void;
 }
 
@@ -31,7 +30,6 @@ export default function RequisitionDetailsModal({
   requisition,
   isOpen,
   onClose,
-  onEdit,
   onEditRequisition,
 }: RequisitionDetailsModalProps) {
   const { toast } = useToast();
@@ -365,18 +363,6 @@ export default function RequisitionDetailsModal({
                 {isGeneratingPDF && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <FileText className="mr-1 h-4 w-4" />
                 Gerar Ordem de Compra
-              </Button>
-            )}
-
-            {requisition && requisition.status === "pending" && canEdit() && onEdit && (
-              <Button
-                onClick={() => onEdit(requisition)}
-                variant="outline"
-                className="w-full sm:w-auto"
-                data-testid="button-edit-requisition"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Editar Requisição
               </Button>
             )}
 
