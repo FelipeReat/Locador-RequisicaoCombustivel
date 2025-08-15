@@ -23,24 +23,41 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   const { t } = useLanguage();
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>({
-    requesterId: 1, // Default to first user
-    supplierId: undefined,
-    client: "BBM Serviços",
-    vehicleId: undefined,
-    kmAtual: "",
-    kmAnterior: "",
-    kmRodado: "",
-    tanqueCheio: "false",
-    quantity: "",
-    fuelType: "diesel",
+  const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>(() => {
+    if (initialData) {
+      return {
+        requesterId: initialData.requesterId || 1,
+        supplierId: initialData.supplierId,
+        client: initialData.client || "BBM Serviços",
+        vehicleId: initialData.vehicleId,
+        kmAtual: initialData.kmAtual || "",
+        kmAnterior: initialData.kmAnterior || "",
+        kmRodado: initialData.kmRodado || "",
+        tanqueCheio: initialData.tanqueCheio || "false",
+        quantity: initialData.quantity || "",
+        fuelType: initialData.fuelType || "diesel",
+      };
+    }
+    return {
+      requesterId: 1, // Default to first user
+      supplierId: undefined,
+      client: "BBM Serviços",
+      vehicleId: undefined,
+      kmAtual: "",
+      kmAnterior: "",
+      kmRodado: "",
+      tanqueCheio: "false",
+      quantity: "",
+      fuelType: "diesel",
+    };
   });
 
-  const [isTanqueCheio, setIsTanqueCheio] = useState(false);
+  const [isTanqueCheio, setIsTanqueCheio] = useState(initialData?.tanqueCheio === "true");
 
   // Update form data when initialData changes (for editing)
   useEffect(() => {
     if (initialData) {
+      console.log('Updating form data with initialData:', initialData);
       setFormData({
         requesterId: initialData.requesterId || 1,
         supplierId: initialData.supplierId,

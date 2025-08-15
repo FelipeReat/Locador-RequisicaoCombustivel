@@ -39,6 +39,44 @@ export default function NewRequisition() {
   const title = isEditing ? t('edit-requisition') : t('new-requisition');
   const subtitle = isEditing ? t('edit-fuel-requisition') : t('create-new-fuel-requisition');
 
+  // Show loading if we're editing but haven't loaded the data yet
+  if (isEditing && isLoadingRequisition) {
+    return (
+      <>
+        <Header 
+          title={title} 
+          subtitle={subtitle} 
+        />
+        <main className="flex-1 mobile-container py-4 lg:py-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2">Carregando dados da requisição...</span>
+              </div>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  // Prepare initial data for editing
+  const initialData = editingRequisition ? {
+    requesterId: editingRequisition.requesterId,
+    supplierId: editingRequisition.supplierId,
+    client: editingRequisition.client,
+    vehicleId: editingRequisition.vehicleId,
+    kmAtual: editingRequisition.kmAtual?.toString() || "",
+    kmAnterior: editingRequisition.kmAnterior?.toString() || "",
+    kmRodado: editingRequisition.kmRodado?.toString() || "",
+    tanqueCheio: editingRequisition.tanqueCheio as "true" | "false",
+    quantity: editingRequisition.quantity?.toString() || "",
+    fuelType: editingRequisition.fuelType
+  } : undefined;
+
+  console.log('New Requisition - isEditing:', isEditing, 'editingRequisition:', editingRequisition, 'initialData:', initialData);
+
   return (
     <>
       <Header 
@@ -61,18 +99,7 @@ export default function NewRequisition() {
             <div className="mobile-card">
               <RequisitionForm 
                 onSuccess={handleSuccess} 
-                initialData={editingRequisition ? {
-                  requesterId: editingRequisition.requesterId,
-                  supplierId: editingRequisition.supplierId,
-                  client: editingRequisition.client,
-                  vehicleId: editingRequisition.vehicleId,
-                  kmAtual: editingRequisition.kmAtual?.toString() || "",
-                  kmAnterior: editingRequisition.kmAnterior?.toString() || "",
-                  kmRodado: editingRequisition.kmRodado?.toString() || "",
-                  tanqueCheio: editingRequisition.tanqueCheio as "true" | "false",
-                  quantity: editingRequisition.quantity?.toString() || "",
-                  fuelType: editingRequisition.fuelType
-                } : undefined}
+                initialData={initialData}
                 isEditing={isEditing}
                 editingId={editingRequisitionId}
               />
