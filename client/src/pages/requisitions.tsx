@@ -441,18 +441,6 @@ export default function Requisitions() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-
-                          {hasPermission('create_fuel_requisition') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => generatePDF(requisition)}
-                              className="h-8 w-8 p-0 hover:bg-green-100 hover:text-green-600"
-                              title="Baixar PDF"
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          )}
                         </div>
                       </TableCell>
                     </TableRow>
