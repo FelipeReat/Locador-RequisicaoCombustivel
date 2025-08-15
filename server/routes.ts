@@ -511,6 +511,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteUser(id);
+
+      if (!deleted) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+
+      res.json({ message: "Usuário excluído com sucesso" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Erro ao excluir usuário" });
+    }
+  });
+
   // Vehicle routes
   app.get("/api/vehicles", async (req, res) => {
     try {

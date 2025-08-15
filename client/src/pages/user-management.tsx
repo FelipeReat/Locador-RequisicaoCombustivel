@@ -191,6 +191,10 @@ function UserManagement() {
   const deleteUser = useMutation({
     mutationFn: async (id: number) => {
       const response = await apiRequest("DELETE", `/api/users/${id}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao excluir usuário');
+      }
       return response.json();
     },
     onSuccess: () => {

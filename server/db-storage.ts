@@ -102,6 +102,8 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: number): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
+    // Limpeza agressiva do cache após exclusão
+    this.cache.clear();
     return result.rowCount > 0;
   }
 
