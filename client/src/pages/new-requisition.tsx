@@ -62,8 +62,16 @@ export default function NewRequisition() {
               <RequisitionForm 
                 onSuccess={handleSuccess} 
                 initialData={editingRequisition ? {
-                  ...editingRequisition,
-                  tanqueCheio: editingRequisition.tanqueCheio as "true" | "false"
+                  requesterId: editingRequisition.requesterId,
+                  supplierId: editingRequisition.supplierId,
+                  client: editingRequisition.client,
+                  vehicleId: editingRequisition.vehicleId,
+                  kmAtual: editingRequisition.kmAtual?.toString() || "",
+                  kmAnterior: editingRequisition.kmAnterior?.toString() || "",
+                  kmRodado: editingRequisition.kmRodado?.toString() || "",
+                  tanqueCheio: editingRequisition.tanqueCheio as "true" | "false",
+                  quantity: editingRequisition.quantity?.toString() || "",
+                  fuelType: editingRequisition.fuelType
                 } : undefined}
                 isEditing={isEditing}
                 editingId={editingRequisitionId}

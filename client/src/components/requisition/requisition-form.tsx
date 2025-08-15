@@ -34,10 +34,28 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
     tanqueCheio: "false",
     quantity: "",
     fuelType: "diesel",
-    ...initialData,
   });
 
   const [isTanqueCheio, setIsTanqueCheio] = useState(false);
+
+  // Update form data when initialData changes (for editing)
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        requesterId: initialData.requesterId || 1,
+        supplierId: initialData.supplierId,
+        client: initialData.client || "BBM Serviços",
+        vehicleId: initialData.vehicleId,
+        kmAtual: initialData.kmAtual || "",
+        kmAnterior: initialData.kmAnterior || "",
+        kmRodado: initialData.kmRodado || "",
+        tanqueCheio: initialData.tanqueCheio || "false",
+        quantity: initialData.quantity || "",
+        fuelType: initialData.fuelType || "diesel",
+      });
+      setIsTanqueCheio(initialData.tanqueCheio === "true");
+    }
+  }, [initialData]);
 
   // Fetch suppliers
   const { data: suppliers = [] } = useQuery<Supplier[]>({
