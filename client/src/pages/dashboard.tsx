@@ -550,16 +550,7 @@ export default function Dashboard() {
                             </Button>
                           </>
                         )}
-                        {userRole !== 'employee' && requisition.status === 'pending' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setLocation("/requisitions")}
-                            title="Ir para requisições"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
+                        
                       </td>
                     </tr>
                   ))
