@@ -531,7 +531,7 @@ export default function Dashboard() {
                               size="sm"
                               onClick={() => setEditingRequisition(requisition)}
                               title="Editar valores reais"
-                              className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                              className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
