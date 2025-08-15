@@ -21,7 +21,7 @@ export default function NewRequisition() {
   }, [location]);
 
   // Fetch requisition data if editing
-  const { data: editingRequisition } = useQuery<FuelRequisition>({
+  const { data: editingRequisition, isLoading: isLoadingRequisition } = useQuery<FuelRequisition>({
     queryKey: ["/api/fuel-requisitions", editingRequisitionId],
     queryFn: async () => {
       const response = await fetch(`/api/fuel-requisitions/${editingRequisitionId}`);
@@ -45,7 +45,7 @@ export default function NewRequisition() {
         title={title} 
         subtitle={subtitle} 
       />
-      
+
       <main className="flex-1 mobile-container py-4 lg:py-6">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -57,7 +57,7 @@ export default function NewRequisition() {
                 {t('fill-required-data')}
               </p>
             </div>
-            
+
             <div className="mobile-card">
               <RequisitionForm 
                 onSuccess={handleSuccess} 

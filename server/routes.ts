@@ -182,11 +182,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/fuel-requisitions/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      // Allow partial updates for existing requisitions
       const validatedData = insertFuelRequisitionSchema.partial().parse(req.body);
+      
+      // Fetch the current requisition to check its status
+      const currentRequisition = await storage.getFuelRequisition(id);
+      if (!currentRequisition) {
+        return res.status(404).json({ message: "Requisição não encontrada" });
+      }
+
+      // Only allow editing if the status is 'pending'
+      if (currentRequisition.status !== 'pending') {
+        return res.status(400).json({ message: "Só é possível editar requisições pendentes" });
+      }
+
       const requisition = await storage.updateFuelRequisition(id, validatedData);
 
       if (!requisition) {
-        return res.status(404).json({ message: "Requisição não encontrada" });
+        // This case should ideally not happen if currentRequisition was found, but good for safety
+        return res.status(404).json({ message: "Requisição não encontrada após a verificação" });
+      }
+
+      // Ensure the status remains 'pending' if it was edited in validatedData
+      // Or if the update was just a status change that should be handled by the patch endpoint
+      // For this PUT endpoint, we are focusing on data edits, not status changes.
+      if (validatedData.status && validatedData.status !== 'pending') {
+        return res.status(400).json({ message: "O status da requisição não pode ser alterado por este endpoint. Use o endpoint de status." });
       }
 
       res.json(requisition);

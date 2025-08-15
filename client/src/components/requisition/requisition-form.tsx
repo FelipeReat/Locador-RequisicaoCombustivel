@@ -160,7 +160,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       }
       
       toast({
-        title: isEditing ? t('requisition-updated-success') : t('requisition-created-success'),
+        title: isEditing ? "Requisição Atualizada" : "Requisição Criada",
         description: isEditing ? "A requisição foi atualizada com sucesso." : "A requisição foi criada com sucesso.",
       });
       onSuccess?.();
@@ -388,7 +388,10 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
         className="w-full" 
         disabled={createMutation.isPending}
       >
-        {createMutation.isPending ? "Criando..." : "Criar Requisição"}
+        {createMutation.isPending ? 
+          (isEditing ? "Atualizando..." : "Criando...") : 
+          (isEditing ? "Atualizar Requisição" : "Criar Requisição")
+        }
       </Button>
     </form>
   );

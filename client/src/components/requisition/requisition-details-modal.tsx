@@ -59,7 +59,7 @@ export default function RequisitionDetailsModal({
     // If `hasPermission` is a separate function, its implementation would be needed.
     return true; // Defaulting to true to allow the structure to be rendered
   };
-  
+
   // Assuming canEditValues is a derived permission or prop.
   // For now, let's assume canEditValues is the same as canEdit.
   const canEditValues = canEdit(); // Adjust if canEditValues has a different source
@@ -81,7 +81,7 @@ export default function RequisitionDetailsModal({
       // Atualização otimista dos dados em cache
       queryClient.setQueryData(["/api/fuel-requisitions"], (old: any) => {
         if (!old) return old;
-        return old.map((req: any) => 
+        return old.map((req: any) =>
           req.id === updatedRequisition.id ? updatedRequisition : req
         );
       });
@@ -368,18 +368,15 @@ export default function RequisitionDetailsModal({
               </Button>
             )}
 
-            {requisition && requisition.status === "pending" && onEdit && canEdit() && (
-              <Button 
-                onClick={() => {
-                  if (onEdit && requisition) {
-                    onEdit(requisition);
-                  }
-                }} 
-                variant="outline" 
+            {requisition && requisition.status === "pending" && canEdit() && onEdit && (
+              <Button
+                onClick={() => onEdit(requisition)}
+                variant="outline"
                 className="w-full sm:w-auto"
+                data-testid="button-edit-requisition"
               >
                 <Edit className="mr-2 h-4 w-4" />
-                Editar
+                Editar Requisição
               </Button>
             )}
 
