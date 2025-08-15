@@ -13,10 +13,15 @@ export default function NewRequisition() {
 
   // Parse URL parameters to check if we're editing
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.split('?')[1] || '');
+    console.log('Current location:', location);
+    const searchParams = location.includes('?') ? location.split('?')[1] : '';
+    const urlParams = new URLSearchParams(searchParams);
     const editId = urlParams.get('edit');
-    if (editId) {
+    console.log('Edit ID from URL:', editId);
+    if (editId && !isNaN(parseInt(editId))) {
       setEditingRequisitionId(parseInt(editId));
+    } else {
+      setEditingRequisitionId(null);
     }
   }, [location]);
 
@@ -40,7 +45,7 @@ export default function NewRequisition() {
   const subtitle = isEditing ? t('edit-fuel-requisition') : t('create-new-fuel-requisition');
 
   // Show loading if we're editing but haven't loaded the data yet
-  if (isEditing && isLoadingRequisition) {
+  if (isEditing && (isLoadingRequisition || !editingRequisition)) {
     return (
       <>
         <Header 

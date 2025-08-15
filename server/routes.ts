@@ -178,6 +178,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get a specific fuel requisition
+  app.get("/api/fuel-requisitions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+
+      const requisition = await storage.getFuelRequisition(id);
+      if (!requisition) {
+        return res.status(404).json({ message: "Requisição não encontrada" });
+      }
+
+      res.json(requisition);
+    } catch (error) {
+      console.error("Error fetching fuel requisition:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Update a fuel requisition
   app.put("/api/fuel-requisitions/:id", async (req, res) => {
     try {

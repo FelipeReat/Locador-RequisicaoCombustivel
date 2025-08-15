@@ -56,9 +56,11 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
 
   // Update form data when initialData changes (for editing)
   useEffect(() => {
-    if (initialData) {
-      console.log('Updating form data with initialData:', initialData);
-      setFormData({
+    if (initialData && Object.keys(initialData).length > 0) {
+      console.log('RequisitionForm - Updating form data with initialData:', initialData);
+      console.log('RequisitionForm - isEditing:', isEditing);
+      
+      const updatedFormData = {
         requesterId: initialData.requesterId || 1,
         supplierId: initialData.supplierId,
         client: initialData.client || "BBM Serviços",
@@ -69,10 +71,13 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
         tanqueCheio: initialData.tanqueCheio || "false",
         quantity: initialData.quantity || "",
         fuelType: initialData.fuelType || "diesel",
-      });
+      };
+      
+      console.log('RequisitionForm - Setting form data to:', updatedFormData);
+      setFormData(updatedFormData);
       setIsTanqueCheio(initialData.tanqueCheio === "true");
     }
-  }, [initialData]);
+  }, [initialData, isEditing]);
 
   // Fetch suppliers
   const { data: suppliers = [] } = useQuery<Supplier[]>({
