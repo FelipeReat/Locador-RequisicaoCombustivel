@@ -37,12 +37,14 @@ export default function Login() {
       let errorMessage = 'Erro ao fazer login. Tente novamente.';
       
       if (err.message) {
-        if (err.message.includes('Usuário não encontrado')) {
+        if (err.message.includes('Usuário não encontrado') || err.message.includes('User not found')) {
           errorMessage = 'Usuário não encontrado. Verifique se o nome de usuário está correto.';
-        } else if (err.message.includes('Senha incorreta')) {
-          errorMessage = 'Senha incorreta. Verifique sua senha e tente novamente.';
-        } else if (err.message.includes('Credenciais inválidas')) {
-          errorMessage = 'Usuário ou senha incorretos. Verifique seus dados e tente novamente.';
+        } else if (err.message.includes('Senha incorreta') || err.message.includes('Invalid password') || err.message.includes('password')) {
+          errorMessage = '🔐 Senha incorreta. Verifique sua senha e tente novamente.';
+        } else if (err.message.includes('Credenciais inválidas') || err.message.includes('Invalid credentials')) {
+          errorMessage = '❌ Usuário ou senha incorretos. Verifique seus dados e tente novamente.';
+        } else if (err.message.includes('authentication') || err.message.includes('login')) {
+          errorMessage = '⚠️ Falha na autenticação. Verifique seu usuário e senha.';
         } else {
           errorMessage = err.message;
         }

@@ -137,9 +137,40 @@ export default function FuelTracking() {
   };
 
   const handleExportCombustiveis = () => {
-    // Export combustíveis functionality
-    console.log('Exporting combustíveis data...');
-    // You can implement specific export logic here
+    if (filteredRecords.length === 0) {
+      alert('Não há dados para exportar.');
+      return;
+    }
+
+    // Create CSV content
+    const headers = ['Data', 'Placa', 'Combustível', 'Quantidade (L)', 'Preço/L (R$)', 'Total (R$)', 'Odômetro (km)', 'Local', 'Operador'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredRecords.map(record => [
+        new Date(record.date).toLocaleDateString('pt-BR'),
+        record.vehiclePlate,
+        record.fuelType,
+        record.quantity.toFixed(1),
+        record.pricePerLiter.toFixed(2),
+        record.totalCost.toFixed(2),
+        record.odometer.toLocaleString('pt-BR'),
+        `"${record.location}"`,
+        `"${record.operator}"`
+      ].join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `controle-combustivel-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert('Relatório de controle de combustível exportado com sucesso!');
   };
 
   if (isLoading) {

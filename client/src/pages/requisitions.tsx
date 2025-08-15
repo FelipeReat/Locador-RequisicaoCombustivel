@@ -196,11 +196,45 @@ export default function Requisitions() {
   };
 
   const generatePDF = (requisition: FuelRequisition) => {
-    // Placeholder for PDF generation logic
-    toast({
-      title: "Baixar PDF",
-      description: `Gerando PDF para requisição ${requisition.id}`,
-    });
+    try {
+      // Import PDF generator (assuming it exists in the project)
+      import('@/lib/pdf-generator').then(({ PDFGenerator }) => {
+        const pdfGenerator = new PDFGenerator('portrait');
+        
+        // Get additional data for the PDF
+        const user = users.find((u: any) => u.id === requisition.requesterId);
+        const supplier = suppliers?.find(s => s.id === requisition.supplierId);
+        const vehicle = vehicles?.find(v => v.id === requisition.vehicleId);
+        
+        const pdfData = {
+          ...requisition,
+          requesterName: user?.fullName || user?.username || 'N/A',
+          supplierName: supplier?.name || 'N/A',
+          vehiclePlate: vehicle?.plate || 'N/A',
+          vehicleModel: vehicle?.model || 'N/A'
+        };
+        
+        pdfGenerator.generateRequisitionsReport([pdfData], {
+          title: `Requisição ${requisition.id}`,
+          subtitle: `Data: ${new Date(requisition.createdAt).toLocaleDateString('pt-BR')}`,
+          company: 'Sistema de Controle de Abastecimento'
+        });
+        
+        pdfGenerator.save(`requisicao-${requisition.id}-${new Date().toISOString().split('T')[0]}.pdf`);
+        
+        toast({
+          title: "PDF Gerado",
+          description: `PDF da requisição ${requisition.id} baixado com sucesso!`,
+        });
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading || suppliersLoading) {

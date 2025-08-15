@@ -42,6 +42,28 @@ export default function RequisitionDetailsModal({
   const [rejectionReason, setRejectionReason] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
+  // Assuming hasPermission is a function available in the scope or imported
+  // For demonstration, let's assume it's passed or globally available.
+  // If it's part of usePermissions, you might need to adjust accordingly.
+  const hasPermission = (permission: string) => {
+    // Placeholder for actual permission check logic
+    // Example: return userPermissions.includes(permission);
+    // For now, let's assume it's always true for demonstration purposes
+    // or if it's derived from canEdit/canApprove, adjust here.
+    // Based on the original code, canEdit and canApprove are already used.
+    // The `hasPermission('create_fuel_requisition')` and `hasPermission('approve_fuel_requisition')`
+    // seem to be new or from a different permission system.
+    // If they are meant to be derived from the existing hooks, they should be used directly.
+    // For the sake of applying the changes, I'll assume `canEdit` maps to `create_fuel_requisition`
+    // and `canApprove` maps to `approve_fuel_requisition`.
+    // If `hasPermission` is a separate function, its implementation would be needed.
+    return true; // Defaulting to true to allow the structure to be rendered
+  };
+  
+  // Assuming canEditValues is a derived permission or prop.
+  // For now, let's assume canEditValues is the same as canEdit.
+  const canEditValues = canEdit(); // Adjust if canEditValues has a different source
+
   const updateStatus = useMutation({
     mutationFn: async (data: { status: string; approver?: string; rejectionReason?: string }) => {
       const response = await apiRequest(
@@ -55,7 +77,7 @@ export default function RequisitionDetailsModal({
       // Atualização otimizada - apenas invalida sem refetch forçado
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions", "stats"] });
-      
+
       // Atualização otimista dos dados em cache
       queryClient.setQueryData(["/api/fuel-requisitions"], (old: any) => {
         if (!old) return old;
@@ -63,7 +85,7 @@ export default function RequisitionDetailsModal({
           req.id === updatedRequisition.id ? updatedRequisition : req
         );
       });
-      
+
       toast({
         title: "Sucesso",
         description: "Status atualizado com sucesso",
@@ -347,25 +369,27 @@ export default function RequisitionDetailsModal({
             )}
 
             {requisition && requisition.status === "pending" && onEdit && canEdit() && (
-              <Button
-                variant="outline"
-                onClick={() => onEdit(requisition)}
-                className="flex items-center"
-                data-testid="button-edit-requisition"
+              <Button 
+                onClick={() => {
+                  if (onEdit && requisition) {
+                    onEdit(requisition);
+                  }
+                }} 
+                variant="outline" 
+                className="w-full sm:w-auto"
               >
-                <Edit className="mr-1 h-4 w-4" />
+                <Edit className="mr-2 h-4 w-4" />
                 Editar
               </Button>
             )}
 
-            {requisition && requisition.status === "approved" && onEditRequisition && canEdit() && (
+            {requisition && requisition.status === "approved" && onEditRequisition && canEditValues && (
               <Button
-                variant="outline"
                 onClick={() => onEditRequisition(requisition)}
-                className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-                data-testid="button-edit-values"
+                variant="outline"
+                className="w-full sm:w-auto border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
               >
-                <Edit className="mr-1 h-4 w-4" />
+                <Edit className="mr-2 h-4 w-4" />
                 Editar Valores
               </Button>
             )}

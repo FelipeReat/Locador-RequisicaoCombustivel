@@ -280,18 +280,19 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {hasPermission('create_fuel_requisition') && (
                 <Button
-                  asChild
-                  className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 bg-gradient-to-r from-blue-600 to-blue-700"
+                  variant="outline"
+                  className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  onClick={() => setLocation("/new-requisition")}
                 >
-                  <a href="/requisitions/new" className="flex items-center space-x-4">
-                    <div className="p-2 bg-white/20 rounded-full">
-                      <Plus className="h-5 w-5" />
+                  <div className="flex items-center space-x-4">
+                    <div className="p-2 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full">
+                      <Plus className="h-5 w-5 text-white" />
                     </div>
                     <div className="text-left">
-                      <div className="font-semibold text-base">Nova Requisição</div>
-                      <div className="text-sm text-blue-100">Criar solicitação de combustível</div>
+                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Nova Requisição</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">Solicitar combustível</div>
                     </div>
-                  </a>
+                  </div>
                 </Button>
               )}
 

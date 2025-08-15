@@ -228,9 +228,6 @@ export default function Reports() {
       />
 
       <main className="flex-1 mobile-content py-6">
-        {/* Date Range Filter */}
-
-
         {/* Statistics Overview */}
       {reportData && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

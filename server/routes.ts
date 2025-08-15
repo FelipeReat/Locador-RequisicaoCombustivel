@@ -40,7 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for authentication header or session
       const authHeader = req.headers.authorization;
       const authToken = req.headers['x-auth-token'];
-      
+
       if (!authHeader && !authToken) {
         return res.status(401).json({ message: "Não autenticado" });
       }
@@ -133,12 +133,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const requisitions = await storage.getFuelRequisitions();
-      
+
       // Implementa paginação para melhor performance
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
       const paginatedRequisitions = requisitions.slice(startIndex, endIndex);
-      
+
       // Cache muito baixo para dados críticos
       res.set('Cache-Control', 'public, max-age=2');
       res.json(paginatedRequisitions);
@@ -449,18 +449,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/users/:id", async (req, res) => {
+  // Update user status
+  app.patch("/api/users/:id/status", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteUser(id);
+      const { active } = req.body;
 
-      if (!deleted) {
+      // Convert boolean to string for database
+      const activeStatus = typeof active === 'boolean' ? active.toString() : active;
+
+      const user = await storage.updateUser(id, { active: activeStatus });
+      if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
 
-      res.json({ message: "Usuário excluído com sucesso" });
+      res.json(user);
     } catch (error) {
-      res.status(500).json({ message: "Erro ao excluir usuário" });
+      console.error("Error updating user status:", error);
+      res.status(500).json({ message: "Erro ao atualizar status do usuário" });
     }
   });
 
@@ -536,7 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedVehicle = await storage.updateVehicleStatus(id, status);
-      
+
       // Headers para evitar cache em status updates críticos
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');

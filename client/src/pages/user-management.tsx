@@ -164,8 +164,12 @@ function UserManagement() {
       const response = await apiRequest(
         "PATCH",
         `/api/users/${id}/status`,
-        { active: active.toString() }
+        { active: active }
       );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao alterar status do usuário');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -228,14 +232,19 @@ function UserManagement() {
 
   const handleNew = () => {
     setEditingUser(null);
-    form.reset({
-      username: "",
-      email: "",
-      fullName: "",
-      phone: "",
-      position: "",
-      role: "employee",
-    });
+    // Clear form completely
+    form.reset();
+    // Set default values after reset
+    setTimeout(() => {
+      form.reset({
+        username: "",
+        email: "",
+        fullName: "",
+        phone: "",
+        position: "",
+        role: "employee",
+      });
+    }, 0);
     setIsDialogOpen(true);
   };
 
