@@ -1,11 +1,12 @@
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { eq, desc, sql, and, gte, lte } from 'drizzle-orm';
 import { db } from './db';
 import { 
   users, 
-  vehicles, 
   fuelRequisitions, 
   suppliers, 
+  vehicles, 
   companies,
+  fuelRecords, 
   type User, 
   type InsertUser, 
   type UpdateUserProfile, 
@@ -20,7 +21,9 @@ import {
   type InsertSupplier, 
   type Company, 
   type InsertCompany, 
-  type LoginUser 
+  type LoginUser,
+  type FuelRecord,
+  type InsertFuelRecord
 } from '@shared/schema';
 import { IStorage } from './storage';
 
@@ -51,7 +54,7 @@ export class DatabaseStorage implements IStorage {
       this.cache.clear();
       return;
     }
-    
+
     // Limpeza agressiva e imediata do cache
     const keys = Array.from(this.cache.keys());
     keys.forEach(key => {
@@ -94,7 +97,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
-    
+
     // Limpeza agressiva do cache para edições de usuários
     this.cache.clear();
     return result[0];
@@ -108,7 +111,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
-    
+
     // Limpeza agressiva do cache para alterações de status
     this.cache.clear();
     return result[0];
@@ -129,7 +132,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
-    
+
     // Limpeza do cache para atualizações de perfil
     this.cache.clear();
     return result[0];
@@ -206,7 +209,7 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
-    
+
     // Limpeza agressiva do cache para criação de fornecedores
     this.cache.clear();
     return result[0];
@@ -220,7 +223,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(suppliers.id, id))
       .returning();
-    
+
     // Limpeza agressiva do cache para edições de fornecedores
     this.cache.clear();
     return result[0];
@@ -254,7 +257,7 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
-    
+
     // Limpeza agressiva do cache para criação de empresas
     this.cache.clear();
     return result[0];
@@ -268,7 +271,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(companies.id, id))
       .returning();
-    
+
     // Limpeza agressiva do cache para edições de empresas
     this.cache.clear();
     return result[0];
@@ -302,7 +305,7 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
-    
+
     // Limpeza agressiva do cache para criação de veículos
     this.cache.clear();
     return result[0];
@@ -316,7 +319,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(vehicles.id, id))
       .returning();
-    
+
     // Limpeza do cache para updates de veículos
     this.cache.clear();
     return result[0];
@@ -330,10 +333,10 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(vehicles.id, id))
       .returning();
-    
+
     // Limpeza agressiva e imediata do cache para status updates críticos
     this.cache.clear();
-    
+
     return result[0];
   }
 
@@ -365,11 +368,11 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
-    
+
     // Invalidar cache relacionado às requisições após criar
     this.invalidateCache('fuelRequisitions');
     this.invalidateCache('requisitionStats');
-    
+
     return result[0];
   }
 
@@ -381,11 +384,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(fuelRequisitions.id, id))
       .returning();
-    
+
     // Invalidar cache relacionado às requisições após atualizar
     this.invalidateCache('fuelRequisitions');
     this.invalidateCache('requisitionStats');
-    
+
     return result[0];
   }
 
@@ -419,10 +422,10 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(fuelRequisitions.id, id))
       .returning();
-    
+
     // Limpeza imediata e agressiva do cache para status updates críticos dos veículos
     this.cache.clear();
-    
+
     return result[0];
   }
 
@@ -514,52 +517,180 @@ export class DatabaseStorage implements IStorage {
       kmPerLiter: row.totalLiters > 0 ? parseFloat((row.totalKmRodado / row.totalLiters).toFixed(2)) : 0
     })).sort((a, b) => b.kmPerLiter - a.kmPerLiter);
   }
-  
+
   // Data cleanup methods - Optimized to avoid unnecessary SELECT before DELETE
   async cleanupRequisitions(): Promise<number> {
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(fuelRequisitions);
-    const count = countResult.count;
-
-    if (count > 0) {
-      await db.delete(fuelRequisitions);
-    }
-
-    // Limpar cache após deletar
-    this.cache.clear();
-    
-    return count;
+    const result = await db.delete(fuelRequisitions);
+    return result.changes || 0;
   }
 
   async cleanupVehicles(): Promise<number> {
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(vehicles);
-    const count = countResult.count;
-
-    if (count > 0) {
-      await db.delete(vehicles);
-    }
-
-    return count;
+    const result = await db.delete(vehicles);
+    return result.changes || 0;
   }
 
   async cleanupSuppliers(): Promise<number> {
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(suppliers);
-    const count = countResult.count;
-
-    if (count > 0) {
-      await db.delete(suppliers);
-    }
-
-    return count;
+    const result = await db.delete(suppliers);
+    return result.changes || 0;
   }
 
   async cleanupCompanies(): Promise<number> {
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(companies);
-    const count = countResult.count;
+    const result = await db.delete(companies);
+    return result.changes || 0;
+  }
 
-    if (count > 0) {
-      await db.delete(companies);
+  // Fuel Records Methods
+  async getFuelRecords(): Promise<FuelRecord[]> {
+    try {
+      const records = await db.select().from(fuelRecords).orderBy(desc(fuelRecords.recordDate));
+      return records;
+    } catch (error) {
+      console.error('Error fetching fuel records:', error);
+      return [];
     }
+  }
 
-    return count;
+  async getFuelRecord(id: number): Promise<FuelRecord | undefined> {
+    try {
+      const result = await db.select().from(fuelRecords).where(eq(fuelRecords.id, id));
+      return result[0];
+    } catch (error) {
+      console.error('Error fetching fuel record:', error);
+      return undefined;
+    }
+  }
+
+  async createFuelRecord(record: InsertFuelRecord): Promise<FuelRecord> {
+    try {
+      const totalCost = (parseFloat(record.litersRefueled) * parseFloat(record.pricePerLiter)).toFixed(2);
+
+      const result = await db.insert(fuelRecords).values({
+        ...record,
+        fuelStation: record.fuelStation || null,
+        notes: record.notes || null,
+        totalCost,
+      }).returning();
+
+      return result[0];
+    } catch (error) {
+      console.error('Error creating fuel record:', error);
+      throw new Error('Erro ao criar registro de combustível');
+    }
+  }
+
+  async updateFuelRecord(id: number, updates: Partial<InsertFuelRecord>): Promise<FuelRecord | undefined> {
+    try {
+      // Recalculate total cost if price or liters changed
+      let updateData = { ...updates };
+      if (updates.litersRefueled && updates.pricePerLiter) {
+        updateData.totalCost = (parseFloat(updates.litersRefueled) * parseFloat(updates.pricePerLiter)).toFixed(2);
+      }
+
+      const result = await db.update(fuelRecords)
+        .set(updateData)
+        .where(eq(fuelRecords.id, id))
+        .returning();
+
+      return result[0];
+    } catch (error) {
+      console.error('Error updating fuel record:', error);
+      return undefined;
+    }
+  }
+
+  async deleteFuelRecord(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(fuelRecords).where(eq(fuelRecords.id, id));
+      return (result.changes || 0) > 0;
+    } catch (error) {
+      console.error('Error deleting fuel record:', error);
+      return false;
+    }
+  }
+
+  async getFuelRecordsByVehicle(vehicleId: number): Promise<FuelRecord[]> {
+    try {
+      const records = await db.select()
+        .from(fuelRecords)
+        .where(eq(fuelRecords.vehicleId, vehicleId))
+        .orderBy(desc(fuelRecords.recordDate));
+      return records;
+    } catch (error) {
+      console.error('Error fetching fuel records by vehicle:', error);
+      return [];
+    }
+  }
+
+  async getMonthlyFuelReport(year: number, month: number): Promise<{
+    vehicleId: number;
+    vehiclePlate: string;
+    vehicleModel: string;
+    totalKm: number;
+    totalLiters: number;
+    averageKmPerLiter: number;
+    totalCost: number;
+  }[]> {
+    try {
+      const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+      const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+      const records = await db.select()
+        .from(fuelRecords)
+        .where(
+          and(
+            gte(fuelRecords.recordDate, startDate),
+            lte(fuelRecords.recordDate, endDate)
+          )
+        );
+
+      const vehicleData = await db.select().from(vehicles);
+      const vehicleMap = new Map(vehicleData.map(v => [v.id, v]));
+
+      const reportMap = new Map<number, {
+        vehiclePlate: string;
+        vehicleModel: string;
+        totalKm: number;
+        totalLiters: number;
+        totalCost: number;
+      }>();
+
+      records.forEach(record => {
+        const vehicle = vehicleMap.get(record.vehicleId);
+        if (!vehicle) return;
+
+        const current = reportMap.get(record.vehicleId) || {
+          vehiclePlate: vehicle.plate,
+          vehicleModel: vehicle.model,
+          totalKm: 0,
+          totalLiters: 0,
+          totalCost: 0,
+        };
+
+        current.totalKm += parseFloat(record.distanceTraveled);
+        current.totalLiters += parseFloat(record.litersRefueled);
+        current.totalCost += parseFloat(record.totalCost);
+
+        reportMap.set(record.vehicleId, current);
+      });
+
+      return Array.from(reportMap.entries()).map(([vehicleId, data]) => ({
+        vehicleId,
+        ...data,
+        averageKmPerLiter: data.totalLiters > 0 ? data.totalKm / data.totalLiters : 0,
+      }));
+    } catch (error) {
+      console.error('Error generating monthly fuel report:', error);
+      return [];
+    }
+  }
+
+  async cleanupFuelRecords(): Promise<number> {
+    try {
+      const result = await db.delete(fuelRecords);
+      return result.changes || 0;
+    } catch (error) {
+      console.error('Error cleaning up fuel records:', error);
+      return 0;
+    }
   }
 }
