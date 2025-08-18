@@ -112,23 +112,42 @@ export default function FuelTracking() {
     },
   });
 
-  // Form setup
+  // Form setup with proper default values
   const form = useForm<InsertFuelRecord>({
     resolver: zodResolver(insertFuelRecordSchema),
     defaultValues: {
-      vehicleId: vehicles.length > 0 ? vehicles[0].id : 59, // Use first vehicle or fallback
+      vehicleId: vehicles.length > 0 ? vehicles[0].id : 59,
       currentMileage: '',
       previousMileage: '',
       distanceTraveled: '',
-      fuelType: 'gasolina',
+      fuelType: 'gasolina' as const,
       litersRefueled: '',
       pricePerLiter: '',
-      operatorId: currentUser?.id || 14, // Use current user or fallback
+      operatorId: currentUser?.id || 14,
       fuelStation: '',
       notes: '',
       recordDate: new Date().toISOString().split('T')[0],
     },
   });
+
+  // Reset form defaults when data loads
+  React.useEffect(() => {
+    if (vehicles.length > 0 && currentUser?.id) {
+      form.reset({
+        vehicleId: vehicles[0].id,
+        currentMileage: '',
+        previousMileage: '',
+        distanceTraveled: '',
+        fuelType: 'gasolina' as const,
+        litersRefueled: '',
+        pricePerLiter: '',
+        operatorId: currentUser.id,
+        fuelStation: '',
+        notes: '',
+        recordDate: new Date().toISOString().split('T')[0],
+      });
+    }
+  }, [vehicles, currentUser, form]);
 
   // Watch form values for automatic calculations
   const watchedValues = form.watch(['currentMileage', 'previousMileage']);
@@ -524,11 +543,22 @@ export default function FuelTracking() {
                       className="w-full sm:w-auto"
                       disabled={createFuelRecordMutation.isPending}
                       data-testid="button-save"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         console.log('Save button clicked');
                         console.log('Form errors:', form.formState.errors);
                         console.log('Form values:', form.getValues());
                         console.log('Form is valid:', form.formState.isValid);
+                        console.log('Form state:', form.formState);
+                        
+                        // Trigger validation manually
+                        const isValid = await form.trigger();
+                        console.log('Manual validation result:', isValid);
+                        
+                        if (!isValid) {
+                          console.log('Form validation failed, errors:', form.formState.errors);
+                          e.preventDefault();
+                          return;
+                        }
                       }}
                     >
                       {createFuelRecordMutation.isPending ? 'Salvando...' : 'Salvar Registro'}
