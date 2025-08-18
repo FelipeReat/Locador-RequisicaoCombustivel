@@ -2,10 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { DatabaseStorage } from "./db-storage";
 import { MemStorage } from "./storage";
-import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema } from "@shared/schema";
+import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema, insertFuelRecordSchema } from "@shared/schema";
 
-// Use database storage for persistent data
-const storage = new DatabaseStorage();
+// Use memory storage for development
+const storage = new MemStorage();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -779,6 +779,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Empresa excluída com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao excluir empresa" });
+    }
+  });
+
+  // Fuel Records API Routes (Vehicle Check-in System)
+  app.get("/api/fuel-records", async (req, res) => {
+    try {
+      const records = await storage.getFuelRecords();
+      res.set('Cache-Control', 'public, max-age=2');
+      res.json(records);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar registros de combustível" });
+    }
+  });
+
+  app.get("/api/fuel-records/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const record = await storage.getFuelRecord(id);
+
+      if (!record) {
+        return res.status(404).json({ error: "Registro não encontrado" });
+      }
+
+      res.json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar registro" });
+    }
+  });
+
+  app.post("/api/fuel-records", async (req, res) => {
+    try {
+      const validatedData = insertFuelRecordSchema.parse(req.body);
+      const record = await storage.createFuelRecord(validatedData);
+      
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.status(201).json(record);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao criar registro de combustível" });
+      }
+    }
+  });
+
+  app.put("/api/fuel-records/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertFuelRecordSchema.partial().parse(req.body);
+      const record = await storage.updateFuelRecord(id, validatedData);
+
+      if (!record) {
+        return res.status(404).json({ message: "Registro não encontrado" });
+      }
+
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.json(record);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao atualizar registro" });
+      }
+    }
+  });
+
+  app.delete("/api/fuel-records/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteFuelRecord(id);
+
+      if (!deleted) {
+        return res.status(404).json({ message: "Registro não encontrado" });
+      }
+
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.json({ message: "Registro excluído com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir registro" });
+    }
+  });
+
+  app.get("/api/fuel-records/vehicle/:vehicleId", async (req, res) => {
+    try {
+      const vehicleId = parseInt(req.params.vehicleId);
+      const records = await storage.getFuelRecordsByVehicle(vehicleId);
+      res.json(records);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar registros do veículo" });
+    }
+  });
+
+  app.get("/api/fuel-records/reports/monthly", async (req, res) => {
+    try {
+      const year = parseInt(req.query.year as string);
+      const month = parseInt(req.query.month as string);
+      
+      if (!year || !month) {
+        return res.status(400).json({ message: "Ano e mês são obrigatórios" });
+      }
+
+      const report = await storage.getMonthlyFuelReport(year, month);
+      res.json(report);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao gerar relatório mensal" });
+    }
+  });
+
+  app.delete("/api/cleanup/fuel-records", async (req, res) => {
+    try {
+      const deletedCount = await storage.cleanupFuelRecords();
+      res.json({ deletedCount, message: "Registros de combustível removidos com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao remover registros de combustível" });
     }
   });
 

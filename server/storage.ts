@@ -1,4 +1,4 @@
-import { users, fuelRequisitions, vehicles, suppliers, companies, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany, type LoginUser } from "@shared/schema";
+import { users, fuelRequisitions, vehicles, suppliers, companies, fuelRecords, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany, type LoginUser, type FuelRecord, type InsertFuelRecord } from "@shared/schema";
 
 export interface IStorage {
   // Users
@@ -57,6 +57,24 @@ export interface IStorage {
   getRequisitionsByDepartment(): Promise<{ department: string; count: number; totalLiters: number }[]>;
   getRequisitionsByFuelType(): Promise<{ fuelType: string; count: number; totalLiters: number }[]>;
   getFuelEfficiencyStats(): Promise<{ vehiclePlate: string; vehicleModel: string; totalKmRodado: number; totalLiters: number; kmPerLiter: number }[]>;
+
+  // Fuel Records (New Vehicle Check-in System)
+  getFuelRecords(): Promise<FuelRecord[]>;
+  getFuelRecord(id: number): Promise<FuelRecord | undefined>;
+  createFuelRecord(record: InsertFuelRecord): Promise<FuelRecord>;
+  updateFuelRecord(id: number, updates: Partial<InsertFuelRecord>): Promise<FuelRecord | undefined>;
+  deleteFuelRecord(id: number): Promise<boolean>;
+  getFuelRecordsByVehicle(vehicleId: number): Promise<FuelRecord[]>;
+  getFuelRecordsByMonth(year: number, month: number): Promise<FuelRecord[]>;
+  getMonthlyFuelReport(year: number, month: number): Promise<{
+    vehicleId: number;
+    vehiclePlate: string;
+    vehicleModel: string;
+    totalKm: number;
+    totalLiters: number;
+    averageKmPerLiter: number;
+    totalCost: number;
+  }[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -65,11 +83,13 @@ export class MemStorage implements IStorage {
   private suppliers: Map<number, Supplier>;
   private companies: Map<number, Company>;
   private vehicles: Map<number, Vehicle>;
+  private fuelRecords: Map<number, FuelRecord>;
   private currentUserId: number;
   private currentRequisitionId: number;
   private currentSupplierId: number;
   private currentCompanyId: number;
   private currentVehicleId: number;
+  private currentFuelRecordId: number;
   private loggedInUserId: number | null = null;
   
   // Cache para melhorar performance
@@ -83,11 +103,13 @@ export class MemStorage implements IStorage {
     this.suppliers = new Map();
     this.companies = new Map();
     this.vehicles = new Map();
+    this.fuelRecords = new Map();
     this.currentUserId = 1;
     this.currentRequisitionId = 1;
     this.currentSupplierId = 1;
     this.currentCompanyId = 1;
     this.currentVehicleId = 1;
+    this.currentFuelRecordId = 1;
 
     // Add sample data for demonstration
     this.addSampleData();
@@ -984,6 +1006,133 @@ export class MemStorage implements IStorage {
       .sort((a, b) => b.kmPerLiter - a.kmPerLiter);
   }
 
+  // Fuel Records (New Vehicle Check-in System) Implementation
+  async getFuelRecords(): Promise<FuelRecord[]> {
+    return Array.from(this.fuelRecords.values()).sort((a, b) => 
+      new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+    );
+  }
+
+  async getFuelRecord(id: number): Promise<FuelRecord | undefined> {
+    return this.fuelRecords.get(id);
+  }
+
+  async createFuelRecord(record: InsertFuelRecord): Promise<FuelRecord> {
+    const now = new Date().toISOString();
+    const totalCost = (parseFloat(record.litersRefueled) * parseFloat(record.pricePerLiter)).toFixed(2);
+    
+    const newRecord: FuelRecord = {
+      id: this.currentFuelRecordId++,
+      ...record,
+      fuelStation: record.fuelStation || null,
+      notes: record.notes || null,
+      totalCost,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.fuelRecords.set(newRecord.id, newRecord);
+    this.statsCache = null;
+    return newRecord;
+  }
+
+  async updateFuelRecord(id: number, updates: Partial<InsertFuelRecord>): Promise<FuelRecord | undefined> {
+    const existingRecord = this.fuelRecords.get(id);
+    if (!existingRecord) return undefined;
+
+    const now = new Date().toISOString();
+    let totalCost = existingRecord.totalCost;
+    
+    // Recalculate total cost if liters or price changes
+    if (updates.litersRefueled || updates.pricePerLiter) {
+      const liters = updates.litersRefueled || existingRecord.litersRefueled;
+      const price = updates.pricePerLiter || existingRecord.pricePerLiter;
+      totalCost = (parseFloat(liters) * parseFloat(price)).toFixed(2);
+    }
+
+    const updatedRecord: FuelRecord = {
+      ...existingRecord,
+      ...updates,
+      totalCost,
+      updatedAt: now,
+    };
+
+    this.fuelRecords.set(id, updatedRecord);
+    this.statsCache = null;
+    return updatedRecord;
+  }
+
+  async deleteFuelRecord(id: number): Promise<boolean> {
+    const deleted = this.fuelRecords.delete(id);
+    if (deleted) {
+      this.statsCache = null;
+    }
+    return deleted;
+  }
+
+  async getFuelRecordsByVehicle(vehicleId: number): Promise<FuelRecord[]> {
+    return Array.from(this.fuelRecords.values())
+      .filter(record => record.vehicleId === vehicleId)
+      .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime());
+  }
+
+  async getFuelRecordsByMonth(year: number, month: number): Promise<FuelRecord[]> {
+    return Array.from(this.fuelRecords.values())
+      .filter(record => {
+        const recordDate = new Date(record.recordDate);
+        return recordDate.getFullYear() === year && recordDate.getMonth() === month - 1;
+      })
+      .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime());
+  }
+
+  async getMonthlyFuelReport(year: number, month: number): Promise<{
+    vehicleId: number;
+    vehiclePlate: string;
+    vehicleModel: string;
+    totalKm: number;
+    totalLiters: number;
+    averageKmPerLiter: number;
+    totalCost: number;
+  }[]> {
+    const monthlyRecords = await this.getFuelRecordsByMonth(year, month);
+    const vehicles = Array.from(this.vehicles.values());
+    const vehicleStats = new Map<number, {
+      vehiclePlate: string;
+      vehicleModel: string;
+      totalKm: number;
+      totalLiters: number;
+      totalCost: number;
+    }>();
+
+    monthlyRecords.forEach(record => {
+      const vehicle = vehicles.find(v => v.id === record.vehicleId);
+      if (!vehicle) return;
+
+      const current = vehicleStats.get(record.vehicleId) || {
+        vehiclePlate: vehicle.plate,
+        vehicleModel: vehicle.model,
+        totalKm: 0,
+        totalLiters: 0,
+        totalCost: 0,
+      };
+
+      current.totalKm += parseFloat(record.distanceTraveled);
+      current.totalLiters += parseFloat(record.litersRefueled);
+      current.totalCost += parseFloat(record.totalCost);
+      vehicleStats.set(record.vehicleId, current);
+    });
+
+    return Array.from(vehicleStats.entries()).map(([vehicleId, stats]) => ({
+      vehicleId,
+      vehiclePlate: stats.vehiclePlate,
+      vehicleModel: stats.vehicleModel,
+      totalKm: stats.totalKm,
+      totalLiters: stats.totalLiters,
+      averageKmPerLiter: stats.totalLiters > 0 ? parseFloat((stats.totalKm / stats.totalLiters).toFixed(2)) : 0,
+      totalCost: stats.totalCost,
+    })).sort((a, b) => b.averageKmPerLiter - a.averageKmPerLiter);
+  }
+
   // Data cleanup methods
   async cleanupRequisitions(): Promise<number> {
     const count = this.fuelRequisitions.size;
@@ -1010,6 +1159,13 @@ export class MemStorage implements IStorage {
     const count = this.companies.size;
     this.companies.clear();
     this.currentCompanyId = 1;
+    return count;
+  }
+
+  async cleanupFuelRecords(): Promise<number> {
+    const count = this.fuelRecords.size;
+    this.fuelRecords.clear();
+    this.currentFuelRecordId = 1;
     return count;
   }
 }

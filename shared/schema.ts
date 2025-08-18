@@ -235,3 +235,54 @@ export const insertCompanySchema = createInsertSchema(companies, {
 
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type Company = typeof companies.$inferSelect;
+
+// New fuel records table for vehicle check-in system
+export const fuelRecords = pgTable("fuel_records", {
+  id: serial("id").primaryKey(),
+  vehicleId: integer("vehicle_id").notNull(),
+  currentMileage: text("current_mileage").notNull(), // Quilometragem atual
+  previousMileage: text("previous_mileage").notNull(), // Quilometragem anterior
+  distanceTraveled: text("distance_traveled").notNull(), // Quilometragem rodada entre abastecimentos
+  fuelType: text("fuel_type").notNull(),
+  litersRefueled: text("liters_refueled").notNull(), // Litros abastecidos
+  pricePerLiter: text("price_per_liter").notNull(), // Valor por litro
+  totalCost: text("total_cost").notNull(),
+  operatorId: integer("operator_id").notNull(),
+  fuelStation: text("fuel_station"), // Posto de combustível
+  notes: text("notes"), // Observações
+  recordDate: text("record_date").notNull(),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export const insertFuelRecordSchema = createInsertSchema(fuelRecords, {
+  vehicleId: z.number().min(1, "Veículo é obrigatório"),
+  currentMileage: z.string().refine((val) => parseFloat(val) >= 0, {
+    message: "Quilometragem atual deve ser maior ou igual a 0",
+  }),
+  previousMileage: z.string().refine((val) => parseFloat(val) >= 0, {
+    message: "Quilometragem anterior deve ser maior ou igual a 0",
+  }),
+  distanceTraveled: z.string().refine((val) => parseFloat(val) >= 0, {
+    message: "Distância rodada deve ser maior ou igual a 0",
+  }),
+  fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
+    errorMap: () => ({ message: "Tipo de combustível inválido" }),
+  }),
+  litersRefueled: z.string().refine((val) => parseFloat(val) > 0, {
+    message: "Litros abastecidos deve ser maior que 0",
+  }),
+  pricePerLiter: z.string().refine((val) => parseFloat(val) > 0, {
+    message: "Preço por litro deve ser maior que 0",
+  }),
+  operatorId: z.number().min(1, "Operador é obrigatório"),
+  recordDate: z.string().min(1, "Data do registro é obrigatória"),
+}).omit({
+  id: true,
+  totalCost: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertFuelRecord = z.infer<typeof insertFuelRecordSchema>;
+export type FuelRecord = typeof fuelRecords.$inferSelect;
