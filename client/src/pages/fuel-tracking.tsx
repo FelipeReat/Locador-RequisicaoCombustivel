@@ -151,7 +151,7 @@ export default function FuelTracking() {
 
   // Watch form values for automatic calculations
   const watchedValues = form.watch(['currentMileage', 'previousMileage']);
-  
+
   useEffect(() => {
     const [currentMileage, previousMileage] = watchedValues;
     if (currentMileage && previousMileage) {
@@ -170,7 +170,7 @@ export default function FuelTracking() {
     const vehiclePlate = vehicle?.plate || '';
     const user = users.find(u => u.id === record.operatorId);
     const operatorName = user?.fullName || user?.username || '';
-    
+
     const matchesSearch = 
       vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (record.fuelStation || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -216,13 +216,13 @@ export default function FuelTracking() {
       'Data', 'Placa', 'Combustível', 'KM Atual', 'KM Anterior', 'KM Rodado',
       'Litros', 'Preço/L (R$)', 'Total (R$)', 'Posto', 'Operador'
     ];
-    
+
     const csvContent = [
       headers.join(','),
       ...filteredRecords.map(record => {
         const vehicle = vehicles.find(v => v.id === record.vehicleId);
         const user = users.find(u => u.id === record.operatorId);
-        
+
         return [
           new Date(record.recordDate).toLocaleDateString('pt-BR'),
           vehicle?.plate || '',
@@ -284,7 +284,7 @@ export default function FuelTracking() {
             Sistema de bater ponto de abastecimento de veículos
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           <Button 
             onClick={handleMonthlyReport}
@@ -294,7 +294,7 @@ export default function FuelTracking() {
             <BarChart3 className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Relatório Mensal</span>
           </Button>
-          
+
           <Dialog open={isNewRecordModalOpen} onOpenChange={setIsNewRecordModalOpen}>
             <DialogTrigger asChild>
               <Button 
@@ -549,11 +549,11 @@ export default function FuelTracking() {
                         console.log('Form values:', form.getValues());
                         console.log('Form is valid:', form.formState.isValid);
                         console.log('Form state:', form.formState);
-                        
+
                         // Trigger validation manually
                         const isValid = await form.trigger();
                         console.log('Manual validation result:', isValid);
-                        
+
                         if (!isValid) {
                           console.log('Form validation failed, errors:', form.formState.errors);
                           e.preventDefault();
@@ -571,7 +571,7 @@ export default function FuelTracking() {
         </div>
       </div>
 
-      
+
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -746,7 +746,7 @@ export default function FuelTracking() {
                   const vehicle = vehicles.find(v => v.id === record.vehicleId);
                   const user = users.find(u => u.id === record.operatorId);
                   const efficiency = parseFloat(record.distanceTraveled) / parseFloat(record.litersRefueled);
-                  
+
                   return (
                     <TableRow key={record.id} data-testid={`row-record-${record.id}`}>
                       <TableCell className="mobile-text-sm">
