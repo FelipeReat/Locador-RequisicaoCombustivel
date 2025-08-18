@@ -4,8 +4,8 @@ import { DatabaseStorage } from "./db-storage";
 import { MemStorage } from "./storage";
 import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema, insertFuelRecordSchema } from "@shared/schema";
 
-// Use memory storage for development
-const storage = new MemStorage();
+// Use database storage for production
+const storage = new DatabaseStorage();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
