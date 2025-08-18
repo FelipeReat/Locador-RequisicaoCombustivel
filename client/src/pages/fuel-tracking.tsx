@@ -62,7 +62,6 @@ export default function FuelTracking() {
   // Fetch fuel records
   const { data: fuelRecords = [], isLoading } = useQuery<FuelRecord[]>({
     queryKey: ['/api/fuel-records'],
-    refetchInterval: 2000,
   });
 
   // Fetch vehicles
@@ -252,7 +251,7 @@ export default function FuelTracking() {
     );
   }
 
-  const userCanRegister = currentUser && canRegisterToday(currentUser.role);
+  const userCanRegister = !!currentUser;
 
   return (
     <div className="mobile-content space-y-4 lg:space-y-6">
@@ -535,18 +534,7 @@ export default function FuelTracking() {
         </div>
       </div>
 
-      {/* Access Control Alert */}
-      {currentUser && !userCanRegister && (
-        <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-          <Clock className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800 dark:text-orange-200">
-            {!isWeekday() 
-              ? "Registros de abastecimento são permitidos apenas em dias úteis (segunda a sexta-feira). Gerentes e administradores podem registrar nos finais de semana."
-              : "Você não tem permissão para registrar abastecimentos."
-            }
-          </AlertDescription>
-        </Alert>
-      )}
+      
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
