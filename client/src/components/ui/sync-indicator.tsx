@@ -37,14 +37,17 @@ export function SyncIndicator() {
   // Monitora queries em execução
   useEffect(() => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event?.query?.state.fetchStatus === 'fetching') {
-        setSyncStatus('syncing');
-      } else if (event?.query?.state.fetchStatus === 'idle') {
-        setSyncStatus('synced');
-        setLastSync(new Date());
-        // Volta para 'online' após 2 segundos
-        setTimeout(() => setSyncStatus('online'), 2000);
-      }
+      // Usar requestAnimationFrame para evitar setState durante render
+      requestAnimationFrame(() => {
+        if (event?.query?.state.fetchStatus === 'fetching') {
+          setSyncStatus('syncing');
+        } else if (event?.query?.state.fetchStatus === 'idle') {
+          setSyncStatus('synced');
+          setLastSync(new Date());
+          // Volta para 'online' após 2 segundos
+          setTimeout(() => setSyncStatus('online'), 2000);
+        }
+      });
     });
 
     return unsubscribe;

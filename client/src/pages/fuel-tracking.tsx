@@ -116,14 +116,14 @@ export default function FuelTracking() {
   const form = useForm<InsertFuelRecord>({
     resolver: zodResolver(insertFuelRecordSchema),
     defaultValues: {
-      vehicleId: 0,
+      vehicleId: vehicles.length > 0 ? vehicles[0].id : 59, // Use first vehicle or fallback
       currentMileage: '',
       previousMileage: '',
       distanceTraveled: '',
       fuelType: 'gasolina',
       litersRefueled: '',
       pricePerLiter: '',
-      operatorId: currentUser?.id || 0,
+      operatorId: currentUser?.id || 14, // Use current user or fallback
       fuelStation: '',
       notes: '',
       recordDate: new Date().toISOString().split('T')[0],
@@ -179,6 +179,7 @@ export default function FuelTracking() {
   const averagePrice = totalLiters > 0 ? totalCost / totalLiters : 0;
 
   const onSubmit = (data: InsertFuelRecord) => {
+    console.log('Form submitted with data:', data);
     createFuelRecordMutation.mutate(data);
   };
 
@@ -523,6 +524,12 @@ export default function FuelTracking() {
                       className="w-full sm:w-auto"
                       disabled={createFuelRecordMutation.isPending}
                       data-testid="button-save"
+                      onClick={(e) => {
+                        console.log('Save button clicked');
+                        console.log('Form errors:', form.formState.errors);
+                        console.log('Form values:', form.getValues());
+                        console.log('Form is valid:', form.formState.isValid);
+                      }}
                     >
                       {createFuelRecordMutation.isPending ? 'Salvando...' : 'Salvar Registro'}
                     </Button>
