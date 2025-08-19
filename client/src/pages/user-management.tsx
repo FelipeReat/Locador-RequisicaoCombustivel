@@ -68,22 +68,22 @@ function UserManagement() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Check if current user is admin
-  const isAdmin = currentUser?.role === "admin";
+  // Check if current user is admin or manager
+  const isAdminOrManager = currentUser?.role === "admin" || currentUser?.role === "manager";
 
-  // If not admin, redirect or show access denied
+  // If not admin or manager, redirect or show access denied
   useEffect(() => {
-    if (currentUser && !isAdmin) {
+    if (currentUser && !isAdminOrManager) {
       navigate("/dashboard");
     }
-  }, [currentUser, isAdmin, navigate]);
+  }, [currentUser, isAdminOrManager, navigate]);
 
   if (!currentUser) {
     // Render a loading spinner or null while waiting for auth data
     return <LoadingSpinner message={t("loading-auth-data")} />;
   }
 
-  if (!isAdmin) {
+  if (!isAdminOrManager) {
     return null; // Will redirect in useEffect
   }
 

@@ -26,10 +26,7 @@ export default function Login() {
 
     try {
       await login(username, password);
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Bem-vindo ao sistema!",
-      });
+      // Success toast will be handled by auth context, don't duplicate here
     } catch (err: any) {
       console.error('Login error:', err);
       
@@ -40,11 +37,11 @@ export default function Login() {
         if (err.message.includes('Usuário não encontrado') || err.message.includes('User not found')) {
           errorMessage = 'Usuário não encontrado. Verifique se o nome de usuário está correto.';
         } else if (err.message.includes('Senha incorreta') || err.message.includes('Invalid password') || err.message.includes('password')) {
-          errorMessage = '🔐 Senha incorreta. Verifique sua senha e tente novamente.';
+          errorMessage = 'Senha incorreta. Verifique sua senha e tente novamente.';
         } else if (err.message.includes('Credenciais inválidas') || err.message.includes('Invalid credentials')) {
-          errorMessage = '❌ Usuário ou senha incorretos. Verifique seus dados e tente novamente.';
+          errorMessage = 'Usuário ou senha incorretos. Verifique seus dados e tente novamente.';
         } else if (err.message.includes('authentication') || err.message.includes('login')) {
-          errorMessage = '⚠️ Falha na autenticação. Verifique seu usuário e senha.';
+          errorMessage = 'Falha na autenticação. Verifique seu usuário e senha.';
         } else {
           errorMessage = err.message;
         }
@@ -54,7 +51,7 @@ export default function Login() {
       
       // Show toast with error for better visibility
       toast({
-        title: "Erro no login",
+        title: "Acesso negado",
         description: errorMessage,
         variant: "destructive",
       });

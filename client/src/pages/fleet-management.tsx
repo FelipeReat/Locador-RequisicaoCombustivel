@@ -229,7 +229,15 @@ function FleetManagement() {
 
   const handleNew = () => {
     setEditingVehicle(null);
-    form.reset();
+    // Reset form with explicit default values to prevent pre-filling
+    form.reset({
+      plate: "",
+      model: "",
+      brand: "",
+      year: new Date().getFullYear(),
+      fuelType: "gasolina",
+      mileage: "0",
+    });
     setIsDialogOpen(true);
   };
 

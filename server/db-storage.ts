@@ -175,11 +175,23 @@ export class DatabaseStorage implements IStorage {
 
   async authenticateUser(credentials: LoginUser): Promise<User | null> {
     const user = await this.getUserByUsername(credentials.username);
-    if (user && user.password === credentials.password && user.active === "true") {
-      this.loggedInUserId = user.id;
-      return user;
+    if (!user) {
+      throw new Error('Usuário não encontrado');
     }
-    return null;
+
+    if (user.password !== credentials.password) {
+      throw new Error('Senha incorreta');
+    }
+
+    if (user.active !== 'true') {
+      throw new Error('Usuário inativo');
+    }
+
+    // Store the logged in user ID and clear cache to ensure fresh data
+    this.loggedInUserId = user.id;
+    this.invalidateCache();
+    
+    return { ...user, password: '' }; // Don't return password in response
   }
 
   logoutCurrentUser(): void {
@@ -521,22 +533,22 @@ export class DatabaseStorage implements IStorage {
   // Data cleanup methods - Optimized to avoid unnecessary SELECT before DELETE
   async cleanupRequisitions(): Promise<number> {
     const result = await db.delete(fuelRequisitions);
-    return result.changes || 0;
+    return result.rowCount || 0;
   }
 
   async cleanupVehicles(): Promise<number> {
     const result = await db.delete(vehicles);
-    return result.changes || 0;
+    return result.rowCount || 0;
   }
 
   async cleanupSuppliers(): Promise<number> {
     const result = await db.delete(suppliers);
-    return result.changes || 0;
+    return result.rowCount || 0;
   }
 
   async cleanupCompanies(): Promise<number> {
     const result = await db.delete(companies);
-    return result.changes || 0;
+    return result.rowCount || 0;
   }
 
   // Fuel Records Methods
@@ -581,7 +593,7 @@ export class DatabaseStorage implements IStorage {
   async updateFuelRecord(id: number, updates: Partial<InsertFuelRecord>): Promise<FuelRecord | undefined> {
     try {
       // Recalculate total cost if price or liters changed
-      let updateData = { ...updates };
+      let updateData: any = { ...updates };
       if (updates.litersRefueled && updates.pricePerLiter) {
         updateData.totalCost = (parseFloat(updates.litersRefueled) * parseFloat(updates.pricePerLiter)).toFixed(2);
       }
@@ -601,7 +613,7 @@ export class DatabaseStorage implements IStorage {
   async deleteFuelRecord(id: number): Promise<boolean> {
     try {
       const result = await db.delete(fuelRecords).where(eq(fuelRecords.id, id));
-      return (result.changes || 0) > 0;
+      return (result.rowCount || 0) > 0;
     } catch (error) {
       console.error('Error deleting fuel record:', error);
       return false;
@@ -687,10 +699,30 @@ export class DatabaseStorage implements IStorage {
   async cleanupFuelRecords(): Promise<number> {
     try {
       const result = await db.delete(fuelRecords);
-      return result.changes || 0;
+      return result.rowCount || 0;
     } catch (error) {
       console.error('Error cleaning up fuel records:', error);
       return 0;
+    }
+  }
+
+  async getFuelRecordsByMonth(year: number, month: number): Promise<FuelRecord[]> {
+    try {
+      const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+      const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+      
+      const records = await db.select()
+        .from(fuelRecords)
+        .where(and(
+          gte(fuelRecords.recordDate, startDate),
+          lte(fuelRecords.recordDate, endDate)
+        ))
+        .orderBy(desc(fuelRecords.recordDate));
+      
+      return records;
+    } catch (error) {
+      console.error('Error fetching fuel records by month:', error);
+      return [];
     }
   }
 }

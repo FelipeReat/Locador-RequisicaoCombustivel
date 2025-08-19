@@ -212,9 +212,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
 
-      // Only allow editing if the status is 'pending'
-      if (currentRequisition.status !== 'pending') {
-        return res.status(400).json({ message: "Só é possível editar requisições pendentes" });
+      // Allow editing of approved requisitions for values updates (quantity, pricePerLiter, fiscalCoupon)
+      // Only restrict editing of basic data for pending requisitions
+      const allowedFields = ['quantity', 'pricePerLiter', 'fiscalCoupon'];
+      const isValuesUpdate = Object.keys(validatedData).every(key => allowedFields.includes(key));
+      
+      if (currentRequisition.status === 'pending' || 
+          (currentRequisition.status === 'approved' && isValuesUpdate)) {
+        // Allow the update
+      } else if (currentRequisition.status === 'approved' && !isValuesUpdate) {
+        return res.status(400).json({ message: "Para requisições aprovadas, só é possível editar valores (quantidade, preço, cupom fiscal)" });
+      } else {
+        return res.status(400).json({ message: "Não é possível editar requisições rejeitadas ou finalizadas" });
       }
 
       const requisition = await storage.updateFuelRequisition(id, validatedData);
@@ -223,9 +232,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // This case should ideally not happen if currentRequisition was found, but good for safety
         return res.status(404).json({ message: "Requisição não encontrada após a verificação" });
       }
-
-      // Ensure the status remains 'pending' - PUT endpoint doesn't handle status changes
-      // Status changes should be handled by the PATCH endpoint
 
       res.json(requisition);
     } catch (error) {
