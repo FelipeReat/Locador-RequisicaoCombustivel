@@ -7,22 +7,53 @@ import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateU
 // Use database storage for production
 const storage = new DatabaseStorage();
 
+// Session management
+const userSessions = new Map<string, { userId: number; timestamp: number }>();
+
+const generateSessionId = () => {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+
+const getUserFromSession = async (sessionId: string) => {
+  const session = userSessions.get(sessionId);
+  if (!session) return null;
+  
+  // Clean up expired sessions (24 hours)
+  if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
+    userSessions.delete(sessionId);
+    return null;
+  }
+  
+  return await storage.getUser(session.userId);
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
       const validatedData = loginSchema.parse(req.body);
       const user = await storage.authenticateUser(validatedData);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Credenciais inválidas" });
+      }
 
-      res.json(user);
+      // Create session for authenticated user
+      const sessionId = generateSessionId();
+      userSessions.set(sessionId, {
+        userId: user.id,
+        timestamp: Date.now()
+      });
+
+      res.json({ ...user, sessionId });
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message === 'USER_NOT_FOUND') {
+        if (error.message.includes('Usuário não encontrado')) {
           return res.status(401).json({ 
             message: "Usuário não encontrado. Verifique se o nome de usuário está correto.",
             errorType: "USER_NOT_FOUND"
           });
-        } else if (error.message === 'INVALID_PASSWORD') {
+        } else if (error.message.includes('Senha incorreta')) {
           return res.status(401).json({ 
             message: "Senha incorreta. Verifique sua senha e tente novamente.",
             errorType: "INVALID_PASSWORD"
@@ -59,7 +90,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/logout", async (req, res) => {
     try {
-      // Clear the current logged in user
+      const sessionId = req.headers['x-session-id'] as string;
+      if (sessionId) {
+        userSessions.delete(sessionId);
+      }
       storage.logoutCurrentUser();
       res.json({ message: "Logout realizado com sucesso" });
     } catch (error) {
@@ -67,10 +101,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
   // User routes
   app.get("/api/user/profile", async (req, res) => {
     try {
-      const user = await storage.getCurrentUser();
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Sessão não encontrada" });
+      }
+      
+      const user = await getUserFromSession(sessionId);
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
@@ -82,7 +123,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/user/profile", async (req, res) => {
     try {
-      const currentUser = await storage.getCurrentUser();
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Sessão não encontrada" });
+      }
+      
+      const currentUser = await getUserFromSession(sessionId);
       if (!currentUser) {
         return res.status(401).json({ message: "Não autenticado" });
       }
@@ -106,7 +152,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user/change-password", async (req, res) => {
     try {
-      const currentUser = await storage.getCurrentUser();
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Sessão não encontrada" });
+      }
+      
+      const currentUser = await getUserFromSession(sessionId);
       if (!currentUser) {
         return res.status(401).json({ message: "Não autenticado" });
       }

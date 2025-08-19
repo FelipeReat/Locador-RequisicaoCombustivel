@@ -10,6 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**August 19, 2025 - Critical Session Management and Bug Fixes**
+- Fixed critical user session conflicts that were causing user data mixing between different browser sessions
+- Implemented proper session-based authentication with unique session IDs for each user login
+- Resolved manager access issue for user management page (now allows admin OR manager roles)
+- Fixed vehicle form pre-filling bug by explicitly setting default values in reset function
+- Updated edit values validation to allow editing approved requisitions (quantity, price, fiscal coupon)
+- Enhanced login error messages with user-friendly Portuguese text without emojis
+- Fixed all LSP/TypeScript errors in database storage layer
+- Improved cache invalidation during authentication to prevent data leakage
+- Updated API client to include session IDs in all authenticated requests
+
 **August 18, 2025 - Migration to Replit Environment and Bug Fixes**
 - Successfully completed migration from Replit Agent to standard Replit environment
 - Created PostgreSQL database and migrated all schema tables (users, vehicles, fuel_requisitions, suppliers, companies, fuel_records)

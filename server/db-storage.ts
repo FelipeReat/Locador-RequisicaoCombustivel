@@ -28,7 +28,7 @@ import {
 import { IStorage } from './storage';
 
 export class DatabaseStorage implements IStorage {
-  private loggedInUserId: number | null = null;
+  // Remove the shared loggedInUserId - this was causing session conflicts
   private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
   private readonly DEFAULT_TTL = 1000; // 1 segundo apenas para máxima responsividade
 
@@ -169,8 +169,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCurrentUser(): Promise<User | undefined> {
-    if (!this.loggedInUserId) return undefined;
-    return await this.getUser(this.loggedInUserId);
+    // This method should now receive user ID from session context
+    // For now, return undefined to prevent session conflicts
+    return undefined;
   }
 
   async authenticateUser(credentials: LoginUser): Promise<User | null> {
@@ -187,15 +188,15 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Usuário inativo');
     }
 
-    // Store the logged in user ID and clear cache to ensure fresh data
-    this.loggedInUserId = user.id;
+    // Clear cache to ensure fresh data but don't store user ID globally
     this.invalidateCache();
     
     return { ...user, password: '' }; // Don't return password in response
   }
 
   logoutCurrentUser(): void {
-    this.loggedInUserId = null;
+    // Clear cache on logout to prevent data leakage
+    this.invalidateCache();
   }
 
   // Suppliers with caching

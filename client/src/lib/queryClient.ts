@@ -12,7 +12,8 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Adicionar token de autenticação se disponível
+  // Include session ID for authenticated requests
+  const sessionId = localStorage.getItem('session-id');
   const authUser = localStorage.getItem('auth-user');
   const headers: Record<string, string> = {};
 
@@ -22,6 +23,10 @@ export async function apiRequest(
 
   if (authUser) {
     headers['x-auth-token'] = 'authenticated';
+  }
+
+  if (sessionId) {
+    headers['x-session-id'] = sessionId;
   }
 
   const res = await fetch(url, {
@@ -41,12 +46,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // Adicionar token de autenticação se disponível
+    // Include session ID and auth token for authenticated requests
+    const sessionId = localStorage.getItem('session-id');
     const authUser = localStorage.getItem('auth-user');
     const headers: Record<string, string> = {};
 
     if (authUser) {
       headers['x-auth-token'] = 'authenticated';
+    }
+
+    if (sessionId) {
+      headers['x-session-id'] = sessionId;
     }
 
     const res = await fetch(queryKey.join("/") as string, {

@@ -82,9 +82,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       return response.json();
     },
-    onSuccess: (user) => {
+    onSuccess: (userWithSession) => {
+      // Store the session ID separately for API calls
+      if (userWithSession.sessionId) {
+        localStorage.setItem('session-id', userWithSession.sessionId);
+      }
+      
+      // Remove sessionId from user object before storing
+      const { sessionId, ...user } = userWithSession;
       setUser(user);
-      localStorage.setItem('auth-user', JSON.stringify(user)); // Ensure user is saved on success
+      localStorage.setItem('auth-user', JSON.stringify(user));
       queryClient.setQueryData(['/api/auth/me'], user);
       navigate('/dashboard');
     },
@@ -103,7 +110,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('Logout function called');
     try {
       // Call the logout endpoint to clear server-side session
-      await apiRequest('POST', '/api/auth/logout', {});
+      const sessionId = localStorage.getItem('session-id');
+      if (sessionId) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-session-id': sessionId,
+          },
+        });
+      }
     } catch (error) {
       console.error('Logout API error:', error);
     }
@@ -113,6 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     queryClient.setQueryData(['/api/auth/me'], null);
     localStorage.removeItem('auth-token');
     localStorage.removeItem('auth-user');
+    localStorage.removeItem('session-id');
   };
 
   const value = {
