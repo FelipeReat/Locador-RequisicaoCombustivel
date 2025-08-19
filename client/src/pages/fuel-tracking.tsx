@@ -12,25 +12,25 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
-import { Plus, Search, Filter, Download, Clock, AlertTriangle, BarChart3, Calendar } from 'lucide-react';
+import { Plus, Search, Filter, Download, Clock, AlertTriangle, BarChart3, Calendar, Car, Fuel, Calculator } from 'lucide-react';
 import { insertFuelRecordSchema, type InsertFuelRecord, type FuelRecord, type Vehicle, type User } from '@shared/schema';
 import { useToast } from '../hooks/use-toast';
 
-// Helper function to check if current user can register on weekends
-const canRegisterOnWeekends = (userRole: string) => {
-  return userRole === 'admin' || userRole === 'manager';
-};
-
-// Helper function to check if it's a weekday
-const isWeekday = () => {
-  const day = new Date().getDay();
-  return day >= 1 && day <= 5; // Monday to Friday
-};
-
-// Helper function to check if user can register today
-const canRegisterToday = (userRole: string) => {
-  return isWeekday() || canRegisterOnWeekends(userRole);
-};
+interface VehicleCheckIn {
+  vehicleId: number;
+  kmInicial: string;
+  kmFinal: string;
+  kmPercorrido: string;
+  quantidadeLitros: string;
+  precoPorLitro: string;
+  totalReais: string;
+  ultimoAbastecimento: string;
+  kmAbastecimento: string;
+  kmRodado: string;
+  eficiencia: string;
+  operatorId: number;
+  data: string;
+}
 
 interface MonthlyReport {
   vehicleId: number;
@@ -44,9 +44,8 @@ interface MonthlyReport {
 
 export default function FuelTracking() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterVehicle, setFilterVehicle] = useState('all');
-  const [filterFuelType, setFilterFuelType] = useState('all');
-  const [isNewRecordModalOpen, setIsNewRecordModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
   const [isMonthlyReportModalOpen, setIsMonthlyReportModalOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -64,9 +63,10 @@ export default function FuelTracking() {
     queryKey: ['/api/fuel-records'],
   });
 
-  // Fetch vehicles
+  // Fetch vehicles (ordenados alfabeticamente)
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
     queryKey: ['/api/vehicles'],
+    select: (data) => [...data].sort((a, b) => a.plate.localeCompare(b.plate)),
   });
 
   // Fetch users
@@ -100,7 +100,7 @@ export default function FuelTracking() {
         title: "Sucesso",
         description: "Registro de abastecimento criado com sucesso!",
       });
-      setIsNewRecordModalOpen(false);
+      setIsCheckInModalOpen(false);
       form.reset();
     },
     onError: (error: Error) => {
@@ -112,11 +112,11 @@ export default function FuelTracking() {
     },
   });
 
-  // Form setup with proper default values
+  // Form setup
   const form = useForm<InsertFuelRecord>({
     resolver: zodResolver(insertFuelRecordSchema),
     defaultValues: {
-      vehicleId: vehicles.length > 0 ? vehicles[0].id : 59,
+      vehicleId: 0,
       currentMileage: '',
       previousMileage: '',
       distanceTraveled: '',
@@ -130,30 +130,13 @@ export default function FuelTracking() {
     },
   });
 
-  // Reset form defaults when data loads
-  React.useEffect(() => {
-    if (vehicles.length > 0 && currentUser?.id) {
-      form.reset({
-        vehicleId: vehicles[0].id,
-        currentMileage: '',
-        previousMileage: '',
-        distanceTraveled: '',
-        fuelType: 'gasolina' as const,
-        litersRefueled: '',
-        pricePerLiter: '',
-        operatorId: currentUser.id,
-        fuelStation: '',
-        notes: '',
-        recordDate: new Date().toISOString().split('T')[0],
-      });
-    }
-  }, [vehicles, currentUser, form]);
-
   // Watch form values for automatic calculations
-  const watchedValues = form.watch(['currentMileage', 'previousMileage']);
+  const watchedValues = form.watch(['currentMileage', 'previousMileage', 'litersRefueled', 'pricePerLiter']);
 
   useEffect(() => {
-    const [currentMileage, previousMileage] = watchedValues;
+    const [currentMileage, previousMileage, litersRefueled, pricePerLiter] = watchedValues;
+
+    // Calculate distance traveled
     if (currentMileage && previousMileage) {
       const current = parseFloat(currentMileage);
       const previous = parseFloat(previousMileage);
@@ -164,46 +147,55 @@ export default function FuelTracking() {
     }
   }, [watchedValues, form]);
 
-  // Filter records
-  const filteredRecords = fuelRecords.filter(record => {
-    const vehicle = vehicles.find(v => v.id === record.vehicleId);
-    const vehiclePlate = vehicle?.plate || '';
-    const user = users.find(u => u.id === record.operatorId);
-    const operatorName = user?.fullName || user?.username || '';
+  // Filter vehicles
+  const filteredVehicles = vehicles.filter(vehicle => 
+    vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    vehicle.model.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    const matchesSearch = 
-      vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (record.fuelStation || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      operatorName.toLowerCase().includes(searchTerm.toLowerCase());
+  // Get latest record for a vehicle
+  const getLatestRecord = (vehicleId: number) => {
+    return fuelRecords
+      .filter(record => record.vehicleId === vehicleId)
+      .sort((a, b) => new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime())[0];
+  };
 
-    const matchesVehicle = filterVehicle === 'all' || vehiclePlate === filterVehicle;
-    const matchesFuelType = filterFuelType === 'all' || record.fuelType === filterFuelType;
+  // Get vehicle records for today
+  const getTodayRecords = (vehicleId: number) => {
+    const today = new Date().toISOString().split('T')[0];
+    return fuelRecords.filter(record => 
+      record.vehicleId === vehicleId && 
+      record.recordDate === today
+    );
+  };
 
-    return matchesSearch && matchesVehicle && matchesFuelType;
-  });
+  const handleVehicleCheckIn = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    const latestRecord = getLatestRecord(vehicle.id);
 
-  // Unique values for filters
-  const uniqueVehicles = Array.from(new Set(
-    fuelRecords.map(record => {
-      const vehicle = vehicles.find(v => v.id === record.vehicleId);
-      return vehicle?.plate;
-    }).filter(Boolean)
-  ));
-  const uniqueFuelTypes = Array.from(new Set(fuelRecords.map(record => record.fuelType)));
+    form.reset({
+      vehicleId: vehicle.id,
+      currentMileage: '',
+      previousMileage: latestRecord?.currentMileage || '0',
+      distanceTraveled: '',
+      fuelType: 'gasolina' as const,
+      litersRefueled: '',
+      pricePerLiter: '',
+      operatorId: currentUser?.id || 14,
+      fuelStation: '',
+      notes: '',
+      recordDate: new Date().toISOString().split('T')[0],
+    });
 
-  // Statistics
-  const totalRecords = fuelRecords.length;
-  const totalLiters = fuelRecords.reduce((acc, record) => acc + parseFloat(record.litersRefueled), 0);
-  const totalCost = fuelRecords.reduce((acc, record) => acc + parseFloat(record.totalCost), 0);
-  const averagePrice = totalLiters > 0 ? totalCost / totalLiters : 0;
+    setIsCheckInModalOpen(true);
+  };
 
   const onSubmit = (data: InsertFuelRecord) => {
-    console.log('Form submitted with data:', data);
     createFuelRecordMutation.mutate(data);
   };
 
   const handleExport = () => {
-    if (filteredRecords.length === 0) {
+    if (fuelRecords.length === 0) {
       toast({
         title: "Aviso",
         description: "Não há dados para exportar.",
@@ -213,28 +205,30 @@ export default function FuelTracking() {
     }
 
     const headers = [
-      'Data', 'Placa', 'Combustível', 'KM Atual', 'KM Anterior', 'KM Rodado',
-      'Litros', 'Preço/L (R$)', 'Total (R$)', 'Posto', 'Operador'
+      'Data', 'Placa', 'Combustível', 'KM Inicial', 'KM Final', 'KM Percorrido',
+      'Litros', 'Preço/L (R$)', 'Total (R$)', 'Posto', 'Operador', 'Eficiência (km/L)'
     ];
 
     const csvContent = [
       headers.join(','),
-      ...filteredRecords.map(record => {
+      ...fuelRecords.map(record => {
         const vehicle = vehicles.find(v => v.id === record.vehicleId);
         const user = users.find(u => u.id === record.operatorId);
+        const efficiency = parseFloat(record.distanceTraveled) / parseFloat(record.litersRefueled);
 
         return [
           new Date(record.recordDate).toLocaleDateString('pt-BR'),
           vehicle?.plate || '',
           record.fuelType,
-          record.currentMileage,
           record.previousMileage,
+          record.currentMileage,
           record.distanceTraveled,
           parseFloat(record.litersRefueled).toFixed(1),
           parseFloat(record.pricePerLiter).toFixed(2),
           parseFloat(record.totalCost).toFixed(2),
           `"${record.fuelStation || ''}"`,
-          `"${user?.fullName || user?.username || ''}"`
+          `"${user?.fullName || user?.username || ''}"`,
+          efficiency.toFixed(2)
         ].join(',');
       })
     ].join('\n');
@@ -243,7 +237,7 @@ export default function FuelTracking() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `registros-combustivel-${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `controle-combustivel-${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -271,17 +265,15 @@ export default function FuelTracking() {
     );
   }
 
-  const userCanRegister = !!currentUser;
-
   return (
     <div className="mobile-content space-y-4 lg:space-y-6">
       <div className="flex items-center justify-between gap-3 sm:gap-4">
         <div className="flex-1 min-w-0 ml-12 sm:ml-0">
           <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white truncate">
-            Controle de Combustível
+            Controle de Combustível - Check-in Veículos
           </h1>
           <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1 hidden sm:block">
-            Sistema de bater ponto de abastecimento de veículos
+            Sistema de controle diário de quilometragem e abastecimento
           </p>
         </div>
 
@@ -295,500 +287,368 @@ export default function FuelTracking() {
             <span className="hidden sm:inline">Relatório Mensal</span>
           </Button>
 
-          <Dialog open={isNewRecordModalOpen} onOpenChange={setIsNewRecordModalOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                className="shrink-0 h-8 sm:h-10"
-                disabled={!userCanRegister}
-                data-testid="button-new-record"
-              >
-                <Plus className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Registrar Abastecimento</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl mobile-container">
-              <DialogHeader>
-                <DialogTitle>Registrar Abastecimento de Veículo</DialogTitle>
-                <DialogDescription>
-                  Registre as informações de abastecimento do veículo
-                </DialogDescription>
-              </DialogHeader>
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="vehicleId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Veículo *</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(parseInt(value))}
-                            value={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger data-testid="select-vehicle">
-                                <SelectValue placeholder="Selecione o veículo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {vehicles.map((vehicle) => (
-                                <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
-                                  {vehicle.plate} - {vehicle.model}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="fuelType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tipo de Combustível *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-fuel-type">
-                                <SelectValue placeholder="Selecione o combustível" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="gasolina">Gasolina</SelectItem>
-                              <SelectItem value="etanol">Etanol</SelectItem>
-                              <SelectItem value="diesel">Diesel</SelectItem>
-                              <SelectItem value="diesel_s10">Diesel S10</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="previousMileage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quilometragem Anterior (KM) *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              step="0.1"
-                              placeholder="Ex: 15000" 
-                              data-testid="input-previous-mileage"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="currentMileage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quilometragem Atual (KM) *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              step="0.1"
-                              placeholder="Ex: 15100" 
-                              data-testid="input-current-mileage"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="distanceTraveled"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Distância Rodada (KM) *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              step="0.1"
-                              readOnly
-                              placeholder="Calculado automaticamente" 
-                              className="bg-gray-100 dark:bg-gray-800"
-                              data-testid="input-distance-traveled"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="litersRefueled"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Litros Abastecidos *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              step="0.01"
-                              placeholder="Ex: 45.50" 
-                              data-testid="input-liters-refueled"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="pricePerLiter"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Preço por Litro (R$) *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              step="0.01"
-                              placeholder="Ex: 5.89" 
-                              data-testid="input-price-per-liter"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="recordDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Data do Registro *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="date" 
-                              data-testid="input-record-date"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="fuelStation"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Posto de Combustível</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              value={field.value || ''}
-                              placeholder="Ex: Posto Shell - Centro" 
-                              data-testid="input-fuel-station"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Observações</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              value={field.value || ''}
-                              placeholder="Observações sobre o abastecimento" 
-                              data-testid="input-notes"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="mobile-button-group pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsNewRecordModalOpen(false)} 
-                      className="w-full sm:w-auto"
-                      type="button"
-                      data-testid="button-cancel"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      className="w-full sm:w-auto"
-                      disabled={createFuelRecordMutation.isPending}
-                      data-testid="button-save"
-                      onClick={async (e) => {
-                        console.log('Save button clicked');
-                        console.log('Form errors:', form.formState.errors);
-                        console.log('Form values:', form.getValues());
-                        console.log('Form is valid:', form.formState.isValid);
-                        console.log('Form state:', form.formState);
-
-                        // Trigger validation manually
-                        const isValid = await form.trigger();
-                        console.log('Manual validation result:', isValid);
-
-                        if (!isValid) {
-                          console.log('Form validation failed, errors:', form.formState.errors);
-                          e.preventDefault();
-                          return;
-                        }
-                      }}
-                    >
-                      {createFuelRecordMutation.isPending ? 'Salvando...' : 'Salvar Registro'}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <Button 
+            onClick={handleExport}
+            variant="outline" 
+            className="shrink-0 h-8 sm:h-10"
+          >
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Exportar</span>
+          </Button>
         </div>
       </div>
 
-
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <Card>
-          <CardContent className="p-4 lg:p-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 p-2 lg:p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-blue-600 rounded"></div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  Total de Registros
-                </p>
-                <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white" data-testid="stat-total-records">
-                  {totalRecords}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 lg:p-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 p-2 lg:p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-green-600 rounded"></div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  Total em Litros
-                </p>
-                <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white" data-testid="stat-total-liters">
-                  {totalLiters.toFixed(1)}L
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 lg:p-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 p-2 lg:p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-yellow-600 rounded"></div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  Custo Total
-                </p>
-                <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white" data-testid="stat-total-cost">
-                  R$ {totalCost.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 lg:p-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 p-2 lg:p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                <div className="w-4 h-4 lg:w-6 lg:h-6 bg-purple-600 rounded"></div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  Preço Médio/L
-                </p>
-                <p className="text-lg lg:text-2xl font-bold text-gray-800 dark:text-white" data-testid="stat-average-price">
-                  R$ {averagePrice.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
+      {/* Search Filter */}
       <Card>
         <CardHeader className="mobile-card">
           <CardTitle className="mobile-text-lg flex items-center">
-            <Filter className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-            Filtros
+            <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+            Buscar Veículo
           </CardTitle>
         </CardHeader>
         <CardContent className="mobile-card pt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div>
-              <Label htmlFor="search">Buscar</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Buscar por placa, posto..."
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  data-testid="input-search"
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar por placa ou modelo..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Vehicle List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredVehicles.map((vehicle) => {
+          const latestRecord = getLatestRecord(vehicle.id);
+          const todayRecords = getTodayRecords(vehicle.id);
+          const hasRecordToday = todayRecords.length > 0;
+
+          return (
+            <Card key={vehicle.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Car className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <CardTitle className="text-lg">{vehicle.plate}</CardTitle>
+                      <CardDescription className="text-sm">{vehicle.model}</CardDescription>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant={hasRecordToday ? "default" : "secondary"}
+                    className="text-xs"
+                  >
+                    {hasRecordToday ? "Registrado hoje" : "Pendente"}
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-500">Combustível:</span>
+                    <p className="font-medium">{vehicle.fuelType}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">KM Atual:</span>
+                    <p className="font-medium font-mono">
+                      {latestRecord?.currentMileage || vehicle.mileage || "0"}
+                    </p>
+                  </div>
+                </div>
+
+                {latestRecord && (
+                  <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
+                    <h4 className="text-sm font-medium mb-2 flex items-center">
+                      <Fuel className="h-4 w-4 mr-1 text-green-600" />
+                      Último Registro
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-500">Data:</span>
+                        <p>{new Date(latestRecord.recordDate).toLocaleDateString('pt-BR')}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">KM Rodado:</span>
+                        <p className="font-mono">{latestRecord.distanceTraveled}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Litros:</span>
+                        <p className="font-mono">{parseFloat(latestRecord.litersRefueled).toFixed(1)}L</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Eficiência:</span>
+                        <p className="font-mono">
+                          {(parseFloat(latestRecord.distanceTraveled) / parseFloat(latestRecord.litersRefueled)).toFixed(1)} km/L
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Button 
+                  onClick={() => handleVehicleCheckIn(vehicle)}
+                  className="w-full"
+                  variant={hasRecordToday ? "outline" : "default"}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {hasRecordToday ? "Novo Registro" : "Registrar Abastecimento"}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {filteredVehicles.length === 0 && (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-gray-500">Nenhum veículo encontrado com os filtros aplicados.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Check-in Modal */}
+      <Dialog open={isCheckInModalOpen} onOpenChange={setIsCheckInModalOpen}>
+        <DialogContent className="max-w-4xl mobile-container">
+          <DialogHeader>
+            <DialogTitle>
+              Registrar Abastecimento - {selectedVehicle?.plate} ({selectedVehicle?.model})
+            </DialogTitle>
+            <DialogDescription>
+              Complete as informações de quilometragem e abastecimento
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Quilometragem Section */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <Calculator className="h-5 w-5 mr-2 text-blue-600" />
+                  Controle de Quilometragem
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="previousMileage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>KM Inicial (início do dia)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            step="0.1"
+                            placeholder="Ex: 15000" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="currentMileage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>KM Final (fim do dia)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            step="0.1"
+                            placeholder="Ex: 15100" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="distanceTraveled"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>KM Percorrido</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            step="0.1"
+                            readOnly
+                            placeholder="Calculado automaticamente" 
+                            className="bg-gray-100 dark:bg-gray-800"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Fuel Section */}
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <Fuel className="h-5 w-5 mr-2 text-green-600" />
+                  Informações de Abastecimento
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="fuelType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Combustível</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="gasolina">Gasolina</SelectItem>
+                            <SelectItem value="etanol">Etanol</SelectItem>
+                            <SelectItem value="diesel">Diesel</SelectItem>
+                            <SelectItem value="diesel_s10">Diesel S10</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="litersRefueled"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantidade (Litros)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            step="0.01"
+                            placeholder="Ex: 45.50" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="pricePerLiter"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Preço por Litro (R$)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            step="0.01"
+                            placeholder="Ex: 5.89" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
+                    <FormLabel className="text-sm">Total em R$</FormLabel>
+                    <p className="text-lg font-bold text-green-600">
+                      R$ {(() => {
+                        const liters = parseFloat(form.watch('litersRefueled') || '0');
+                        const price = parseFloat(form.watch('pricePerLiter') || '0');
+                        return (liters * price).toFixed(2);
+                      })()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="recordDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data do Registro</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="fuelStation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Posto de Combustível</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          value={field.value || ''}
+                          placeholder="Ex: Posto Shell - Centro" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="vehicle-filter">Veículo</Label>
-              <Select value={filterVehicle} onValueChange={setFilterVehicle}>
-                <SelectTrigger data-testid="select-filter-vehicle">
-                  <SelectValue placeholder="Todos os veículos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os veículos</SelectItem>
-                  {uniqueVehicles.map(plate => (
-                    <SelectItem key={plate} value={plate || 'unknown'}>{plate}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        value={field.value || ''}
+                        placeholder="Observações sobre o abastecimento" 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div>
-              <Label htmlFor="fuel-filter">Tipo de Combustível</Label>
-              <Select value={filterFuelType} onValueChange={setFilterFuelType}>
-                <SelectTrigger data-testid="select-filter-fuel-type">
-                  <SelectValue placeholder="Todos os tipos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  {uniqueFuelTypes.map(fuelType => (
-                    <SelectItem key={fuelType} value={fuelType}>{fuelType}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-end">
-              <Button 
-                onClick={handleExport} 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                data-testid="button-export"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Records Table */}
-      <Card>
-        <CardHeader className="mobile-card">
-          <CardTitle className="mobile-text-lg">Registros de Abastecimento</CardTitle>
-          <CardDescription className="mobile-text-sm">
-            {filteredRecords.length} registro{filteredRecords.length !== 1 ? 's' : ''} encontrado{filteredRecords.length !== 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="mobile-card pt-0">
-          <div className="mobile-table-container">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="mobile-text-sm">Data</TableHead>
-                  <TableHead className="mobile-text-sm">Veículo</TableHead>
-                  <TableHead className="mobile-text-sm">Combustível</TableHead>
-                  <TableHead className="mobile-text-sm">KM Rodado</TableHead>
-                  <TableHead className="mobile-text-sm">Litros</TableHead>
-                  <TableHead className="mobile-text-sm">Preço/L</TableHead>
-                  <TableHead className="mobile-text-sm">Total</TableHead>
-                  <TableHead className="mobile-text-sm">Eficiência</TableHead>
-                  <TableHead className="mobile-text-sm">Operador</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRecords.map((record) => {
-                  const vehicle = vehicles.find(v => v.id === record.vehicleId);
-                  const user = users.find(u => u.id === record.operatorId);
-                  const efficiency = parseFloat(record.distanceTraveled) / parseFloat(record.litersRefueled);
-
-                  return (
-                    <TableRow key={record.id} data-testid={`row-record-${record.id}`}>
-                      <TableCell className="mobile-text-sm">
-                        {new Date(record.recordDate).toLocaleDateString('pt-BR')}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="mobile-text-sm">
-                          {vehicle?.plate}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="mobile-text-sm">{record.fuelType}</TableCell>
-                      <TableCell className="mobile-text-sm">{parseFloat(record.distanceTraveled).toFixed(1)} km</TableCell>
-                      <TableCell className="mobile-text-sm">{parseFloat(record.litersRefueled).toFixed(1)}L</TableCell>
-                      <TableCell className="mobile-text-sm">R$ {parseFloat(record.pricePerLiter).toFixed(2)}</TableCell>
-                      <TableCell className="font-medium mobile-text-sm">
-                        R$ {parseFloat(record.totalCost).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="mobile-text-sm">
-                        <Badge 
-                          variant={efficiency >= 10 ? "default" : efficiency >= 7 ? "secondary" : "destructive"}
-                          className="mobile-text-sm"
-                        >
-                          {efficiency.toFixed(1)} km/L
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="mobile-text-sm">
-                        {user?.fullName || user?.username}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-
-          {filteredRecords.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500 mobile-text-sm">Nenhum registro encontrado com os filtros aplicados.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              <div className="mobile-button-group pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsCheckInModalOpen(false)} 
+                  className="w-full sm:w-auto"
+                  type="button"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="w-full sm:w-auto"
+                  disabled={createFuelRecordMutation.isPending}
+                >
+                  {createFuelRecordMutation.isPending ? 'Salvando...' : 'Salvar Registro'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* Monthly Report Modal */}
       <Dialog open={isMonthlyReportModalOpen} onOpenChange={setIsMonthlyReportModalOpen}>
@@ -796,7 +656,7 @@ export default function FuelTracking() {
           <DialogHeader>
             <DialogTitle>Relatório Mensal de Combustível</DialogTitle>
             <DialogDescription>
-              Análise completa de eficiência e consumo por veículo
+              Análise completa por veículo - KM rodados, litros consumidos e eficiência
             </DialogDescription>
           </DialogHeader>
 
@@ -808,7 +668,7 @@ export default function FuelTracking() {
                   value={selectedMonth.toString()} 
                   onValueChange={(value) => setSelectedMonth(parseInt(value))}
                 >
-                  <SelectTrigger data-testid="select-report-month">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -827,7 +687,7 @@ export default function FuelTracking() {
                   value={selectedYear.toString()} 
                   onValueChange={(value) => setSelectedYear(parseInt(value))}
                 >
-                  <SelectTrigger data-testid="select-report-year">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -856,7 +716,7 @@ export default function FuelTracking() {
                     <TableRow>
                       <TableHead>Veículo</TableHead>
                       <TableHead>Modelo</TableHead>
-                      <TableHead>Total KM</TableHead>
+                      <TableHead>Total KM Rodados</TableHead>
                       <TableHead>Total Litros</TableHead>
                       <TableHead>Média km/L</TableHead>
                       <TableHead>Custo Total</TableHead>
@@ -864,13 +724,13 @@ export default function FuelTracking() {
                   </TableHeader>
                   <TableBody>
                     {monthlyReport.map((report) => (
-                      <TableRow key={report.vehicleId} data-testid={`row-monthly-${report.vehicleId}`}>
+                      <TableRow key={report.vehicleId}>
                         <TableCell className="font-medium">
                           <Badge variant="outline">{report.vehiclePlate}</Badge>
                         </TableCell>
                         <TableCell>{report.vehicleModel}</TableCell>
-                        <TableCell>{report.totalKm.toFixed(1)} km</TableCell>
-                        <TableCell>{report.totalLiters.toFixed(1)}L</TableCell>
+                        <TableCell className="font-mono">{report.totalKm.toFixed(1)} km</TableCell>
+                        <TableCell className="font-mono">{report.totalLiters.toFixed(1)}L</TableCell>
                         <TableCell>
                           <Badge 
                             variant={report.averageKmPerLiter >= 10 ? "default" : 
@@ -879,7 +739,9 @@ export default function FuelTracking() {
                             {report.averageKmPerLiter.toFixed(1)} km/L
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-bold">R$ {report.totalCost.toFixed(2)}</TableCell>
+                        <TableCell className="font-bold text-green-600">
+                          R$ {report.totalCost.toFixed(2)}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
