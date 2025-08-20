@@ -318,39 +318,37 @@ export default function RequisitionDetailsModal({
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Tipo de Combustível</Label>
-              <p className="text-gray-900 dark:text-white mt-1">{getFuelTypeLabel(requisition.fuelType)}</p>
-            </div>
-
-            <div>
               <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Quantidade</Label>
               <p className="text-gray-900 dark:text-white mt-1">{requisition.quantity} Litros</p>
             </div>
 
-            {/* Detalhes do Veículo */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-              <Label className="text-sm font-medium text-blue-700 dark:text-blue-300">Detalhes do Veículo</Label>
-              {vehicleDetails ? (
-                <div className="mt-2 space-y-1">
-                  <p className="text-sm"><span className="font-medium">Placa:</span> {vehicleDetails.plate}</p>
-                  <p className="text-sm"><span className="font-medium">Modelo:</span> {vehicleDetails.brand} {vehicleDetails.model}</p>
-                  <p className="text-sm"><span className="font-medium">Ano:</span> {vehicleDetails.year}</p>
-                  <p className="text-sm"><span className="font-medium">Combustível:</span> {vehicleDetails.fuelType}</p>
-                  <p className="text-sm"><span className="font-medium">KM Atual:</span> {vehicleDetails.mileage || 'Não informado'}</p>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 mt-1">Carregando informações do veículo...</p>
-              )}
-            </div>
+            {/* Detalhes do Veículo e Informações de KM lado a lado */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 col-span-full">
+              {/* Detalhes do Veículo */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <Label className="text-sm font-medium text-blue-700 dark:text-blue-300">Detalhes do Veículo</Label>
+                {vehicleDetails ? (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm"><span className="font-medium">Placa:</span> {vehicleDetails.plate}</p>
+                    <p className="text-sm"><span className="font-medium">Modelo:</span> {vehicleDetails.brand} {vehicleDetails.model}</p>
+                    <p className="text-sm"><span className="font-medium">Ano:</span> {vehicleDetails.year}</p>
+                    <p className="text-sm"><span className="font-medium">Combustível:</span> {vehicleDetails.fuelType}</p>
+                    <p className="text-sm"><span className="font-medium">KM Atual:</span> {vehicleDetails.mileage || 'Não informado'}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mt-1">Carregando informações do veículo...</p>
+                )}
+              </div>
 
-            {/* Informações de KM */}
-            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Informações de Quilometragem</Label>
-              <div className="mt-2 space-y-1">
-                <p className="text-sm"><span className="font-medium">KM Anterior:</span> {requisition.kmAnterior}</p>
-                <p className="text-sm"><span className="font-medium">KM Atual:</span> {requisition.kmAtual}</p>
-                <p className="text-sm"><span className="font-medium">KM Rodado:</span> {requisition.kmRodado}</p>
-                <p className="text-sm"><span className="font-medium">Tanque Cheio:</span> {requisition.tanqueCheio === "true" ? "Sim" : "Não"}</p>
+              {/* Informações de KM */}
+              <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Informações de Quilometragem</Label>
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm"><span className="font-medium">KM Anterior:</span> {requisition.kmAnterior}</p>
+                  <p className="text-sm"><span className="font-medium">KM Atual:</span> {requisition.kmAtual}</p>
+                  <p className="text-sm"><span className="font-medium">KM Rodado:</span> {requisition.kmRodado}</p>
+                  <p className="text-sm"><span className="font-medium">Tanque Cheio:</span> {requisition.tanqueCheio === "true" ? "Sim" : "Não"}</p>
+                </div>
               </div>
             </div>
           </div>
