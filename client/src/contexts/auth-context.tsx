@@ -65,11 +65,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
       try {
-        const response = await apiRequest<User & { sessionId: string }>('/api/auth/login', {
-          method: 'POST',
-          body: JSON.stringify(credentials),
-        });
-        return response;
+        console.log('Login API call started:', credentials.username);
+        const response = await apiRequest('POST', '/api/auth/login', credentials);
+        const user = await response.json();
+        console.log('Login API call successful:', user);
+        return user;
       } catch (error) {
         console.error('Login API call failed:', error);
         if (error instanceof Error) {
@@ -85,7 +85,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     onSuccess: (user) => {
       setUser(user);
       localStorage.setItem('auth-user', JSON.stringify(user));
-      localStorage.setItem('session-id', user.sessionId);
+      if (user.sessionId) {
+        localStorage.setItem('session-id', user.sessionId);
+      }
       queryClient.invalidateQueries();
       navigate('/');
     },

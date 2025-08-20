@@ -20,7 +20,7 @@ const getUserFromSession = async (sessionId: string) => {
 
   // Clean up expired sessions (24 hours)
   if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
-    userSessions.delete(session);
+    userSessions.delete(sessionId);
     return null;
   }
 
