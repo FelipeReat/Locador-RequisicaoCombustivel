@@ -327,11 +327,13 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
               <SelectValue placeholder="Responsável" />
             </SelectTrigger>
             <SelectContent>
-              {/* Mostra apenas o usuário logado para novas requisições */}
-              {!isEditing && currentUser ? (
-                <SelectItem value={(currentUser as any).id.toString()}>
-                  {(currentUser as any).fullName || (currentUser as any).username}
-                </SelectItem>
+              {!isEditing ? (
+                // Para novas requisições, mostra apenas o usuário logado
+                currentUser && (
+                  <SelectItem value={(currentUser as any).id.toString()}>
+                    {(currentUser as any).fullName || (currentUser as any).username}
+                  </SelectItem>
+                )
               ) : (
                 // Para edição, mostra todos os usuários (modo admin)
                 users.map((user) => (
