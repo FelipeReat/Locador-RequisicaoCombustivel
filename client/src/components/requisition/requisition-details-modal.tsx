@@ -185,16 +185,20 @@ export default function RequisitionDetailsModal({
   const generatePurchasePDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      // Buscar dados do fornecedor e veículo
+      // Buscar dados do fornecedor, veículo e usuário responsável
       const supplierResponse = await fetch(`/api/suppliers/${requisition?.supplierId}`);
       const vehicleResponse = await fetch(`/api/vehicles/${requisition?.vehicleId}`);
+      const userResponse = await fetch(`/api/users/${requisition?.requesterId}`);
 
       const supplier = supplierResponse.ok ? await supplierResponse.json() : null;
       const vehicle = vehicleResponse.ok ? await vehicleResponse.json() : null;
+      const requesterUser = userResponse.ok ? await userResponse.json() : null;
+
+      console.log('Dados para o PDF:', { requisition, supplier, vehicle, requesterUser });
 
       const pdfGenerator = new PDFGenerator();
       if (requisition) {
-        pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle);
+        pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle, requesterUser);
         pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
 
         // Atualização otimista - atualiza o cache imediatamente

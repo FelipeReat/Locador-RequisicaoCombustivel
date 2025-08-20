@@ -523,14 +523,21 @@ export class PDFGenerator {
       const signatureX = startX + maxWidth - 40;
       const signatureY = 190;
 
-      // Nome do responsável em negrito (buscar pelo requesterId)
+      // Nome do responsável em negrito
       this.doc.setFont('helvetica', 'bold');
       this.doc.setFontSize(8);
       let responsavelNome = 'Responsável não identificado';
 
+      // Buscar o nome do responsável de diferentes formas
       if (requesterUser?.fullName) {
         responsavelNome = requesterUser.fullName.toUpperCase();
+      } else if (requesterUser?.username) {
+        responsavelNome = requesterUser.username.toUpperCase();
+      } else if (requisition.requesterName) {
+        responsavelNome = requisition.requesterName.toUpperCase();
       }
+
+      console.log('Nome do responsável para o PDF:', responsavelNome, 'Dados do usuário:', requesterUser);
 
       this.doc.text(responsavelNome, signatureX + 17.5, signatureY, { align: 'center' });
 

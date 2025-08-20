@@ -17,13 +17,13 @@ const generateSessionId = () => {
 const getUserFromSession = async (sessionId: string) => {
   const session = userSessions.get(sessionId);
   if (!session) return null;
-  
+
   // Clean up expired sessions (24 hours)
   if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
-    userSessions.delete(sessionId);
+    userSessions.delete(session);
     return null;
   }
-  
+
   return await storage.getUser(session.userId);
 };
 
@@ -33,7 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = loginSchema.parse(req.body);
       const user = await storage.authenticateUser(validatedData);
-      
+
       if (!user) {
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
@@ -110,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!sessionId) {
         return res.status(401).json({ message: "Sessão não encontrada" });
       }
-      
+
       const user = await getUserFromSession(sessionId);
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
@@ -127,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!sessionId) {
         return res.status(401).json({ message: "Sessão não encontrada" });
       }
-      
+
       const currentUser = await getUserFromSession(sessionId);
       if (!currentUser) {
         return res.status(401).json({ message: "Não autenticado" });
@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!sessionId) {
         return res.status(401).json({ message: "Sessão não encontrada" });
       }
-      
+
       const currentUser = await getUserFromSession(sessionId);
       if (!currentUser) {
         return res.status(401).json({ message: "Não autenticado" });
@@ -220,13 +220,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { generated } = req.body;
-      
+
       const requisition = await storage.markPurchaseOrderGenerated(id, generated);
-      
+
       if (!requisition) {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
-      
+
       res.json(requisition);
     } catch (error) {
       res.status(500).json({ message: "Erro ao marcar ordem de compra como gerada" });
@@ -274,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       // Allow partial updates for existing requisitions
       const validatedData = insertFuelRequisitionSchema.partial().parse(req.body);
-      
+
       // Fetch the current requisition to check its status
       const currentRequisition = await storage.getFuelRequisition(id);
       if (!currentRequisition) {
@@ -285,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Only restrict editing of basic data for pending requisitions
       const allowedFields = ['quantity', 'pricePerLiter', 'fiscalCoupon'];
       const isValuesUpdate = Object.keys(validatedData).every(key => allowedFields.includes(key));
-      
+
       if (currentRequisition.status === 'pending' || 
           (currentRequisition.status === 'approved' && isValuesUpdate)) {
         // Allow the update
@@ -721,12 +721,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/cleanup/requisitions", async (req, res) => {
     try {
       const deletedCount = await storage.cleanupRequisitions();
-      
+
       // Headers para forçar limpeza de cache
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
-      
+
       res.json({ deletedCount, message: "Requisições removidas com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao remover requisições" });
@@ -766,11 +766,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (storage instanceof DatabaseStorage) {
         (storage as any).cache?.clear();
       }
-      
+
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache'); 
       res.set('Expires', '0');
-      
+
       res.json({ message: "Cache limpo com sucesso" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao limpar cache" });
@@ -887,7 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertFuelRecordSchema.parse(req.body);
       const record = await storage.createFuelRecord(validatedData);
-      
+
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
       res.set('Expires', '0');
@@ -956,7 +956,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const year = parseInt(req.query.year as string);
       const month = parseInt(req.query.month as string);
-      
+
       if (!year || !month) {
         return res.status(400).json({ message: "Ano e mês são obrigatórios" });
       }
