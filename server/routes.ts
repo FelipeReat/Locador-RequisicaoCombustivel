@@ -221,7 +221,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { generated } = req.body;
 
-      const requisition = await storage.markPurchaseOrderGenerated(id, generated);
+      // Use updateFuelRequisition since markPurchaseOrderGenerated doesn't exist
+      const requisition = await storage.updateFuelRequisition(id, { purchaseOrderGenerated: generated });
 
       if (!requisition) {
         return res.status(404).json({ message: "Requisição não encontrada" });

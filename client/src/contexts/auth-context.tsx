@@ -63,42 +63,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [queryClient]);
 
   const loginMutation = useMutation({
-    mutationFn: async ({ username, password }: LoginCredentials) => {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        const error = new Error(errorData.message || 'Login failed');
-        // Pass the errorType to help with specific error handling
-        (error as any).errorType = errorData.errorType;
+    mutationFn: async (credentials: LoginCredentials) => {
+      try {
+        const response = await apiRequest<User & { sessionId: string }>('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify(credentials),
+        });
+        return response;
+      } catch (error) {
+        console.error('Login API call failed:', error);
+        if (error instanceof Error) {
+          if (error.message.includes('Servidor não está disponível')) {
+            throw new Error('Servidor não está disponível. Por favor, verifique se o sistema está rodando.');
+          } else if (error.message.includes('conectar ao servidor')) {
+            throw new Error('Não foi possível conectar ao servidor. Verifique sua conexão com a internet.');
+          }
+        }
         throw error;
       }
-
-      return response.json();
     },
-    onSuccess: (userWithSession) => {
-      // Store the session ID separately for API calls
-      if (userWithSession.sessionId) {
-        localStorage.setItem('session-id', userWithSession.sessionId);
-      }
-      
-      // Remove sessionId from user object before storing
-      const { sessionId, ...user } = userWithSession;
+    onSuccess: (user) => {
       setUser(user);
-      localStorage.setItem('auth-user', JSON.stringify(user));
-      queryClient.setQueryData(['/api/auth/me'], user);
-      navigate('/dashboard');
+      queryClient.invalidateQueries();
+      setLocation('/');
     },
-    onError: (error: any) => {
-      console.error('Login mutation error:', error);
-      // The error is already thrown from mutationFn, so no need to re-throw here
-      // The UI can then catch this error and display appropriate messages based on error.errorType
+    onError: (error) => {
+      console.error('Login failed:', error);
+      // Error will be handled by the component
     },
   });
 
