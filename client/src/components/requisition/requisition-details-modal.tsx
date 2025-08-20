@@ -197,6 +197,16 @@ export default function RequisitionDetailsModal({
         pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle);
         pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
 
+        // Atualização otimista - atualiza o cache imediatamente
+        queryClient.setQueryData(["/api/fuel-requisitions"], (old: any) => {
+          if (!old) return old;
+          return old.map((req: any) =>
+            req.id === requisition.id 
+              ? { ...req, purchaseOrderGenerated: "true" }
+              : req
+          );
+        });
+
         // Mark that this user has generated a purchase order for this requisition
         await apiRequest("PATCH", `/api/fuel-requisitions/${requisition.id}/purchase-order`, {
           generated: true,
@@ -212,6 +222,9 @@ export default function RequisitionDetailsModal({
         description: t("purchase-order-generated"),
       });
     } catch (error) {
+      // Reverter a mudança otimista em caso de erro
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      
       toast({
         title: t("error"),
         description: t("pdf-generation-error"),
@@ -223,7 +236,10 @@ export default function RequisitionDetailsModal({
   };
 
   // Check if current user has already generated purchase order for this requisition
-  const hasGeneratedPurchaseOrder = requisition?.purchaseOrderGenerated === "true";
+  // Busca os dados mais atualizados do cache
+  const currentRequisitionData = queryClient.getQueryData(["/api/fuel-requisitions"]) as any[];
+  const currentRequisition = currentRequisitionData?.find((req: any) => req.id === requisition?.id);
+  const hasGeneratedPurchaseOrder = (currentRequisition?.purchaseOrderGenerated || requisition?.purchaseOrderGenerated) === "true";
 
   const handleDownloadPDF = () => {
     if (!requisition) return;
