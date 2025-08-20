@@ -84,8 +84,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     onSuccess: (user) => {
       setUser(user);
+      localStorage.setItem('auth-user', JSON.stringify(user));
+      localStorage.setItem('session-id', user.sessionId);
       queryClient.invalidateQueries();
-      setLocation('/');
+      navigate('/');
     },
     onError: (error) => {
       console.error('Login failed:', error);
