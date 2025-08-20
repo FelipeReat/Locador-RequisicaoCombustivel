@@ -310,42 +310,35 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
         {/* Responsável - Limitado ao usuário logado */}
         <div className="space-y-2">
           <Label htmlFor="requesterId">Responsável *</Label>
-          <Select 
-            value={formData.requesterId?.toString()} 
-            onValueChange={(value) => handleInputChange("requesterId", parseInt(value))}
-            disabled={!isEditing} // Desabilita para novas requisições
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Responsável" />
-            </SelectTrigger>
-            <SelectContent>
-              {!isEditing ? (
-                // Para novas requisições, mostra apenas o usuário logado
-                currentUser && typeof currentUser === 'object' && 'id' in currentUser ? (
-                  <SelectItem value={(currentUser as any).id.toString()}>
-                    {(currentUser as any).fullName || (currentUser as any).username || 'Usuário Atual'}
-                  </SelectItem>
-                ) : (
-                  <SelectItem value="1">
-                    Usuário Padrão
-                  </SelectItem>
-                )
-              ) : (
-                // Para edição, mostra todos os usuários (modo admin)
-                users.map((user) => (
+          {!isEditing ? (
+            // Para novas requisições: mostra apenas o usuário atual em um campo visualmente similar mas informativo
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium">
+                {currentUser && typeof currentUser === 'object' && 'id' in currentUser ? 
+                  ((currentUser as any)?.fullName || (currentUser as any)?.username || 'Usuário atual')
+                  : 'Carregando usuário...'}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Você será o responsável por esta requisição
+              </p>
+            </div>
+          ) : (
+            // Para edição: permite escolher qualquer usuário (modo admin)
+            <Select 
+              value={formData.requesterId?.toString()} 
+              onValueChange={(value) => handleInputChange("requesterId", parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user) => (
                   <SelectItem key={user.id} value={user.id.toString()}>
                     {user.fullName || user.username}
                   </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-          {!isEditing && currentUser && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Você está logado como: <span className="font-medium text-gray-700 dark:text-gray-300">
-                {((currentUser as any)?.fullName || (currentUser as any)?.username || 'Usuário') as string}
-              </span>
-            </p>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
 
