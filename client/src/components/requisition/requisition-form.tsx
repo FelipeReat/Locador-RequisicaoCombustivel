@@ -68,13 +68,13 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
 
   // Set current user as default requester for new requisitions
   useEffect(() => {
-    if (currentUser && typeof currentUser === 'object' && 'id' in currentUser && !isEditing && !formData.requesterId) {
+    if (currentUser && typeof currentUser === 'object' && 'id' in currentUser && !isEditing) {
       setFormData(prev => ({ 
         ...prev, 
         requesterId: (currentUser as any).id 
       }));
     }
-  }, [currentUser, isEditing, formData.requesterId]);
+  }, [currentUser, isEditing]);
 
   // Update form data when initialData changes (for editing)
   useEffect(() => {
@@ -329,11 +329,11 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
             <SelectContent>
               {!isEditing ? (
                 // Para novas requisições, mostra apenas o usuário logado
-                currentUser && (
+                currentUser && typeof currentUser === 'object' && 'id' in currentUser ? (
                   <SelectItem value={(currentUser as any).id.toString()}>
-                    {(currentUser as any).fullName || (currentUser as any).username}
+                    {(currentUser as any).fullName || (currentUser as any).username || 'Usuário'}
                   </SelectItem>
-                )
+                ) : null
               ) : (
                 // Para edição, mostra todos os usuários (modo admin)
                 users.map((user) => (
