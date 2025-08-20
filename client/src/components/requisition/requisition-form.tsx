@@ -43,24 +43,39 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   const [isTanqueCheio, setIsTanqueCheio] = useState(initialData?.tanqueCheio === "true");
   const [openVehicleCombobox, setOpenVehicleCombobox] = useState(false);
 
-  // Get current user from auth context
+  // Get current user from auth context or use default
   const { data: currentUser } = useQuery({
     queryKey: ["/api/user/profile"],
     retry: false,
     refetchOnWindowFocus: false,
   });
 
+  // Get all users to find current user by name
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+  });
+
   // Set current user as default requester for new requisitions
   useEffect(() => {
-    if (currentUser && typeof currentUser === 'object' && 'id' in currentUser) {
-      if (!isEditing && !formData.requesterId) {
+    if (!isEditing && !formData.requesterId) {
+      // Try to use the authenticated user first
+      if (currentUser && typeof currentUser === 'object' && 'id' in currentUser) {
         setFormData(prev => ({ 
           ...prev, 
           requesterId: (currentUser as any).id 
         }));
+      } else if (users.length > 0) {
+        // Fallback: use the first admin user or any user
+        const adminUser = users.find(user => user.role === 'admin') || users[0];
+        if (adminUser) {
+          setFormData(prev => ({ 
+            ...prev, 
+            requesterId: adminUser.id 
+          }));
+        }
       }
     }
-  }, [currentUser, isEditing, formData.requesterId]);
+  }, [currentUser, users, isEditing, formData.requesterId]);
 
   // Update form data when initialData changes (for editing)
   useEffect(() => {
@@ -116,10 +131,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
     }
   }, [formData.vehicleId, vehicles]);
 
-  // Fetch users
-  const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["/api/users"],
-  });
+  
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertFuelRequisition) => {
@@ -199,8 +211,12 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       if (!isEditing) {
         // Reset form only for new requisitions
         // Reset form with current user as requester
+        const resetRequesterId = currentUser && typeof currentUser === 'object' && 'id' in currentUser 
+          ? (currentUser as any).id 
+          : (users.find(user => user.role === 'admin')?.id || users[0]?.id || 1);
+        
         setFormData({
-          requesterId: (currentUser as any)?.id || 1,
+          requesterId: resetRequesterId,
           supplierId: undefined,
           client: "BBM Serviços",
           vehicleId: undefined,
@@ -250,9 +266,13 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    const fallbackRequesterId = currentUser && typeof currentUser === 'object' && 'id' in currentUser 
+      ? (currentUser as any).id 
+      : (users.find(user => user.role === 'admin')?.id || users[0]?.id || 1);
+
     const submissionData = {
       ...formData,
-      requesterId: formData.requesterId || (currentUser as any)?.id || 1,
+      requesterId: formData.requesterId || fallbackRequesterId,
       tanqueCheio: isTanqueCheio ? "true" : "false",
       quantity: isTanqueCheio ? undefined : formData.quantity,
     };
@@ -314,9 +334,19 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
             // Para novas requisições: mostra apenas o usuário atual em um campo visualmente similar mas informativo
             <div className="flex flex-col space-y-2">
               <div className="flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium">
-                {currentUser && typeof currentUser === 'object' && 'id' in currentUser ? 
-                  ((currentUser as any)?.fullName || (currentUser as any)?.username || 'Usuário atual')
-                  : 'Carregando usuário...'}
+                {(() => {
+                  // Try to get user name from authenticated user
+                  if (currentUser && typeof currentUser === 'object' && 'id' in currentUser) {
+                    return (currentUser as any)?.fullName || (currentUser as any)?.username || 'Usuário atual';
+                  }
+                  // Fallback: get user name from users list based on selected requesterId
+                  if (formData.requesterId && users.length > 0) {
+                    const selectedUser = users.find(user => user.id === formData.requesterId);
+                    return selectedUser?.fullName || selectedUser?.username || 'Usuário selecionado';
+                  }
+                  // Final fallback
+                  return 'Administrador do Sistema';
+                })()}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Você será o responsável por esta requisição
