@@ -527,11 +527,11 @@ export class PDFGenerator {
       this.doc.setFont('helvetica', 'bold');
       this.doc.setFontSize(8);
       let responsavelNome = 'Responsável não identificado';
-      
+
       if (requesterUser?.fullName) {
         responsavelNome = requesterUser.fullName.toUpperCase();
       }
-      
+
       this.doc.text(responsavelNome, signatureX + 17.5, signatureY, { align: 'center' });
 
       // Rodapé da via
