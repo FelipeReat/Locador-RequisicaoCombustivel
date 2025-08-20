@@ -68,7 +68,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
 
   // Set current user as default requester for new requisitions
   useEffect(() => {
-    if (currentUser && 'id' in currentUser && !isEditing && !formData.requesterId) {
+    if (currentUser && typeof currentUser === 'object' && 'id' in currentUser && !isEditing && !formData.requesterId) {
       setFormData(prev => ({ 
         ...prev, 
         requesterId: (currentUser as any).id 
@@ -342,9 +342,11 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
               )}
             </SelectContent>
           </Select>
-          {!isEditing && (
+          {!isEditing && currentUser && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Você será o responsável por esta requisição
+              Você está logado como: <span className="font-medium text-gray-700 dark:text-gray-300">
+                {((currentUser as any)?.fullName || (currentUser as any)?.username || 'Usuário') as string}
+              </span>
             </p>
           )}
         </div>
