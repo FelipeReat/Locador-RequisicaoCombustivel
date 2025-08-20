@@ -40,6 +40,25 @@ export default function RequisitionDetailsModal({
   const [rejectionReason, setRejectionReason] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
+  // Fetch vehicle details for this requisition
+  const { data: vehicleDetails } = useQuery({
+    queryKey: ["/api/vehicles", requisition?.vehicleId],
+    queryFn: async () => {
+      if (!requisition?.vehicleId) return null;
+      const response = await fetch(`/api/vehicles/${requisition.vehicleId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!requisition?.vehicleId,
+  });
+
+  // Fetch current user to check if they already generated purchase order for this requisition
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/user/profile"],
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
   // Assuming hasPermission is a function available in the scope or imported
   // For demonstration, let's assume it's passed or globally available.
   // If it's part of usePermissions, you might need to adjust accordingly.
@@ -177,6 +196,15 @@ export default function RequisitionDetailsModal({
       if (requisition) {
         pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle);
         pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
+
+        // Mark that this user has generated a purchase order for this requisition
+        await apiRequest("PATCH", `/api/fuel-requisitions/${requisition.id}/purchase-order`, {
+          generated: true,
+          userId: (currentUser as any)?.id
+        });
+        
+        // Invalidate queries to refresh the data
+        queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       }
 
       toast({
@@ -193,6 +221,9 @@ export default function RequisitionDetailsModal({
       setIsGeneratingPDF(false);
     }
   };
+
+  // Check if current user has already generated purchase order for this requisition
+  const hasGeneratedPurchaseOrder = requisition?.purchaseOrderGenerated === "true";
 
   const handleDownloadPDF = () => {
     if (!requisition) return;
@@ -295,6 +326,33 @@ export default function RequisitionDetailsModal({
               <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">Quantidade</Label>
               <p className="text-gray-900 dark:text-white mt-1">{requisition.quantity} Litros</p>
             </div>
+
+            {/* Detalhes do Veículo */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <Label className="text-sm font-medium text-blue-700 dark:text-blue-300">Detalhes do Veículo</Label>
+              {vehicleDetails ? (
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm"><span className="font-medium">Placa:</span> {vehicleDetails.plate}</p>
+                  <p className="text-sm"><span className="font-medium">Modelo:</span> {vehicleDetails.brand} {vehicleDetails.model}</p>
+                  <p className="text-sm"><span className="font-medium">Ano:</span> {vehicleDetails.year}</p>
+                  <p className="text-sm"><span className="font-medium">Combustível:</span> {vehicleDetails.fuelType}</p>
+                  <p className="text-sm"><span className="font-medium">KM Atual:</span> {vehicleDetails.mileage || 'Não informado'}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 mt-1">Carregando informações do veículo...</p>
+              )}
+            </div>
+
+            {/* Informações de KM */}
+            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
+              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Informações de Quilometragem</Label>
+              <div className="mt-2 space-y-1">
+                <p className="text-sm"><span className="font-medium">KM Anterior:</span> {requisition.kmAnterior}</p>
+                <p className="text-sm"><span className="font-medium">KM Atual:</span> {requisition.kmAtual}</p>
+                <p className="text-sm"><span className="font-medium">KM Rodado:</span> {requisition.kmRodado}</p>
+                <p className="text-sm"><span className="font-medium">Tanque Cheio:</span> {requisition.tanqueCheio === "true" ? "Sim" : "Não"}</p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -353,10 +411,10 @@ export default function RequisitionDetailsModal({
 
         <DialogFooter className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex space-x-3">
-            {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && (
+            {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && !hasGeneratedPurchaseOrder && (
               <Button
                 variant="outline"
-                onClick={handleDownloadPDF}
+                onClick={generatePurchasePDF}
                 className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
                 disabled={isGeneratingPDF}
               >
@@ -364,6 +422,13 @@ export default function RequisitionDetailsModal({
                 <FileText className="mr-1 h-4 w-4" />
                 Gerar Ordem de Compra
               </Button>
+            )}
+            
+            {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && hasGeneratedPurchaseOrder && (
+              <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-md">
+                <Check className="h-4 w-4" />
+                Ordem de compra já foi gerada para esta requisição
+              </div>
             )}
 
             {requisition && requisition.status === "approved" && onEditRequisition && canEditValues && (

@@ -54,6 +54,7 @@ export const fuelRequisitions = pgTable("fuel_requisitions", {
   approverId: integer("approver_id"),
   approvedDate: text("approved_date"),
   rejectionReason: text("rejection_reason"),
+  purchaseOrderGenerated: text("purchase_order_generated").default("false"),
   createdAt: text("created_at").notNull().default("now()"),
   updatedAt: text("updated_at").notNull().default("now()"),
 });

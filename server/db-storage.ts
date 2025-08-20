@@ -199,6 +199,26 @@ export class DatabaseStorage implements IStorage {
     this.invalidateCache();
   }
 
+  // Mark purchase order as generated
+  async markPurchaseOrderGenerated(id: number, generated: boolean): Promise<FuelRequisition | null> {
+    try {
+      const result = await db
+        .update(fuelRequisitions)
+        .set({ 
+          purchaseOrderGenerated: generated ? "true" : "false",
+          updatedAt: new Date().toISOString()
+        })
+        .where(eq(fuelRequisitions.id, id))
+        .returning();
+
+      this.invalidateCache('fuelRequisitions');
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error marking purchase order as generated:', error);
+      return null;
+    }
+  }
+
   // Suppliers with caching
   async getSuppliers(): Promise<Supplier[]> {
     const cacheKey = this.getCacheKey('suppliers');

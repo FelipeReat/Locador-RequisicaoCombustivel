@@ -77,7 +77,7 @@ export default function NewRequisition() {
     kmRodado: editingRequisition.kmRodado?.toString() || "",
     tanqueCheio: editingRequisition.tanqueCheio as "true" | "false",
     quantity: editingRequisition.quantity?.toString() || "",
-    fuelType: editingRequisition.fuelType
+    fuelType: editingRequisition.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10"
   } : undefined;
 
   console.log('New Requisition - isEditing:', isEditing, 'editingRequisition:', editingRequisition, 'initialData:', initialData);

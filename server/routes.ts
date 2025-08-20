@@ -215,6 +215,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route to mark purchase order as generated
+  app.patch("/api/fuel-requisitions/:id/purchase-order", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { generated } = req.body;
+      
+      const requisition = await storage.markPurchaseOrderGenerated(id, generated);
+      
+      if (!requisition) {
+        return res.status(404).json({ message: "Requisição não encontrada" });
+      }
+      
+      res.json(requisition);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao marcar ordem de compra como gerada" });
+    }
+  });
+
   // Create a new fuel requisition
   app.post("/api/fuel-requisitions", async (req, res) => {
     try {

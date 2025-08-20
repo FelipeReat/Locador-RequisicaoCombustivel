@@ -6,9 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { InsertFuelRequisition, Supplier, Vehicle, User } from "@shared/schema";
 
 interface RequisitionFormProps {
@@ -26,7 +30,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>(() => {
     if (initialData) {
       return {
-        requesterId: initialData.requesterId || 1,
+        requesterId: initialData.requesterId,
         supplierId: initialData.supplierId,
         client: initialData.client || "BBM Serviços",
         vehicleId: initialData.vehicleId,
@@ -39,7 +43,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       };
     }
     return {
-      requesterId: 1, // Default to first user
+      requesterId: undefined, // Will be set from current user
       supplierId: undefined,
       client: "BBM Serviços",
       vehicleId: undefined,
@@ -53,6 +57,24 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   });
 
   const [isTanqueCheio, setIsTanqueCheio] = useState(initialData?.tanqueCheio === "true");
+  const [openVehicleCombobox, setOpenVehicleCombobox] = useState(false);
+
+  // Get current user from auth context
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/user/profile"],
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Set current user as default requester for new requisitions
+  useEffect(() => {
+    if (currentUser && 'id' in currentUser && !isEditing && !formData.requesterId) {
+      setFormData(prev => ({ 
+        ...prev, 
+        requesterId: (currentUser as any).id 
+      }));
+    }
+  }, [currentUser, isEditing, formData.requesterId]);
 
   // Update form data when initialData changes (for editing)
   useEffect(() => {
@@ -61,7 +83,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       console.log('RequisitionForm - isEditing:', isEditing);
       
       const updatedFormData = {
-        requesterId: initialData.requesterId || 1,
+        requesterId: initialData.requesterId,
         supplierId: initialData.supplierId,
         client: initialData.client || "BBM Serviços",
         vehicleId: initialData.vehicleId,
@@ -184,8 +206,9 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       
       if (!isEditing) {
         // Reset form only for new requisitions
+        // Reset form with current user as requester
         setFormData({
-          requesterId: 1,
+          requesterId: (currentUser as any)?.id || 1,
           supplierId: undefined,
           client: "BBM Serviços",
           vehicleId: undefined,
@@ -237,7 +260,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
     
     const submissionData = {
       ...formData,
-      requesterId: formData.requesterId || 1,
+      requesterId: formData.requesterId || (currentUser as any)?.id || 1,
       tanqueCheio: isTanqueCheio ? "true" : "false",
       quantity: isTanqueCheio ? undefined : formData.quantity,
     };
@@ -292,44 +315,96 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
           </Select>
         </div>
 
-        {/* Responsável */}
+        {/* Responsável - Limitado ao usuário logado */}
         <div className="space-y-2">
           <Label htmlFor="requesterId">Responsável *</Label>
           <Select 
             value={formData.requesterId?.toString()} 
             onValueChange={(value) => handleInputChange("requesterId", parseInt(value))}
+            disabled={!isEditing} // Desabilita para novas requisições
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione o responsável" />
+              <SelectValue placeholder="Responsável" />
             </SelectTrigger>
             <SelectContent>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id.toString()}>
-                  {user.fullName}
+              {/* Mostra apenas o usuário logado para novas requisições */}
+              {!isEditing && currentUser ? (
+                <SelectItem value={(currentUser as any).id.toString()}>
+                  {(currentUser as any).fullName || (currentUser as any).username}
                 </SelectItem>
-              ))}
+              ) : (
+                // Para edição, mostra todos os usuários (modo admin)
+                users.map((user) => (
+                  <SelectItem key={user.id} value={user.id.toString()}>
+                    {user.fullName || user.username}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
+          {!isEditing && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Você será o responsável por esta requisição
+            </p>
+          )}
         </div>
 
-        {/* Veículo */}
+        {/* Veículo com busca */}
         <div className="space-y-2">
           <Label htmlFor="vehicleId">Veículo *</Label>
-          <Select 
-            value={formData.vehicleId?.toString()} 
-            onValueChange={(value) => handleInputChange("vehicleId", parseInt(value))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um veículo" />
-            </SelectTrigger>
-            <SelectContent>
-              {vehicles.map((vehicle) => (
-                <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
-                  {vehicle.plate} - {vehicle.brand} {vehicle.model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={openVehicleCombobox} onOpenChange={setOpenVehicleCombobox}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={openVehicleCombobox}
+                className="w-full justify-between"
+              >
+                {formData.vehicleId
+                  ? vehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.plate + 
+                    " - " + 
+                    vehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.brand + 
+                    " " + 
+                    vehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.model
+                  : "Buscar veículo..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Digite placa, modelo ou marca..." />
+                <CommandEmpty>Nenhum veículo encontrado.</CommandEmpty>
+                <CommandGroup>
+                  {vehicles.map((vehicle) => (
+                    <CommandItem
+                      key={vehicle.id}
+                      value={`${vehicle.plate} ${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
+                      onSelect={() => {
+                        handleInputChange("vehicleId", vehicle.id);
+                        setOpenVehicleCombobox(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          formData.vehicleId === vehicle.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span className="font-medium">{vehicle.plate}</span>
+                        <span className="text-sm text-gray-500">
+                          {vehicle.brand} {vehicle.model} ({vehicle.year})
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Digite para buscar por placa, modelo ou marca
+          </p>
         </div>
 
         {/* KM Atual */}
