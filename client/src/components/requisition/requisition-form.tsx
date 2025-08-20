@@ -27,33 +27,17 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   const { t } = useLanguage();
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>(() => {
-    if (initialData) {
-      return {
-        requesterId: initialData.requesterId,
-        supplierId: initialData.supplierId,
-        client: initialData.client || "BBM Serviços",
-        vehicleId: initialData.vehicleId,
-        kmAtual: initialData.kmAtual || "",
-        kmAnterior: initialData.kmAnterior || "",
-        kmRodado: initialData.kmRodado || "",
-        tanqueCheio: initialData.tanqueCheio || "false",
-        quantity: initialData.quantity || "",
-        fuelType: initialData.fuelType || "diesel",
-      };
-    }
-    return {
-      requesterId: undefined, // Will be set from current user
-      supplierId: undefined,
-      client: "BBM Serviços",
-      vehicleId: undefined,
-      kmAtual: "",
-      kmAnterior: "",
-      kmRodado: "",
-      tanqueCheio: "false",
-      quantity: "",
-      fuelType: "diesel",
-    };
+  const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>({
+    requesterId: undefined,
+    supplierId: undefined,
+    client: "BBM Serviços",
+    vehicleId: undefined,
+    kmAtual: "",
+    kmAnterior: "",
+    kmRodado: "",
+    tanqueCheio: "false",
+    quantity: "",
+    fuelType: "diesel",
   });
 
   const [isTanqueCheio, setIsTanqueCheio] = useState(initialData?.tanqueCheio === "true");
@@ -68,13 +52,15 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
 
   // Set current user as default requester for new requisitions
   useEffect(() => {
-    if (currentUser && typeof currentUser === 'object' && 'id' in currentUser && !isEditing) {
-      setFormData(prev => ({ 
-        ...prev, 
-        requesterId: (currentUser as any).id 
-      }));
+    if (currentUser && typeof currentUser === 'object' && 'id' in currentUser) {
+      if (!isEditing && !formData.requesterId) {
+        setFormData(prev => ({ 
+          ...prev, 
+          requesterId: (currentUser as any).id 
+        }));
+      }
     }
-  }, [currentUser, isEditing]);
+  }, [currentUser, isEditing, formData.requesterId]);
 
   // Update form data when initialData changes (for editing)
   useEffect(() => {
@@ -98,8 +84,14 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       console.log('RequisitionForm - Setting form data to:', updatedFormData);
       setFormData(updatedFormData);
       setIsTanqueCheio(initialData.tanqueCheio === "true");
+    } else if (!isEditing && currentUser && typeof currentUser === 'object' && 'id' in currentUser) {
+      // Para novas requisições, define o usuário logado como padrão
+      setFormData(prev => ({
+        ...prev,
+        requesterId: (currentUser as any).id
+      }));
     }
-  }, [initialData, isEditing]);
+  }, [initialData, isEditing, currentUser]);
 
   // Fetch suppliers
   const { data: suppliers = [] } = useQuery<Supplier[]>({
@@ -331,9 +323,13 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
                 // Para novas requisições, mostra apenas o usuário logado
                 currentUser && typeof currentUser === 'object' && 'id' in currentUser ? (
                   <SelectItem value={(currentUser as any).id.toString()}>
-                    {(currentUser as any).fullName || (currentUser as any).username || 'Usuário'}
+                    {(currentUser as any).fullName || (currentUser as any).username || 'Usuário Atual'}
                   </SelectItem>
-                ) : null
+                ) : (
+                  <SelectItem value="1">
+                    Usuário Padrão
+                  </SelectItem>
+                )
               ) : (
                 // Para edição, mostra todos os usuários (modo admin)
                 users.map((user) => (
