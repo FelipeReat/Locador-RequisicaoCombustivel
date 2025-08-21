@@ -436,77 +436,89 @@ export default function RequisitionDetailsModal({
 
         <DialogFooter className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex space-x-3">
-            {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && !hasGeneratedPurchaseOrder && (
-              <Button
-                variant="outline"
-                onClick={generatePurchasePDF}
-                className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-                disabled={isGeneratingPDF}
-              >
-                {isGeneratingPDF && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <FileText className="mr-1 h-4 w-4" />
-                Gerar Ordem de Compra
-              </Button>
-            )}
-
-            {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && hasGeneratedPurchaseOrder && (
-              <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                <Check className="h-4 w-4" />
-                Ordem de compra já foi gerada para esta requisição
-              </div>
-            )}
-
-            {requisition && requisition.status === "approved" && onEditRequisition && canEditValues && (
-              <Button
-                onClick={() => onEditRequisition(requisition)}
-                variant="outline"
-                className="w-full sm:w-auto border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Editar Valores
-              </Button>
-            )}
-
-            {requisition && requisition.status === "pending" && canApprove() && (
+            {/* Apenas gerentes e admins têm acesso aos botões de ação */}
+            {(userRole === 'manager' || userRole === 'admin') && (
               <>
-                {!showRejectionInput ? (
+                {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && !hasGeneratedPurchaseOrder && (
                   <Button
-                    variant="destructive"
-                    onClick={() => setShowRejectionInput(true)}
-                    className="flex items-center"
-                    data-testid="button-reject-requisition"
+                    variant="outline"
+                    onClick={generatePurchasePDF}
+                    className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                    disabled={isGeneratingPDF}
                   >
-                    <X className="mr-1 h-4 w-4" />
-                    Rejeitar
-                  </Button>
-                ) : (
-                  <Button
-                    variant="destructive"
-                    onClick={handleReject}
-                    disabled={updateStatus.isPending}
-                    className="flex items-center"
-                    data-testid="button-confirm-rejection"
-                  >
-                    {updateStatus.isPending && (
-                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                    )}
-                    Confirmar Rejeição
+                    {isGeneratingPDF && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <FileText className="mr-1 h-4 w-4" />
+                    Gerar Ordem de Compra
                   </Button>
                 )}
 
-                <Button
-                  onClick={handleApprove}
-                  disabled={updateStatus.isPending}
-                  className="flex items-center bg-green-600 hover:bg-green-700"
-                  data-testid="button-approve-requisition"
-                >
-                  {updateStatus.isPending && (
-                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                  )}
-                  <Check className="mr-1 h-4 w-4" />
-                  Aprovar
-                </Button>
+                {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && hasGeneratedPurchaseOrder && (
+                  <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-md">
+                    <Check className="h-4 w-4" />
+                    Ordem de compra já foi gerada para esta requisição
+                  </div>
+                )}
+
+                {requisition && requisition.status === "approved" && onEditRequisition && canEditValues && (
+                  <Button
+                    onClick={() => onEditRequisition(requisition)}
+                    variant="outline"
+                    className="w-full sm:w-auto border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar Valores
+                  </Button>
+                )}
+
+                {requisition && requisition.status === "pending" && canApprove() && (
+                  <>
+                    {!showRejectionInput ? (
+                      <Button
+                        variant="destructive"
+                        onClick={() => setShowRejectionInput(true)}
+                        className="flex items-center"
+                        data-testid="button-reject-requisition"
+                      >
+                        <X className="mr-1 h-4 w-4" />
+                        Rejeitar
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="destructive"
+                        onClick={handleReject}
+                        disabled={updateStatus.isPending}
+                        className="flex items-center"
+                        data-testid="button-confirm-rejection"
+                      >
+                        {updateStatus.isPending && (
+                          <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                        )}
+                        Confirmar Rejeição
+                      </Button>
+                    )}
+
+                    <Button
+                      onClick={handleApprove}
+                      disabled={updateStatus.isPending}
+                      className="flex items-center bg-green-600 hover:bg-green-700"
+                      data-testid="button-approve-requisition"
+                    >
+                      {updateStatus.isPending && (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      )}
+                      <Check className="mr-1 h-4 w-4" />
+                      Aprovar
+                    </Button>
+                  </>
+                )}
               </>
+            )}
+
+            {/* Funcionários só veem as informações, sem botões de ação */}
+            {userRole === 'employee' && (
+              <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                Visualização apenas - Entre em contato com seu gerente para ações nesta requisição
+              </div>
             )}
           </div>
         </DialogFooter>
