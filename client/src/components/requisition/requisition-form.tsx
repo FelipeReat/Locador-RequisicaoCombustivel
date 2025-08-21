@@ -10,6 +10,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
+import { useAuth } from "@/contexts/auth-context";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   const { toast } = useToast();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
+  const { user: authUser } = useAuth(); // Get user from auth context
 
   const [formData, setFormData] = useState<Partial<InsertFuelRequisition>>({
     requesterId: undefined,
@@ -58,14 +60,26 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   // Set current user as default requester for new requisitions
   useEffect(() => {
     if (!isEditing && !formData.requesterId) {
-      // Try to use the authenticated user first
+      // Try to use the API user first
       if (currentUser && typeof currentUser === 'object' && 'id' in currentUser) {
         setFormData(prev => ({ 
           ...prev, 
           requesterId: (currentUser as any).id 
         }));
-      } else if (users.length > 0) {
-        // Fallback: use the first admin user or any user
+      } 
+      // Use auth context user as fallback when API fails (session lost)
+      else if (authUser && users.length > 0) {
+        // Find the authenticated user in the users list by username
+        const matchingUser = users.find(user => user.username === authUser.username);
+        if (matchingUser) {
+          setFormData(prev => ({ 
+            ...prev, 
+            requesterId: matchingUser.id 
+          }));
+        }
+      } 
+      // Last fallback: use the first admin user or any user
+      else if (users.length > 0) {
         const adminUser = users.find(user => user.role === 'admin') || users[0];
         if (adminUser) {
           setFormData(prev => ({ 
@@ -75,7 +89,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
         }
       }
     }
-  }, [currentUser, users, isEditing, formData.requesterId]);
+  }, [currentUser, authUser, users, isEditing, formData.requesterId]);
 
   // Update form data when initialData changes (for editing)
   useEffect(() => {

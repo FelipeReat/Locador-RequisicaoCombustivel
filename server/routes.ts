@@ -107,16 +107,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user/profile", async (req, res) => {
     try {
       const sessionId = req.headers['x-session-id'] as string;
+      
       if (!sessionId) {
         return res.status(401).json({ message: "Sessão não encontrada" });
       }
 
-      const user = await getUserFromSession(sessionId);
+      // Tenta buscar da sessão ativa primeiro
+      let user = await getUserFromSession(sessionId);
+      
+      // Se não encontrar na sessão (servidor reiniciado), tenta recuperar baseado no sessionId salvo
+      if (!user && sessionId) {
+        // Como o servidor reiniciou, vamos procurar o usuário pelos dados de login recentes
+        // Vamos permitir que o usuário faça login automaticamente se tiver sessionId válido
+        const users = await storage.getUsers();
+        
+        // Por enquanto, retorna falha para forçar novo login
+        // Em uma implementação real, poderíamos implementar persistência de sessão no banco
+      }
+      
       if (!user) {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
+      
       res.json(user);
     } catch (error) {
+      console.error('Erro ao buscar perfil do usuário:', error);
       res.status(500).json({ message: "Erro ao buscar perfil do usuário" });
     }
   });
