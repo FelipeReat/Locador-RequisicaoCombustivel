@@ -287,3 +287,29 @@ export const insertFuelRecordSchema = createInsertSchema(fuelRecords, {
 
 export type InsertFuelRecord = z.infer<typeof insertFuelRecordSchema>;
 export type FuelRecord = typeof fuelRecords.$inferSelect;
+
+// Sistema de auditoria para rastrear todas as alterações
+export const auditLog = pgTable("audit_log", {
+  id: serial("id").primaryKey(),
+  tableName: text("table_name").notNull(), // Nome da tabela afetada
+  recordId: text("record_id").notNull(), // ID do registro afetado
+  action: text("action").notNull(), // CREATE, UPDATE, DELETE
+  oldValues: text("old_values"), // Valores anteriores (JSON)
+  newValues: text("new_values"), // Valores novos (JSON)
+  userId: integer("user_id"), // Usuário que fez a alteração
+  timestamp: text("timestamp").notNull().default("now()"),
+  description: text("description"), // Descrição da alteração
+});
+
+export type AuditLog = typeof auditLog.$inferSelect;
+
+// Sistema de backup de dados críticos
+export const dataBackups = pgTable("data_backups", {
+  id: serial("id").primaryKey(),
+  tableName: text("table_name").notNull(),
+  backupData: text("backup_data").notNull(), // JSON com todos os dados
+  backupDate: text("backup_date").notNull().default("now()"),
+  description: text("description"),
+});
+
+export type DataBackup = typeof dataBackups.$inferSelect;

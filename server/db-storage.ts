@@ -6,7 +6,9 @@ import {
   suppliers, 
   vehicles, 
   companies,
-  fuelRecords, 
+  fuelRecords,
+  auditLog,
+  dataBackups,
   type User, 
   type InsertUser, 
   type UpdateUserProfile, 
@@ -23,7 +25,9 @@ import {
   type InsertCompany, 
   type LoginUser,
   type FuelRecord,
-  type InsertFuelRecord
+  type InsertFuelRecord,
+  type AuditLog,
+  type DataBackup
 } from '@shared/schema';
 import { IStorage } from './storage';
 
@@ -31,6 +35,69 @@ export class DatabaseStorage implements IStorage {
   // Remove the shared loggedInUserId - this was causing session conflicts
   private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
   private readonly DEFAULT_TTL = 1000; // 1 segundo apenas para máxima responsividade
+
+  // Sistema de auditoria para rastrear todas as alterações
+  private async logAudit(
+    tableName: string,
+    recordId: string,
+    action: 'CREATE' | 'UPDATE' | 'DELETE',
+    oldValues: any = null,
+    newValues: any = null,
+    userId?: number,
+    description?: string
+  ): Promise<void> {
+    try {
+      await db.insert(auditLog).values({
+        tableName,
+        recordId,
+        action,
+        oldValues: oldValues ? JSON.stringify(oldValues) : null,
+        newValues: newValues ? JSON.stringify(newValues) : null,
+        userId,
+        timestamp: new Date().toISOString(),
+        description,
+      });
+    } catch (error) {
+      console.error('Erro ao registrar auditoria:', error);
+    }
+  }
+
+  // Sistema de backup automático
+  private async createBackup(tableName: string, description?: string): Promise<void> {
+    try {
+      let data: any[] = [];
+      
+      switch (tableName) {
+        case 'users':
+          data = await db.select().from(users);
+          break;
+        case 'vehicles':
+          data = await db.select().from(vehicles);
+          break;
+        case 'suppliers':
+          data = await db.select().from(suppliers);
+          break;
+        case 'companies':
+          data = await db.select().from(companies);
+          break;
+        case 'fuel_requisitions':
+          data = await db.select().from(fuelRequisitions);
+          break;
+        case 'fuel_records':
+          data = await db.select().from(fuelRecords);
+          break;
+      }
+
+      await db.insert(dataBackups).values({
+        tableName,
+        backupData: JSON.stringify(data),
+        backupDate: new Date().toISOString(),
+        description: description || `Backup automático de ${tableName}`,
+      });
+    } catch (error) {
+      console.error('Erro ao criar backup:', error);
+    }
+  }
 
   private getCacheKey(method: string, params?: any): string {
     return `${method}:${params ? JSON.stringify(params) : 'all'}`;
@@ -86,10 +153,20 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
+
+    // Auditoria: registrar criação de usuário
+    await this.logAudit('users', result[0].id.toString(), 'CREATE', null, result[0]);
+    
+    // Backup automático após alteração crítica
+    await this.createBackup('users', `Usuário ${result[0].username} criado`);
+    
     return result[0];
   }
 
   async updateUser(id: number, updates: Partial<InsertUserManagement>): Promise<User | undefined> {
+    // Buscar valores antigos antes da atualização
+    const oldUser = await this.getUser(id);
+    
     const result = await db.update(users)
       .set({
         ...updates,
@@ -97,6 +174,15 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
+
+    // Auditoria: registrar atualização de usuário
+    if (oldUser && result[0]) {
+      await this.logAudit('users', id.toString(), 'UPDATE', oldUser, result[0], undefined, 
+        `Usuário ${result[0].username} atualizado`);
+      
+      // Backup após alteração crítica
+      await this.createBackup('users', `Usuário ${result[0].username} atualizado`);
+    }
 
     // Limpeza agressiva do cache para edições de usuários
     this.cache.clear();
@@ -243,6 +329,13 @@ export class DatabaseStorage implements IStorage {
       updatedAt: now,
     }).returning();
 
+    // Auditoria: registrar criação de fornecedor
+    await this.logAudit('suppliers', result[0].id.toString(), 'CREATE', null, result[0], undefined,
+      `Fornecedor ${result[0].name} criado`);
+    
+    // Backup automático após criação
+    await this.createBackup('suppliers', `Fornecedor ${result[0].name} criado`);
+
     // Limpeza agressiva do cache para criação de fornecedores
     this.cache.clear();
     return result[0];
@@ -291,6 +384,13 @@ export class DatabaseStorage implements IStorage {
       updatedAt: now,
     }).returning();
 
+    // Auditoria: registrar criação de empresa
+    await this.logAudit('companies', result[0].id.toString(), 'CREATE', null, result[0], undefined,
+      `Empresa ${result[0].name} criada`);
+    
+    // Backup automático após criação
+    await this.createBackup('companies', `Empresa ${result[0].name} criada`);
+
     // Limpeza agressiva do cache para criação de empresas
     this.cache.clear();
     return result[0];
@@ -338,6 +438,13 @@ export class DatabaseStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     }).returning();
+
+    // Auditoria: registrar criação de veículo
+    await this.logAudit('vehicles', result[0].id.toString(), 'CREATE', null, result[0], undefined,
+      `Veículo ${result[0].plate} - ${result[0].model} criado`);
+    
+    // Backup automático após criação
+    await this.createBackup('vehicles', `Veículo ${result[0].plate} criado`);
 
     // Limpeza agressiva do cache para criação de veículos
     this.cache.clear();
@@ -744,6 +851,64 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error fetching fuel records by month:', error);
       return [];
+    }
+  }
+
+  // Métodos para auditoria e backup - GARANTEM PERSISTÊNCIA PERMANENTE
+  async getAuditLog(limit: number = 100): Promise<AuditLog[]> {
+    try {
+      return await db.select().from(auditLog).orderBy(desc(auditLog.timestamp)).limit(limit);
+    } catch (error) {
+      console.error('Erro ao buscar auditoria:', error);
+      return [];
+    }
+  }
+
+  async getAuditLogByTable(tableName: string, limit: number = 50): Promise<AuditLog[]> {
+    try {
+      return await db.select().from(auditLog)
+        .where(eq(auditLog.tableName, tableName))
+        .orderBy(desc(auditLog.timestamp))
+        .limit(limit);
+    } catch (error) {
+      console.error('Erro ao buscar auditoria por tabela:', error);
+      return [];
+    }
+  }
+
+  async getDataBackups(limit: number = 10): Promise<DataBackup[]> {
+    try {
+      return await db.select().from(dataBackups).orderBy(desc(dataBackups.backupDate)).limit(limit);
+    } catch (error) {
+      console.error('Erro ao buscar backups:', error);
+      return [];
+    }
+  }
+
+  async getBackupsByTable(tableName: string, limit: number = 5): Promise<DataBackup[]> {
+    try {
+      return await db.select().from(dataBackups)
+        .where(eq(dataBackups.tableName, tableName))
+        .orderBy(desc(dataBackups.backupDate))
+        .limit(limit);
+    } catch (error) {
+      console.error('Erro ao buscar backups por tabela:', error);
+      return [];
+    }
+  }
+
+  // Método para criar backup manual de todas as tabelas críticas
+  async createFullSystemBackup(description?: string): Promise<void> {
+    const tables = ['users', 'vehicles', 'suppliers', 'companies', 'fuel_requisitions', 'fuel_records'];
+    const backupPromises = tables.map(table => 
+      this.createBackup(table, description || 'Backup completo do sistema')
+    );
+    
+    try {
+      await Promise.all(backupPromises);
+      console.log('Backup completo do sistema criado com sucesso');
+    } catch (error) {
+      console.error('Erro ao criar backup completo:', error);
     }
   }
 }

@@ -978,6 +978,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============== ROTAS DE AUDITORIA E BACKUP - GARANTEM PERSISTÊNCIA PERMANENTE ==============
+  
+  // Buscar logs de auditoria geral
+  app.get("/api/audit/logs", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const logs = await storage.getAuditLog(limit);
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json(logs);
+    } catch (error) {
+      console.error('Erro ao buscar logs de auditoria:', error);
+      res.status(500).json({ message: "Erro ao buscar logs de auditoria" });
+    }
+  });
+
+  // Buscar logs de auditoria por tabela específica
+  app.get("/api/audit/logs/:tableName", async (req, res) => {
+    try {
+      const tableName = req.params.tableName;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const logs = await storage.getAuditLogByTable(tableName, limit);
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json(logs);
+    } catch (error) {
+      console.error('Erro ao buscar logs por tabela:', error);
+      res.status(500).json({ message: "Erro ao buscar logs de auditoria por tabela" });
+    }
+  });
+
+  // Buscar backups de dados
+  app.get("/api/audit/backups", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const backups = await storage.getDataBackups(limit);
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json(backups);
+    } catch (error) {
+      console.error('Erro ao buscar backups:', error);
+      res.status(500).json({ message: "Erro ao buscar backups de dados" });
+    }
+  });
+
+  // Buscar backups por tabela específica
+  app.get("/api/audit/backups/:tableName", async (req, res) => {
+    try {
+      const tableName = req.params.tableName;
+      const limit = parseInt(req.query.limit as string) || 5;
+      const backups = await storage.getBackupsByTable(tableName, limit);
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json(backups);
+    } catch (error) {
+      console.error('Erro ao buscar backups por tabela:', error);
+      res.status(500).json({ message: "Erro ao buscar backups por tabela" });
+    }
+  });
+
+  // Criar backup completo do sistema (admin apenas)
+  app.post("/api/audit/backup-system", async (req, res) => {
+    try {
+      const currentUser = await storage.getCurrentUser();
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Acesso negado - apenas administradores" });
+      }
+
+      const { description } = req.body;
+      await storage.createFullSystemBackup(description);
+      
+      res.json({ 
+        message: "Backup completo do sistema criado com sucesso",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Erro ao criar backup completo:', error);
+      res.status(500).json({ message: "Erro ao criar backup do sistema" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
