@@ -85,27 +85,8 @@ export default function RequisitionDetailsModal({
     refetchOnWindowFocus: false,
   });
 
-  // Assuming hasPermission is a function available in the scope or imported
-  // For demonstration, let's assume it's passed or globally available.
-  // If it's part of usePermissions, you might need to adjust accordingly.
-  const hasPermission = (permission: string) => {
-    // Placeholder for actual permission check logic
-    // Example: return userPermissions.includes(permission);
-    // For now, let's assume it's always true for demonstration purposes
-    // or if it's derived from canEdit/canApprove, adjust here.
-    // Based on the original code, canEdit and canApprove are already used.
-    // The `hasPermission('create_fuel_requisition')` and `hasPermission('approve_fuel_requisition')`
-    // seem to be new or from a different permission system.
-    // If they are meant to be derived from the existing hooks, they should be used directly.
-    // For the sake of applying the changes, I'll assume `canEdit` maps to `create_fuel_requisition`
-    // and `canApprove` maps to `approve_fuel_requisition`.
-    // If `hasPermission` is a separate function, its implementation would be needed.
-    return true; // Defaulting to true to allow the structure to be rendered
-  };
-
-  // Assuming canEditValues is a derived permission or prop.
-  // For now, let's assume canEditValues is the same as canEdit.
-  const canEditValues = canEdit(); // Adjust if canEditValues has a different source
+  // Use canEdit from usePermissions hook for editing values
+  const canEditValues = canEdit();
 
   const updateStatus = useMutation({
     mutationFn: async (data: { status: string; approver?: string; rejectionReason?: string }) => {
