@@ -35,7 +35,7 @@ export default function RequisitionDetailsModal({
 }: RequisitionDetailsModalProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { userRole, canApprove, hasPermission, canAccessRequisition } = usePermissions();
+  const { userRole, canApprove, hasPermission, canAccessRequisition, canEdit } = usePermissions();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showRejectionInput, setShowRejectionInput] = useState(false);
