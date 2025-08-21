@@ -195,6 +195,15 @@ export default function Requisitions() {
     setSelectedRequisition(requisition);
   };
 
+  const handleConfirmRequisition = async (requisitionId: number) => {
+    try {
+      await confirmRequisition.mutateAsync(requisitionId);
+    } catch (error) {
+      // Error is handled by the mutation's onError callback
+      console.error('Error confirming requisition:', error);
+    }
+  };
+
   const generatePDF = (requisition: FuelRequisition) => {
     try {
       // Import PDF generator (assuming it exists in the project)
@@ -438,18 +447,34 @@ export default function Requisitions() {
                             onClick={() => handleView(requisition)}
                             className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
                             title="Visualizar detalhes"
+                            data-testid={`button-view-${requisition.id}`}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {requisition.status === "approved" && (
+                          {/* Botão de editar valores - para funcionários quando aprovada */}
+                          {requisition.status === "approved" && userRole === 'employee' && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => setEditingRequisition(requisition)}
                               className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
                               title="Editar valores após aprovação"
+                              data-testid={`button-edit-values-${requisition.id}`}
                             >
                               <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {/* Botão de confirmar realização - para funcionários quando aprovada */}
+                          {requisition.status === "approved" && userRole === 'employee' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleConfirmRequisition(requisition.id)}
+                              className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
+                              title="Confirmar realização"
+                              data-testid={`button-confirm-${requisition.id}`}
+                            >
+                              <Check className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
