@@ -434,6 +434,33 @@ export default function Dashboard() {
                           <Eye className="mr-1 h-3 w-3" />
                           Ver
                         </Button>
+                        {/* Botões para funcionários quando a requisição está aprovada */}
+                        {userRole === 'employee' && requisition.status === 'approved' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingRequisition(requisition)}
+                              className="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white"
+                              title="Editar valores após aprovação"
+                            >
+                              <Edit className="mr-1 h-3 w-3" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              disabled={confirmRequisition.isPending}
+                              className="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white"
+                              title="Confirmar realização"
+                            >
+                              <Check className="mr-1 h-3 w-3" />
+                              Confirmar
+                            </Button>
+                          </>
+                        )}
+                        {/* Botões para não-funcionários quando a requisição está aprovada */}
                         {userRole !== 'employee' && requisition.status === 'approved' && (
                           <Button
                             variant="outline"
@@ -524,6 +551,35 @@ export default function Dashboard() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        {/* Botões para funcionários quando a requisição está aprovada */}
+                        {userRole === 'employee' && requisition.status === 'approved' && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingRequisition(requisition)}
+                              title="Editar valores após aprovação"
+                              className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              disabled={confirmRequisition.isPending}
+                              title="Confirmar realização"
+                              className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
+                            >
+                              {confirmRequisition.isPending ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              ) : (
+                                <Check className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </>
+                        )}
+                        {/* Botões para não-funcionários quando a requisição está aprovada */}
                         {userRole !== 'employee' && requisition.status === 'approved' && (
                           <>
                             <Button
