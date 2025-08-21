@@ -18,6 +18,7 @@ import StatusBadge from "./status-badge";
 import { PDFGenerator } from "@/lib/pdf-generator";
 import { X, Edit, Check, Loader2, FileText } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 
 interface RequisitionDetailsModalProps {
   requisition: FuelRequisition | null;
@@ -34,11 +35,36 @@ export default function RequisitionDetailsModal({
 }: RequisitionDetailsModalProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { canEdit, canApprove } = usePermissions();
+  const { userRole, canApprove, hasPermission, canAccessRequisition } = usePermissions();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showRejectionInput, setShowRejectionInput] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  // Verificar se o usuário tem permissão para acessar esta requisição
+  if (requisition && !canAccessRequisition(requisition.requesterId)) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Acesso Negado</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-center">
+            <p className="text-gray-600 dark:text-gray-300">
+              Você não tem permissão para visualizar esta requisição.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Funcionários só podem visualizar suas próprias requisições.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={onClose}> Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   // Fetch vehicle details for this requisition
   const { data: vehicleDetails } = useQuery({
@@ -205,7 +231,7 @@ export default function RequisitionDetailsModal({
         queryClient.setQueryData(["/api/fuel-requisitions"], (old: any) => {
           if (!old) return old;
           return old.map((req: any) =>
-            req.id === requisition.id 
+            req.id === requisition.id
               ? { ...req, purchaseOrderGenerated: "true" }
               : req
           );
@@ -216,7 +242,7 @@ export default function RequisitionDetailsModal({
           generated: true,
           userId: (currentUser as any)?.id
         });
-        
+
         // Invalidate queries to refresh the data
         queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       }
@@ -228,7 +254,7 @@ export default function RequisitionDetailsModal({
     } catch (error) {
       // Reverter a mudança otimista em caso de erro
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
-      
+
       toast({
         title: t("error"),
         description: t("pdf-generation-error"),
@@ -441,7 +467,7 @@ export default function RequisitionDetailsModal({
                 Gerar Ordem de Compra
               </Button>
             )}
-            
+
             {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && hasGeneratedPurchaseOrder && (
               <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-md">
                 <Check className="h-4 w-4" />

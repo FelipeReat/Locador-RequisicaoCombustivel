@@ -26,6 +26,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,9 +37,10 @@ export default function Dashboard() {
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
   const [editingRequisition, setEditingRequisition] = useState<FuelRequisition | null>(null);
   const { t } = useLanguage();
-  const { userRole, canApprove, hasPermission } = usePermissions();
+  const { userRole, canApprove, hasPermission, canAccessRequisition } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Hooks para atualizações em tempo real
   const { forceRefresh } = useRealTimeUpdates();
@@ -60,7 +62,14 @@ export default function Dashboard() {
     queryKey: ["/api/users"],
   });
 
-  const recentRequisitions = requisitions?.slice(0, 5) || [];
+  // Filtrar requisições baseado nas permissões do usuário
+  const accessibleRequisitions = useMemo(() => {
+    if (!requisitions || !user) return [];
+    
+    return requisitions.filter(req => canAccessRequisition(req.requesterId));
+  }, [requisitions, user, canAccessRequisition]);
+
+  const recentRequisitions = accessibleRequisitions.slice(0, 5);
 
   // Mutation para confirmar requisição (mudar de approved para fulfilled)
   const confirmRequisition = useMutation({
@@ -434,8 +443,8 @@ export default function Dashboard() {
                           <Eye className="mr-1 h-3 w-3" />
                           Ver
                         </Button>
-                        {/* Botões para funcionários quando a requisição está aprovada */}
-                        {userRole === 'employee' && requisition.status === 'approved' && (
+                        {/* Botões para funcionários quando a requisição está aprovada e é do próprio usuário */}
+                        {userRole === 'employee' && requisition.status === 'approved' && canAccessRequisition(requisition.requesterId) && (
                           <>
                             <Button
                               variant="outline"
@@ -460,18 +469,31 @@ export default function Dashboard() {
                             </Button>
                           </>
                         )}
-                        {/* Botões para não-funcionários quando a requisição está aprovada */}
-                        {userRole !== 'employee' && requisition.status === 'approved' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => confirmRequisition.mutate(requisition.id)}
-                            disabled={confirmRequisition.isPending}
-                            className="flex-1 text-xs"
-                          >
-                            <Check className="mr-1 h-3 w-3" />
-                            Confirmar
-                          </Button>
+                        {/* Botões para gerentes/admins quando a requisição está aprovada */}
+                        {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingRequisition(requisition)}
+                              className="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white"
+                              title="Editar valores após aprovação"
+                            >
+                              <Edit className="mr-1 h-3 w-3" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              disabled={confirmRequisition.isPending}
+                              className="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white"
+                              title="Confirmar realização"
+                            >
+                              <Check className="mr-1 h-3 w-3" />
+                              Confirmar
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -551,8 +573,8 @@ export default function Dashboard() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {/* Botões para funcionários quando a requisição está aprovada */}
-                        {userRole === 'employee' && requisition.status === 'approved' && (
+                        {/* Botões para funcionários quando a requisição está aprovada e é do próprio usuário */}
+                        {userRole === 'employee' && requisition.status === 'approved' && canAccessRequisition(requisition.requesterId) && (
                           <>
                             <Button
                               variant="ghost"
@@ -579,8 +601,8 @@ export default function Dashboard() {
                             </Button>
                           </>
                         )}
-                        {/* Botões para não-funcionários quando a requisição está aprovada */}
-                        {userRole !== 'employee' && requisition.status === 'approved' && (
+                        {/* Botões para gerentes/admins quando a requisição está aprovada */}
+                        {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && (
                           <>
                             <Button
                               variant="ghost"
@@ -597,10 +619,10 @@ export default function Dashboard() {
                               onClick={() => confirmRequisition.mutate(requisition.id)}
                               disabled={confirmRequisition.isPending}
                               title="Confirmar como realizada"
-                              className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                              className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
                             >
                               {confirmRequisition.isPending ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                               ) : (
                                 <Check className="h-4 w-4" />
                               )}

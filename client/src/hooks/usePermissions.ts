@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/auth-context';
+import { useMemo } from 'react';
 
 // Definição das permissões por função
 export type UserRole = 'employee' | 'manager' | 'admin';
@@ -76,11 +77,11 @@ export const PERMISSIONS: Permission[] = [
 
 export function usePermissions() {
   const { user } = useAuth();
-  
+
   // Determina a função do usuário
   const getUserRole = (): UserRole => {
     if (!user?.role) return 'employee';
-    
+
     // Mapeamento dos papéis do banco para os tipos do sistema
     switch (user.role) {
       case 'admin':
@@ -97,7 +98,7 @@ export function usePermissions() {
 
   // Retorna as páginas permitidas para o usuário atual
   const getAllowedPages = (): Permission[] => {
-    return PERMISSIONS.filter(permission => 
+    return PERMISSIONS.filter(permission =>
       permission.allowedRoles.includes(userRole)
     );
   };
@@ -118,9 +119,9 @@ export function usePermissions() {
     return userRole === 'admin';
   };
 
-  const canApprove = (): boolean => {
+  const canApprove = useMemo(() => {
     return userRole === 'admin' || userRole === 'manager';
-  };
+  }, [userRole]);
 
   const canViewAllRequisitions = (): boolean => {
     return userRole === 'admin' || userRole === 'manager';
@@ -160,6 +161,22 @@ export function usePermissions() {
     }
   };
 
+  const canAccessRequisition = (requesterId: number): boolean => {
+    if (!user) return false;
+
+    // Admins e gerentes podem acessar qualquer requisição
+    if (userRole === 'admin' || userRole === 'manager') {
+      return true;
+    }
+
+    // Funcionários só podem acessar suas próprias requisições
+    if (userRole === 'employee') {
+      return user.id === requesterId;
+    }
+
+    return false;
+  };
+
   return {
     userRole,
     allowedPages: getAllowedPages(),
@@ -172,5 +189,6 @@ export function usePermissions() {
     canManageUsers,
     canManageFleet,
     canViewTeamData,
+    canAccessRequisition,
   };
 }

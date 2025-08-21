@@ -19,6 +19,7 @@ import { Eye, Edit, Search, Filter, Check, Download, Plus, ChevronLeft, ChevronR
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,9 +35,10 @@ export default function Requisitions() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [supplierFilter, setSupplierFilter] = useState<string>("all"); // Added supplier filter state
   const { t } = useLanguage();
-  const { userRole, hasPermission } = usePermissions();
+  const { userRole, hasPermission, canAccessRequisition } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -143,9 +145,14 @@ export default function Requisitions() {
   });
 
   const filteredRequisitions = requisitions?.filter((req) => {
-    const user = users.find((u: any) => u.id === req.requesterId);
+    // Primeiro verificar se o usuário tem permissão para acessar esta requisição
+    if (!canAccessRequisition(req.requesterId)) {
+      return false;
+    }
+
+    const reqUser = users.find((u: any) => u.id === req.requesterId);
     const matchesSearch = 
-      (user?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (reqUser?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (req.client || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (req.fuelType || "").toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -451,31 +458,55 @@ export default function Requisitions() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {/* Botão de editar valores - para funcionários quando aprovada */}
-                          {requisition.status === "approved" && userRole === 'employee' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingRequisition(requisition)}
-                              className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
-                              title="Editar valores após aprovação"
-                              data-testid={`button-edit-values-${requisition.id}`}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                          {/* Botões de editar e confirmar - para funcionários quando aprovada e é sua própria requisição */}
+                          {requisition.status === "approved" && userRole === 'employee' && canAccessRequisition(requisition.requesterId) && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingRequisition(requisition)}
+                                className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
+                                title="Editar valores após aprovação"
+                                data-testid={`button-edit-values-${requisition.id}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleConfirmRequisition(requisition.id)}
+                                className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
+                                title="Confirmar realização"
+                                data-testid={`button-confirm-${requisition.id}`}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
-                          {/* Botão de confirmar realização - para funcionários quando aprovada */}
-                          {requisition.status === "approved" && userRole === 'employee' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleConfirmRequisition(requisition.id)}
-                              className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
-                              title="Confirmar realização"
-                              data-testid={`button-confirm-${requisition.id}`}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
+                          {/* Botões de editar e confirmar - para gerentes/admins quando aprovada */}
+                          {requisition.status === "approved" && (userRole === 'manager' || userRole === 'admin') && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingRequisition(requisition)}
+                                className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
+                                title="Editar valores após aprovação"
+                                data-testid={`button-edit-values-${requisition.id}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleConfirmRequisition(requisition.id)}
+                                className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
+                                title="Confirmar realização"
+                                data-testid={`button-confirm-${requisition.id}`}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </TableCell>
