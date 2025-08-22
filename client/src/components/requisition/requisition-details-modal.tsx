@@ -208,6 +208,7 @@ export default function RequisitionDetailsModal({
       queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
       
       // Aguarda um breve momento para o cache ser invalidado
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -226,15 +227,33 @@ export default function RequisitionDetailsModal({
         headers: { 'Cache-Control': 'no-cache' }
       });
 
+      // Buscar dados da empresa baseado no cliente da requisição
+      const companiesResponse = await fetch(`/api/companies`, {
+        cache: 'no-cache',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+
       const supplier = supplierResponse.ok ? await supplierResponse.json() : null;
       const vehicle = vehicleResponse.ok ? await vehicleResponse.json() : null;
       const requesterUser = userResponse.ok ? await userResponse.json() : null;
+      
+      // Buscar empresa específica baseada no nome do cliente
+      let company = null;
+      if (companiesResponse.ok) {
+        const companies = await companiesResponse.json();
+        company = companies.find((comp: any) => 
+          comp.name === requisition?.client || 
+          comp.fullName === requisition?.client ||
+          comp.name.includes(requisition?.client) ||
+          requisition?.client.includes(comp.name)
+        );
+      }
 
-      console.log('Dados para o PDF:', { requisition, supplier, vehicle, requesterUser });
+      console.log('Dados para o PDF:', { requisition, supplier, vehicle, requesterUser, company });
 
       const pdfGenerator = new PDFGenerator();
       if (requisition) {
-        pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle, requesterUser);
+        pdfGenerator.generatePurchaseOrderPDF(requisition, supplier, vehicle, requesterUser, company);
         pdfGenerator.save(`ordem-compra-${String(requisition.id).padStart(4, '0')}.pdf`);
 
         // Atualização otimista - atualiza o cache imediatamente

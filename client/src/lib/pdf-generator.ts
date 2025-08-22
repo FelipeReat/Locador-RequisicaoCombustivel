@@ -322,7 +322,7 @@ export class PDFGenerator {
     return quantity * price;
   }
 
-  generatePurchaseOrderPDF(requisition: any, supplier?: any, vehicle?: any, requesterUser?: any) {
+  generatePurchaseOrderPDF(requisition: any, supplier?: any, vehicle?: any, requesterUser?: any, company?: any) {
     this.doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
@@ -402,27 +402,20 @@ export class PDFGenerator {
       this.doc.setFont('helvetica', 'normal');
       this.doc.setFontSize(8);
 
-      // Informações específicas baseadas no cliente
+      // Informações baseadas nos dados atuais da empresa do banco de dados
       let clienteInfo: string[] = [];
 
-      if (requisition.client === "BBM Serviços" || requisition.client === "BBM serviços") {
+      if (company) {
+        // Usar dados atuais da empresa do banco de dados
         clienteInfo = [
-          `CPF/CNPJ: 13.844.973/0001-59`,
-          `Nome Empresarial: BBM Serviços, Aluguel de Máquinas e Tecnologia LTDA`,
-          `Contato: Bruno Rodrigues Derzi`,
-          `Telefone: (92) 3233-0634`,
-          `Email: bruno.derzi@blomaq.com.br`
-        ];
-      } else if (requisition.client === "J.B Andaimes") {
-        clienteInfo = [
-          `CPF/CNPJ: 09.518.795/0001-07`,
-          `Nome Empresarial: J. B. ANDAIMES - LOCADORA DE EQUIPAMENTOS PARA CONSTRUCAO CIVIL LTDA`,
-          `Contato: Bruno Rodrigues Derzi`,
-          `Telefone: (92) 3233-0634`,
-          `Email: bruno.derzi@blomaq.com.br`
+          `CPF/CNPJ: ${company.cnpj || 'Não informado'}`,
+          `Nome Empresarial: ${company.fullName || company.name || 'Não informado'}`,
+          `Contato: ${company.contact || requesterUser?.fullName || 'Não informado'}`,
+          `Telefone: ${company.phone || requesterUser?.phone || 'Não informado'}`,
+          `Email: ${company.email || requesterUser?.email || 'Não informado'}`
         ];
       } else {
-        // Fallback para outros clientes
+        // Fallback para quando não encontrar a empresa no banco
         clienteInfo = [
           `CPF/CNPJ: ${requisition.clientCnpj || 'Não informado'}`,
           `Nome Empresarial: ${requisition.client}`,
@@ -432,15 +425,15 @@ export class PDFGenerator {
 
         // Adicionar email apenas se o usuário tiver email
         if (requesterUser?.email) {
-          clienteInfo.push(`E-Mail: ${requesterUser.email}`);
+          clienteInfo.push(`Email: ${requesterUser.email}`);
         }
       }
 
       lineY = currentY + 7;
       clienteInfo.forEach((info, index) => {
-        // Usar fonte menor especificamente para o nome empresarial da J.B Andaimes
-        if (requisition.client === "J.B Andaimes" && info.includes("Nome Empresarial:")) {
-          this.doc.setFontSize(7); // Fonte menor para o nome longo
+        // Usar fonte menor para nomes empresariais muito longos
+        if (info.includes("Nome Empresarial:") && info.length > 80) {
+          this.doc.setFontSize(7); // Fonte menor para nomes longos
           this.doc.text(info, startX + 2, lineY);
           this.doc.setFontSize(8); // Voltar ao tamanho normal
         } else {
