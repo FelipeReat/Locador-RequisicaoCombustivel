@@ -462,8 +462,8 @@ export default function Requisitions() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {/* Botões de editar e confirmar - para funcionários quando aprovada e é sua própria requisição */}
-                          {requisition.status === "approved" && userRole === 'employee' && canActOnRequisition(requisition.requesterId) && (
+                          {/* Botões de editar e confirmar - para funcionários apenas quando aprovada e é sua própria requisição */}
+                          {requisition.status === "approved" && userRole === 'employee' && canActOnRequisition(requisition.requesterId) && user?.id === requisition.requesterId && (
                             <>
                               <Button
                                 variant="ghost"

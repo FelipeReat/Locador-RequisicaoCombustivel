@@ -415,7 +415,7 @@ export default function RequisitionDetailsModal({
         <DialogFooter className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex space-x-3">
             {/* Apenas usuários com permissão podem agir na requisição */}
-            {requisition && canActOnRequisition(requisition.requesterId) && (
+            {requisition && canActOnRequisition(requisition.requesterId) && (userRole !== 'employee' || user?.id === requisition.requesterId) && (
               <>
                 {(requisition.status === "approved" || requisition.status === "fulfilled") && !hasGeneratedPurchaseOrder && (userRole === 'manager' || userRole === 'admin') && (
                   <Button
@@ -493,9 +493,12 @@ export default function RequisitionDetailsModal({
             )}
 
             {/* Mensagem quando o usuário não pode agir na requisição */}
-            {requisition && !canActOnRequisition(requisition.requesterId) && (
+            {requisition && (!canActOnRequisition(requisition.requesterId) || (userRole === 'employee' && user?.id !== requisition.requesterId)) && (
               <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                Visualização apenas - Esta requisição pertence a outro usuário
+                {userRole === 'employee' && user?.id !== requisition.requesterId 
+                  ? "Visualização apenas - Você só pode agir em suas próprias requisições"
+                  : "Visualização apenas - Esta requisição pertence a outro usuário"
+                }
               </div>
             )}
           </div>

@@ -443,8 +443,8 @@ export default function Dashboard() {
                           <Eye className="mr-1 h-3 w-3" />
                           Ver
                         </Button>
-                        {/* Botões para funcionários quando a requisição está aprovada e é do próprio usuário */}
-                        {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
+                        {/* Botões para funcionários apenas quando a requisição está aprovada e é do próprio usuário */}
+                        {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && user?.id === requisition.requesterId && (
                           <>
                             <Button
                               variant="outline"
@@ -573,8 +573,8 @@ export default function Dashboard() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {/* Botões para funcionários quando a requisição está aprovada e é do próprio usuário */}
-                        {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
+                        {/* Botões para funcionários apenas quando a requisição está aprovada e é do próprio usuário */}
+                        {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && user?.id === requisition.requesterId && (
                           <>
                             <Button
                               variant="ghost"
