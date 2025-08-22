@@ -27,6 +27,7 @@ export const vehicles = pgTable("vehicles", {
   fuelType: text("fuel_type").notNull(),
   mileage: text("mileage").default("0"),
   status: text("status").notNull().default("active"),
+  companyId: integer("company_id"),
   lastMaintenance: text("last_maintenance"),
   nextMaintenance: text("next_maintenance"),
   createdAt: text("created_at").notNull().default("now()"),
@@ -150,6 +151,7 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
   mileage: z.string().refine((val) => parseFloat(val) >= 0, {
     message: "Quilometragem deve ser maior ou igual a 0",
   }).optional(),
+  companyId: z.number().min(1, "Empresa é obrigatória").optional(),
 }).omit({
   id: true,
   status: true,

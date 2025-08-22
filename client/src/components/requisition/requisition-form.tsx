@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { InsertFuelRequisition, Supplier, Vehicle, User } from "@shared/schema";
+import type { InsertFuelRequisition, Supplier, Vehicle, User, Company } from "@shared/schema";
 
 interface RequisitionFormProps {
   onSuccess?: () => void;
@@ -127,9 +127,26 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
     queryKey: ["/api/suppliers"],
   });
 
+  // Fetch companies for client selection
+  const { data: companies = [] } = useQuery<Company[]>({
+    queryKey: ["/api/companies"],
+  });
+
   // Fetch vehicles
   const { data: vehicles = [] } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
+  });
+
+  // Filter vehicles based on selected client/company
+  const filteredVehicles = vehicles.filter(vehicle => {
+    if (!formData.client) return true;
+    
+    // Find the selected company
+    const selectedCompany = companies.find(company => company.name === formData.client);
+    if (!selectedCompany) return true;
+    
+    // Return vehicles that belong to the selected company
+    return vehicle.companyId === selectedCompany.id;
   });
 
   // Update kmAnterior when vehicle is selected
@@ -295,7 +312,17 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   };
 
   const handleInputChange = (field: keyof InsertFuelRequisition, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // If client changes, reset vehicle selection since available vehicles change
+      if (field === 'client' && prev.client !== value) {
+        newData.vehicleId = undefined;
+        newData.kmAnterior = "";
+      }
+      
+      return newData;
+    });
   };
 
   return (
@@ -335,8 +362,11 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
               <SelectValue placeholder="Selecione um cliente" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="BBM Serviços">BBM Serviços</SelectItem>
-              <SelectItem value="J.B Andaimes">J.B Andaimes</SelectItem>
+              {companies.map((company) => (
+                <SelectItem key={company.id} value={company.name}>
+                  {company.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -398,11 +428,11 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
                 className="w-full justify-between"
               >
                 {formData.vehicleId
-                  ? vehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.plate + 
+                  ? filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.plate + 
                     " - " + 
-                    vehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.brand + 
+                    filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.brand + 
                     " " + 
-                    vehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.model
+                    filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.model
                   : "Buscar veículo..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
@@ -410,9 +440,14 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
             <PopoverContent className="w-full p-0">
               <Command>
                 <CommandInput placeholder="Digite placa, modelo ou marca..." />
-                <CommandEmpty>Nenhum veículo encontrado.</CommandEmpty>
+                <CommandEmpty>
+                  {formData.client 
+                    ? "Nenhum veículo encontrado para esta empresa."
+                    : "Selecione primeiro um cliente para ver os veículos disponíveis."
+                  }
+                </CommandEmpty>
                 <CommandGroup>
-                  {vehicles.map((vehicle) => (
+                  {filteredVehicles.map((vehicle) => (
                     <CommandItem
                       key={vehicle.id}
                       value={`${vehicle.plate} ${vehicle.brand} ${vehicle.model} ${vehicle.year}`}

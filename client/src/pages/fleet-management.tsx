@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
-import { insertVehicleSchema, type Vehicle, type InsertVehicle } from "@shared/schema";
+import { insertVehicleSchema, type Vehicle, type InsertVehicle, type Company } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
@@ -82,6 +82,11 @@ function FleetManagement() {
     queryKey: ["/api/vehicles"],
   });
 
+  // Fetch companies for vehicle association
+  const { data: companies } = useQuery<Company[]>({
+    queryKey: ["/api/companies"],
+  });
+
   const form = useForm<InsertVehicle>({
     resolver: zodResolver(insertVehicleSchema),
     defaultValues: {
@@ -91,6 +96,7 @@ function FleetManagement() {
       year: new Date().getFullYear(),
       fuelType: "gasolina",
       mileage: "0",
+      companyId: undefined,
     },
   });
 
@@ -231,6 +237,7 @@ function FleetManagement() {
       year: vehicle.year,
       fuelType: vehicle.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10",
       mileage: vehicle.mileage || "0",
+      companyId: vehicle.companyId || undefined,
     });
     setIsDialogOpen(true);
   };
@@ -245,6 +252,7 @@ function FleetManagement() {
       year: new Date().getFullYear(),
       fuelType: "gasolina",
       mileage: "0",
+      companyId: undefined,
     });
     setIsDialogOpen(true);
   };
@@ -432,6 +440,34 @@ function FleetManagement() {
                         )}
                       />
 
+                      <FormField
+                        control={form.control}
+                        name="companyId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Empresa</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(value ? Number(value) : undefined)} value={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecionar empresa" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Nenhuma empresa</SelectItem>
+                                {companies?.map((company) => (
+                                  <SelectItem key={company.id} value={company.id.toString()}>
+                                    {company.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
                       <FormField
                         control={form.control}
                         name="mileage"
