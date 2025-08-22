@@ -113,6 +113,10 @@ function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      // Invalida cache das requisições para atualizar dados do usuário nos PDFs
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       toast({
         title: t("success"),
         description: t("user-created-success"),
@@ -142,6 +146,10 @@ function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      // Invalida cache das requisições para atualizar dados do usuário nos PDFs
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       toast({
         title: t("success"),
         description: t("user-updated-success"),

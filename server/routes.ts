@@ -534,6 +534,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Usuário não encontrado" });
       }
 
+      // Headers para garantir dados atuais nos PDFs
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar usuário" });

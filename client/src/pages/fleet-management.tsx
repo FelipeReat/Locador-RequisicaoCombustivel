@@ -101,6 +101,10 @@ function FleetManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      // Invalida cache das requisições para atualizar dados do veículo nos PDFs
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: t("success"),
         description: t("vehicle-created-success"),
@@ -124,6 +128,10 @@ function FleetManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      // Invalida cache das requisições para atualizar dados do veículo nos PDFs
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: t("success"),
         description: t("vehicle-updated-success"),

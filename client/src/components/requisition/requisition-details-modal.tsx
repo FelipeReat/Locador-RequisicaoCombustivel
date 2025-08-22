@@ -171,10 +171,27 @@ export default function RequisitionDetailsModal({
   const generatePurchasePDF = async () => {
     setIsGeneratingPDF(true);
     try {
-      // Buscar dados do fornecedor, veículo e usuário responsável
-      const supplierResponse = await fetch(`/api/suppliers/${requisition?.supplierId}`);
-      const vehicleResponse = await fetch(`/api/vehicles/${requisition?.vehicleId}`);
-      const userResponse = await fetch(`/api/users/${requisition?.requesterId}`);
+      // Invalida cache para garantir dados mais atuais antes de gerar o PDF
+      queryClient.invalidateQueries({ queryKey: ["/api/suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      
+      // Aguarda um breve momento para o cache ser invalidado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Buscar dados do fornecedor, veículo e usuário responsável com dados atualizados
+      const supplierResponse = await fetch(`/api/suppliers/${requisition?.supplierId}`, {
+        cache: 'no-cache', // Força busca sem cache
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      const vehicleResponse = await fetch(`/api/vehicles/${requisition?.vehicleId}`, {
+        cache: 'no-cache',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      const userResponse = await fetch(`/api/users/${requisition?.requesterId}`, {
+        cache: 'no-cache',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
 
       const supplier = supplierResponse.ok ? await supplierResponse.json() : null;
       const vehicle = vehicleResponse.ok ? await vehicleResponse.json() : null;
