@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import StatusBadge from "./status-badge";
 import { PDFGenerator } from "@/lib/pdf-generator";
-import { X, Edit, Check, Loader2, FileText } from "lucide-react";
+import { X, Edit, Check, Loader2, FileText, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -66,6 +66,32 @@ export default function RequisitionDetailsModal({
 
   // Use canEdit from usePermissions hook for editing values
   const canEditValues = canEdit();
+
+  const deleteRequisition = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "DELETE",
+        `/api/fuel-requisitions/${requisition?.id}`
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions", "stats"] });
+      toast({
+        title: "Sucesso",
+        description: "Requisição excluída com sucesso",
+      });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir requisição",
+        variant: "destructive",
+      });
+    },
+  });
 
   const updateStatus = useMutation({
     mutationFn: async (data: { status: string; approver?: string; rejectionReason?: string }) => {
@@ -128,6 +154,13 @@ export default function RequisitionDetailsModal({
       approver: "João Silva",
       rejectionReason: rejectionReason,
     });
+  };
+
+  const handleDeleteRequisition = () => {
+    const confirmed = window.confirm("Tem certeza que deseja excluir esta requisição? Esta ação não pode ser desfeita.");
+    if (confirmed) {
+      deleteRequisition.mutate();
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -529,6 +562,22 @@ export default function RequisitionDetailsModal({
                       Aprovar
                     </Button>
                   </>
+                )}
+
+                {/* Botão de exclusão para gerentes/admins - desabilitado quando realizada */}
+                {(userRole === 'manager' || userRole === 'admin') && requisition.status !== "fulfilled" && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteRequisition}
+                    disabled={deleteRequisition.isPending}
+                    className="flex items-center"
+                  >
+                    {deleteRequisition.isPending && (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    )}
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Excluir Requisição
+                  </Button>
                 )}
               </>
             )}

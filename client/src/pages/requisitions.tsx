@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, Edit, Search, Filter, Check, Download, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Eye, Edit, Search, Filter, Check, Download, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -63,6 +63,59 @@ export default function Requisitions() {
   // Placeholder for vehicles data if needed for the table
   const { data: vehicles = [] } = useQuery<any[]>({
     queryKey: ["/api/vehicles"],
+  });
+
+  // Mutation to delete requisition
+  const deleteRequisition = useMutation({
+    mutationFn: async (requisitionId: number) => {
+      const response = await fetch(`/api/fuel-requisitions/${requisitionId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao excluir requisição");
+      }
+
+      return await response.json();
+    },
+    // Optimistic update
+    onMutate: async (requisitionId: number) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
+      const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
+
+      queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
+        if (!old) return old;
+        return old.filter(req => req.id !== requisitionId);
+      });
+
+      return { previousRequisitions };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats"] });
+
+      toast({
+        title: "Sucesso",
+        description: "Requisição excluída com sucesso",
+      });
+    },
+    onError: (error: any, variables, context) => {
+      if (context?.previousRequisitions) {
+        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
+      }
+
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir requisição",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+    }
   });
 
   // Mutation to confirm requisition (change from approved to fulfilled)
@@ -212,6 +265,18 @@ export default function Requisitions() {
     } catch (error) {
       // Error is handled by the mutation's onError callback
       console.error('Error confirming requisition:', error);
+    }
+  };
+
+  const handleDeleteRequisition = async (requisitionId: number) => {
+    const confirmed = window.confirm("Tem certeza que deseja excluir esta requisição? Esta ação não pode ser desfeita.");
+    if (confirmed) {
+      try {
+        await deleteRequisition.mutateAsync(requisitionId);
+      } catch (error) {
+        // Error is handled by the mutation's onError callback
+        console.error('Error deleting requisition:', error);
+      }
     }
   };
 
@@ -511,6 +576,24 @@ export default function Requisitions() {
                                 <Check className="h-4 w-4" />
                               </Button>
                             </>
+                          )}
+                          {/* Botão de exclusão para gerentes/admins - desabilitado quando realizada */}
+                          {(userRole === 'manager' || userRole === 'admin') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteRequisition(requisition.id)}
+                              disabled={requisition.status === "fulfilled" || deleteRequisition.isPending}
+                              className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+                              title={requisition.status === "fulfilled" ? "Não é possível excluir requisições realizadas" : "Excluir requisição"}
+                              data-testid={`button-delete-${requisition.id}`}
+                            >
+                              {deleteRequisition.isPending ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
                           )}
                         </div>
                       </TableCell>
