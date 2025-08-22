@@ -32,7 +32,7 @@ async function backupSystemData() {
     };
 
     // Salvar backup em arquivo
-    const fs = require('fs');
+    const fs = await import('fs');
     const backupFileName = `system-backup-${new Date().toISOString().slice(0, 10)}.json`;
     fs.writeFileSync(backupFileName, JSON.stringify(backupData, null, 2));
 
