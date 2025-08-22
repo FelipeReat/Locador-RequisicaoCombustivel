@@ -491,7 +491,7 @@ export default function RequisitionDetailsModal({
             {/* Apenas usuários com permissão podem agir na requisição */}
             {requisition && canActOnRequisition(requisition.requesterId) && (userRole !== 'employee' || user?.id === requisition.requesterId) && (
               <>
-                {(requisition.status === "approved" || requisition.status === "fulfilled") && !hasGeneratedPurchaseOrder && (userRole === 'manager' || userRole === 'admin') && (
+                {(requisition.status === "approved" || requisition.status === "fulfilled") && !hasGeneratedPurchaseOrder && (userRole === 'manager' || userRole === 'admin' || (userRole === 'employee' && user?.id === requisition.requesterId)) && (
                   <Button
                     variant="outline"
                     onClick={generatePurchasePDF}
@@ -504,7 +504,7 @@ export default function RequisitionDetailsModal({
                   </Button>
                 )}
 
-                {(requisition.status === "approved" || requisition.status === "fulfilled") && hasGeneratedPurchaseOrder && (userRole === 'manager' || userRole === 'admin') && (
+                {(requisition.status === "approved" || requisition.status === "fulfilled") && hasGeneratedPurchaseOrder && (userRole === 'manager' || userRole === 'admin' || (userRole === 'employee' && user?.id === requisition.requesterId)) && (
                   <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-md">
                     <Check className="h-4 w-4" />
                     Ordem de compra já foi gerada para esta requisição
