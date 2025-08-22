@@ -162,18 +162,17 @@ export function usePermissions() {
   };
 
   const canAccessRequisition = (requesterId: number): boolean => {
-    if (!user) return false;
+    // Todos podem ver requisições, mas só podem agir nas próprias (para funcionários)
+    return true;
+  };
 
-    // Admins e gerentes podem acessar qualquer requisição
+  const canActOnRequisition = (requesterId: number) => {
     if (userRole === 'admin' || userRole === 'manager') {
       return true;
     }
-
-    // Funcionários só podem acessar suas próprias requisições
     if (userRole === 'employee') {
-      return user.id === requesterId;
+      return user?.id === requesterId;
     }
-
     return false;
   };
 
@@ -190,5 +189,6 @@ export function usePermissions() {
     canManageFleet,
     canViewTeamData,
     canAccessRequisition,
+    canActOnRequisition,
   };
 }

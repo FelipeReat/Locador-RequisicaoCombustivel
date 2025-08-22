@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type FuelRequisition, type Supplier } from "@shared/schema";
 import Header from "@/components/layout/header";
@@ -35,7 +35,7 @@ export default function Requisitions() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [supplierFilter, setSupplierFilter] = useState<string>("all"); // Added supplier filter state
   const { t } = useLanguage();
-  const { userRole, hasPermission, canAccessRequisition } = usePermissions();
+  const { userRole, hasPermission, canAccessRequisition, canActOnRequisition } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -144,28 +144,32 @@ export default function Requisitions() {
     }
   });
 
-  const filteredRequisitions = requisitions?.filter((req) => {
-    // Primeiro verificar se o usuário tem permissão para acessar esta requisição
-    if (!canAccessRequisition(req.requesterId)) {
-      return false;
-    }
+  const filteredRequisitions = useMemo(() => {
+    if (!requisitions) return [];
 
-    const reqUser = users.find((u: any) => u.id === req.requesterId);
-    const matchesSearch = 
-      (reqUser?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (req.client || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (req.fuelType || "").toLowerCase().includes(searchTerm.toLowerCase());
+    return requisitions.filter(req => {
+      // Todos podem ver todas as requisições
+      // A restrição de ações é feita nos botões individuais
+      const reqUser = users.find((u: any) => u.id === req.requesterId);
+      const matchesSearch = 
+        (reqUser?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.client || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (req.fuelType || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = !statusFilter || statusFilter === "all" || req.status === statusFilter;
-    const matchesSupplier = !supplierFilter || supplierFilter === "all" || req.supplierId.toString() === supplierFilter;
+      const matchesStatus = !statusFilter || statusFilter === "all" || req.status === statusFilter;
+      const matchesSupplier = !supplierFilter || supplierFilter === "all" || req.supplierId.toString() === supplierFilter;
 
-    return matchesSearch && matchesStatus && matchesSupplier;
-  }) || [];
+      return matchesSearch && matchesStatus && matchesSupplier;
+    });
+  }, [requisitions, searchTerm, statusFilter, supplierFilter, users]);
+
 
   // Sort by created date descending (most recent first)
-  const sortedRequisitions = [...filteredRequisitions].sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  const sortedRequisitions = useMemo(() => 
+    [...filteredRequisitions].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ), 
+  [filteredRequisitions]);
 
   // Pagination logic
   const totalPages = Math.ceil(sortedRequisitions.length / itemsPerPage);
@@ -216,12 +220,12 @@ export default function Requisitions() {
       // Import PDF generator (assuming it exists in the project)
       import('@/lib/pdf-generator').then(({ PDFGenerator }) => {
         const pdfGenerator = new PDFGenerator('portrait');
-        
+
         // Get additional data for the PDF
         const user = users.find((u: any) => u.id === requisition.requesterId);
         const supplier = suppliers?.find(s => s.id === requisition.supplierId);
         const vehicle = vehicles?.find(v => v.id === requisition.vehicleId);
-        
+
         const pdfData = {
           ...requisition,
           requesterName: user?.fullName || user?.username || 'N/A',
@@ -229,15 +233,15 @@ export default function Requisitions() {
           vehiclePlate: vehicle?.plate || 'N/A',
           vehicleModel: vehicle?.model || 'N/A'
         };
-        
+
         pdfGenerator.generateRequisitionsReport([pdfData], {
           title: `Requisição ${requisition.id}`,
           subtitle: `Data: ${new Date(requisition.createdAt).toLocaleDateString('pt-BR')}`,
           company: 'Sistema de Controle de Abastecimento'
         });
-        
+
         pdfGenerator.save(`requisicao-${requisition.id}-${new Date().toISOString().split('T')[0]}.pdf`);
-        
+
         toast({
           title: "PDF Gerado",
           description: `PDF da requisição ${requisition.id} baixado com sucesso!`,
@@ -459,7 +463,7 @@ export default function Requisitions() {
                             <Eye className="h-4 w-4" />
                           </Button>
                           {/* Botões de editar e confirmar - para funcionários quando aprovada e é sua própria requisição */}
-                          {requisition.status === "approved" && userRole === 'employee' && canAccessRequisition(requisition.requesterId) && (
+                          {requisition.status === "approved" && userRole === 'employee' && canActOnRequisition(requisition.requesterId) && (
                             <>
                               <Button
                                 variant="ghost"

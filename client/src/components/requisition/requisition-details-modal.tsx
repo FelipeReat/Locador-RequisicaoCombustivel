@@ -35,36 +35,14 @@ export default function RequisitionDetailsModal({
 }: RequisitionDetailsModalProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { userRole, canApprove, hasPermission, canAccessRequisition, canEdit } = usePermissions();
+  const { userRole, canApprove, hasPermission, canAccessRequisition, canActOnRequisition, canEdit } = usePermissions();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showRejectionInput, setShowRejectionInput] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  // Verificar se o usuário tem permissão para acessar esta requisição
-  if (requisition && !canAccessRequisition(requisition.requesterId)) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-red-600">Acesso Negado</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 text-center">
-            <p className="text-gray-600 dark:text-gray-300">
-              Você não tem permissão para visualizar esta requisição.
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Funcionários só podem visualizar suas próprias requisições.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button onClick={onClose}> Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  
 
   // Fetch vehicle details for this requisition
   const { data: vehicleDetails } = useQuery({
@@ -436,10 +414,10 @@ export default function RequisitionDetailsModal({
 
         <DialogFooter className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex space-x-3">
-            {/* Apenas gerentes e admins têm acesso aos botões de ação */}
-            {(userRole === 'manager' || userRole === 'admin') && (
+            {/* Apenas usuários com permissão podem agir na requisição */}
+            {requisition && canActOnRequisition(requisition.requesterId) && (
               <>
-                {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && !hasGeneratedPurchaseOrder && (
+                {(requisition.status === "approved" || requisition.status === "fulfilled") && !hasGeneratedPurchaseOrder && (userRole === 'manager' || userRole === 'admin') && (
                   <Button
                     variant="outline"
                     onClick={generatePurchasePDF}
@@ -452,14 +430,14 @@ export default function RequisitionDetailsModal({
                   </Button>
                 )}
 
-                {requisition && (requisition.status === "approved" || requisition.status === "fulfilled") && hasGeneratedPurchaseOrder && (
+                {(requisition.status === "approved" || requisition.status === "fulfilled") && hasGeneratedPurchaseOrder && (userRole === 'manager' || userRole === 'admin') && (
                   <div className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-md">
                     <Check className="h-4 w-4" />
                     Ordem de compra já foi gerada para esta requisição
                   </div>
                 )}
 
-                {requisition && requisition.status === "approved" && onEditRequisition && canEditValues && (
+                {requisition.status === "approved" && onEditRequisition && canEditValues && (
                   <Button
                     onClick={() => onEditRequisition(requisition)}
                     variant="outline"
@@ -470,7 +448,7 @@ export default function RequisitionDetailsModal({
                   </Button>
                 )}
 
-                {requisition && requisition.status === "pending" && canApprove() && (
+                {requisition.status === "pending" && canApprove() && (
                   <>
                     {!showRejectionInput ? (
                       <Button
@@ -514,10 +492,10 @@ export default function RequisitionDetailsModal({
               </>
             )}
 
-            {/* Funcionários só veem as informações, sem botões de ação */}
-            {userRole === 'employee' && (
+            {/* Mensagem quando o usuário não pode agir na requisição */}
+            {requisition && !canActOnRequisition(requisition.requesterId) && (
               <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                Visualização apenas - Entre em contato com seu gerente para ações nesta requisição
+                Visualização apenas - Esta requisição pertence a outro usuário
               </div>
             )}
           </div>

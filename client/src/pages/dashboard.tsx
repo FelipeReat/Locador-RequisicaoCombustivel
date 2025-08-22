@@ -37,7 +37,7 @@ export default function Dashboard() {
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
   const [editingRequisition, setEditingRequisition] = useState<FuelRequisition | null>(null);
   const { t } = useLanguage();
-  const { userRole, canApprove, hasPermission, canAccessRequisition } = usePermissions();
+  const { userRole, hasPermission, canAccessRequisition, canActOnRequisition } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -65,7 +65,7 @@ export default function Dashboard() {
   // Filtrar requisições baseado nas permissões do usuário
   const accessibleRequisitions = useMemo(() => {
     if (!requisitions || !user) return [];
-    
+
     return requisitions.filter(req => canAccessRequisition(req.requesterId));
   }, [requisitions, user, canAccessRequisition]);
 
@@ -444,7 +444,7 @@ export default function Dashboard() {
                           Ver
                         </Button>
                         {/* Botões para funcionários quando a requisição está aprovada e é do próprio usuário */}
-                        {userRole === 'employee' && requisition.status === 'approved' && canAccessRequisition(requisition.requesterId) && (
+                        {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
                           <>
                             <Button
                               variant="outline"
@@ -470,7 +470,7 @@ export default function Dashboard() {
                           </>
                         )}
                         {/* Botões para gerentes/admins quando a requisição está aprovada */}
-                        {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && (
+                        {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
                           <>
                             <Button
                               variant="outline"
@@ -574,7 +574,7 @@ export default function Dashboard() {
                           <Eye className="h-4 w-4" />
                         </Button>
                         {/* Botões para funcionários quando a requisição está aprovada e é do próprio usuário */}
-                        {userRole === 'employee' && requisition.status === 'approved' && canAccessRequisition(requisition.requesterId) && (
+                        {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
                           <>
                             <Button
                               variant="ghost"
@@ -590,7 +590,7 @@ export default function Dashboard() {
                               size="sm"
                               onClick={() => confirmRequisition.mutate(requisition.id)}
                               disabled={confirmRequisition.isPending}
-                              title="Confirmar realização"
+                              title="Confirmar como realizada"
                               className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
                             >
                               {confirmRequisition.isPending ? (
@@ -602,7 +602,7 @@ export default function Dashboard() {
                           </>
                         )}
                         {/* Botões para gerentes/admins quando a requisição está aprovada */}
-                        {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && (
+                        {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
                           <>
                             <Button
                               variant="ghost"
@@ -629,7 +629,7 @@ export default function Dashboard() {
                             </Button>
                           </>
                         )}
-                        
+
                       </td>
                     </tr>
                   ))
