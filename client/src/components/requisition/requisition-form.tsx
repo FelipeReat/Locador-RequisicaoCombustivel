@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -96,7 +95,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
     if (initialData && Object.keys(initialData).length > 0) {
       console.log('RequisitionForm - Updating form data with initialData:', initialData);
       console.log('RequisitionForm - isEditing:', isEditing);
-      
+
       const updatedFormData = {
         requesterId: initialData.requesterId,
         supplierId: initialData.supplierId,
@@ -109,7 +108,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
         quantity: initialData.quantity || "",
         fuelType: initialData.fuelType || "diesel",
       };
-      
+
       console.log('RequisitionForm - Setting form data to:', updatedFormData);
       setFormData(updatedFormData);
       setIsTanqueCheio(initialData.tanqueCheio === "true");
@@ -140,11 +139,11 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   // Filter vehicles based on selected client/company
   const filteredVehicles = vehicles.filter(vehicle => {
     if (!formData.client) return true;
-    
+
     // Find the selected company
     const selectedCompany = companies.find(company => company.name === formData.client);
     if (!selectedCompany) return true;
-    
+
     // Return vehicles that belong to the selected company
     return vehicle.companyId === selectedCompany.id;
   });
@@ -162,7 +161,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
     }
   }, [formData.vehicleId, vehicles]);
 
-  
+
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertFuelRequisition) => {
@@ -183,7 +182,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
           body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error("Failed to create requisition");
-        
+
         // Update vehicle mileage after creating requisition
         if (data.vehicleId && data.kmAtual) {
           await fetch(`/api/vehicles/${data.vehicleId}`, {
@@ -192,7 +191,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
             body: JSON.stringify({ mileage: data.kmAtual }),
           });
         }
-        
+
         return response.json();
       }
     },
@@ -201,11 +200,11 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       // Cancelar qualquer query em andamento
       await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
       await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
-      
+
       // Obter dados atuais
       const previousRequisitions = queryClient.getQueryData<any[]>(["/api/fuel-requisitions"]);
       const previousStats = queryClient.getQueryData<any>(["/api/fuel-requisitions/stats/overview"]);
-      
+
       // Adicionar nova requisição otimisticamente
       if (previousRequisitions) {
         const optimisticRequisition = {
@@ -218,10 +217,10 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
           approvedDate: null,
           rejectionReason: null
         };
-        
+
         queryClient.setQueryData(["/api/fuel-requisitions"], [optimisticRequisition, ...previousRequisitions]);
       }
-      
+
       // Atualizar estatísticas otimisticamente
       if (previousStats) {
         queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], {
@@ -230,7 +229,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
           pendingRequests: (parseInt(previousStats.pendingRequests) + 1).toString()
         });
       }
-      
+
       return { previousRequisitions, previousStats };
     },
     onSuccess: (data) => {
@@ -238,14 +237,14 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
-      
+
       if (!isEditing) {
         // Reset form only for new requisitions
         // Reset form with current user as requester
         const resetRequesterId = currentUser && typeof currentUser === 'object' && 'id' in currentUser 
           ? (currentUser as any).id 
           : (users.find(user => user.role === 'admin')?.id || users[0]?.id || 1);
-        
+
         setFormData({
           requesterId: resetRequesterId,
           supplierId: undefined,
@@ -260,7 +259,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
         });
         setIsTanqueCheio(false);
       }
-      
+
       toast({
         title: isEditing ? "Requisição Atualizada" : "Requisição Criada",
         description: isEditing ? "A requisição foi atualizada com sucesso." : "A requisição foi criada com sucesso.",
@@ -275,7 +274,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
       if (context?.previousStats) {
         queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], context.previousStats);
       }
-      
+
       toast({
         title: t('operation-error'),
         description: error.message,
@@ -296,7 +295,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const fallbackRequesterId = currentUser && typeof currentUser === 'object' && 'id' in currentUser 
       ? (currentUser as any).id 
       : (users.find(user => user.role === 'admin')?.id || users[0]?.id || 1);
@@ -314,13 +313,13 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
   const handleInputChange = (field: keyof InsertFuelRequisition, value: string | number) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
-      
+
       // If client changes, reset vehicle selection since available vehicles change
       if (field === 'client' && prev.client !== value) {
         newData.vehicleId = undefined;
         newData.kmAnterior = "";
       }
-      
+
       return newData;
     });
   };
@@ -355,13 +354,22 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
         <div className="space-y-2">
           <Label htmlFor="client">Cliente *</Label>
           <Select 
-            value={formData.client} 
-            onValueChange={(value) => handleInputChange("client", value)}
+            value={formData.client || "placeholder"} 
+            onValueChange={(value) => {
+              if (value !== "placeholder") {
+                setFormData(prev => ({ 
+                  ...prev, 
+                  client: value,
+                  vehicleId: 0 // Reset vehicle when client changes
+                }));
+              }
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione um cliente" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="placeholder">Selecione um cliente</SelectItem>
               {companies.map((company) => (
                 <SelectItem key={company.id} value={company.name}>
                   {company.name}

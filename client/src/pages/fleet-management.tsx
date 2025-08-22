@@ -446,14 +446,14 @@ function FleetManagement() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Empresa</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === "none" ? null : Number(value))} value={field.value === null ? "none" : field.value?.toString() || ""}>
+                            <Select onValueChange={(value) => field.onChange(value === "0" ? null : Number(value))} value={field.value === null ? "0" : field.value?.toString() || "0"}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecionar empresa" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="none">Sem empresa</SelectItem>
+                                <SelectItem value="0">Sem empresa</SelectItem>
                                 {companies?.map((company) => (
                                   <SelectItem key={company.id} value={company.id.toString()}>
                                     {company.name}
