@@ -96,7 +96,7 @@ function FleetManagement() {
       year: new Date().getFullYear(),
       fuelType: "gasolina",
       mileage: "0",
-      companyId: undefined,
+      companyId: null,
     },
   });
 
@@ -237,7 +237,7 @@ function FleetManagement() {
       year: vehicle.year,
       fuelType: vehicle.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10",
       mileage: vehicle.mileage || "0",
-      companyId: vehicle.companyId || undefined,
+      companyId: vehicle.companyId ?? null, // Use null if companyId is undefined or null
     });
     setIsDialogOpen(true);
   };
@@ -252,7 +252,7 @@ function FleetManagement() {
       year: new Date().getFullYear(),
       fuelType: "gasolina",
       mileage: "0",
-      companyId: undefined,
+      companyId: null,
     });
     setIsDialogOpen(true);
   };
@@ -446,7 +446,7 @@ function FleetManagement() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Empresa</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(value === "none" ? undefined : Number(value))} value={field.value?.toString() || "none"}>
+                            <Select onValueChange={(value) => field.onChange(value === "none" ? null : Number(value))} value={field.value === null ? "none" : field.value?.toString() || ""}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecionar empresa" />
@@ -584,7 +584,7 @@ function FleetManagement() {
               </div>
             </div>
           </div>
-          
+
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredVehicles.map((vehicle) => (
               <Card key={vehicle.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
