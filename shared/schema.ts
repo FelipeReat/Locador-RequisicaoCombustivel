@@ -151,7 +151,7 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
   mileage: z.string().refine((val) => parseFloat(val) >= 0, {
     message: "Quilometragem deve ser maior ou igual a 0",
   }).optional(),
-  companyId: z.number().min(1, "Empresa é obrigatória").optional(),
+  companyId: z.number().optional(),
 }).omit({
   id: true,
   status: true,

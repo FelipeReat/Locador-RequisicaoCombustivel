@@ -453,7 +453,6 @@ function FleetManagement() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Nenhuma empresa</SelectItem>
                                 {companies?.map((company) => (
                                   <SelectItem key={company.id} value={company.id.toString()}>
                                     {company.name}
