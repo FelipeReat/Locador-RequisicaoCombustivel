@@ -292,7 +292,30 @@ export default function RequisitionDetailsModal({
     },
   });
 
+  // Impedir que funcionários vejam detalhes de requisições que não são suas
   if (!requisition) return null;
+  
+  if (userRole === 'employee' && user?.id !== requisition.requesterId) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Acesso Negado</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-center text-gray-600 dark:text-gray-400">
+              Você só pode visualizar os detalhes de suas próprias requisições.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={onClose} variant="outline">
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
