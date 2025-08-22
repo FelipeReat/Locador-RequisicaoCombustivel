@@ -538,15 +538,19 @@ export default function Dashboard() {
                             </Button>
                           </>
                         )}
-                        {/* Botão de exclusão para gerentes/admins - desabilitado quando realizada */}
+                        {/* Botão de exclusão para gerentes/admins - realizadas só admin pode excluir */}
                         {(userRole === 'manager' || userRole === 'admin') && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDeleteRequisition(requisition.id)}
-                            disabled={requisition.status === "fulfilled" || deleteRequisition.isPending}
+                            disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
                             className="flex-1 text-xs bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-                            title={requisition.status === "fulfilled" ? "Não é possível excluir requisições realizadas" : "Excluir requisição"}
+                            title={
+                              requisition.status === "fulfilled" && userRole !== 'admin' 
+                                ? "Apenas administradores podem excluir requisições realizadas" 
+                                : "Excluir requisição"
+                            }
                           >
                             {deleteRequisition.isPending ? (
                               <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
@@ -690,15 +694,19 @@ export default function Dashboard() {
                             </Button>
                           </>
                         )}
-                        {/* Botão de exclusão para gerentes/admins - desabilitado quando realizada */}
+                        {/* Botão de exclusão para gerentes/admins - realizadas só admin pode excluir */}
                         {(userRole === 'manager' || userRole === 'admin') && (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteRequisition(requisition.id)}
-                            disabled={requisition.status === "fulfilled" || deleteRequisition.isPending}
+                            disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
                             className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-                            title={requisition.status === "fulfilled" ? "Não é possível excluir requisições realizadas" : "Excluir requisição"}
+                            title={
+                              requisition.status === "fulfilled" && userRole !== 'admin' 
+                                ? "Apenas administradores podem excluir requisições realizadas" 
+                                : "Excluir requisição"
+                            }
                           >
                             {deleteRequisition.isPending ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

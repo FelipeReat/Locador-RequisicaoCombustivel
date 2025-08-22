@@ -564,13 +564,18 @@ export default function RequisitionDetailsModal({
                   </>
                 )}
 
-                {/* Botão de exclusão para gerentes/admins - desabilitado quando realizada */}
-                {(userRole === 'manager' || userRole === 'admin') && requisition.status !== "fulfilled" && (
+                {/* Botão de exclusão para gerentes/admins - realizadas só admin pode excluir */}
+                {(userRole === 'manager' || userRole === 'admin') && (requisition.status !== "fulfilled" || userRole === 'admin') && (
                   <Button
                     variant="destructive"
                     onClick={handleDeleteRequisition}
                     disabled={deleteRequisition.isPending}
                     className="flex items-center"
+                    title={
+                      requisition.status === "fulfilled" && userRole !== 'admin' 
+                        ? "Apenas administradores podem excluir requisições realizadas" 
+                        : "Excluir requisição"
+                    }
                   >
                     {deleteRequisition.isPending && (
                       <Loader2 className="mr-1 h-4 w-4 animate-spin" />

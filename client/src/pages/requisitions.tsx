@@ -577,15 +577,19 @@ export default function Requisitions() {
                               </Button>
                             </>
                           )}
-                          {/* Botão de exclusão para gerentes/admins - desabilitado quando realizada */}
+                          {/* Botão de exclusão para gerentes/admins - realizadas só admin pode excluir */}
                           {(userRole === 'manager' || userRole === 'admin') && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteRequisition(requisition.id)}
-                              disabled={requisition.status === "fulfilled" || deleteRequisition.isPending}
+                              disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
                               className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-                              title={requisition.status === "fulfilled" ? "Não é possível excluir requisições realizadas" : "Excluir requisição"}
+                              title={
+                                requisition.status === "fulfilled" && userRole !== 'admin' 
+                                  ? "Apenas administradores podem excluir requisições realizadas" 
+                                  : "Excluir requisição"
+                              }
                               data-testid={`button-delete-${requisition.id}`}
                             >
                               {deleteRequisition.isPending ? (
