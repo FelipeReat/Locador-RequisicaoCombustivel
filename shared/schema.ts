@@ -148,13 +148,12 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
   fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
     errorMap: () => ({ message: "Tipo de combustível inválido" }),
   }),
-  mileage: z.string().refine((val) => parseFloat(val) >= 0, {
-    message: "Quilometragem deve ser maior ou igual a 0",
-  }).optional(),
-  companyId: z.number().optional(),
+  mileage: z.string().optional(),
+  companyId: z.number().nullable(),
 }).omit({
   id: true,
   status: true,
+  lastMaintenance: true,
   createdAt: true,
   updatedAt: true,
 });
