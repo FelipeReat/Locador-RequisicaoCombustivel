@@ -381,10 +381,10 @@ export class PDFGenerator {
       this.doc.setFontSize(8);
 
       const fornecedorInfo = [
-        `CPF/CNPJ: ${supplier?.cnpj || '22.272.444/0001-30'}`,
-        `Nome Empresarial: ${supplier?.name || 'A L X COMERCIO DE COMBUSTIVEIS LTDA'}`,
-        `Contato: ${supplier?.responsavel || 'CARLOS'}`,
-        `Telefone: ${supplier?.phone || '(92) 9883-8218'}  Celular: ${supplier?.mobile || '(92) 98838-2180'}`
+        `CPF/CNPJ: ${supplier?.cnpj || 'Não informado'}`,
+        `Nome Empresarial: ${supplier?.name || 'Não informado'}`,
+        `Contato: ${supplier?.responsavel || 'Não informado'}`,
+        `Telefone: ${supplier?.phone || 'Não informado'}`
       ];
 
       let lineY = currentY + 7;
