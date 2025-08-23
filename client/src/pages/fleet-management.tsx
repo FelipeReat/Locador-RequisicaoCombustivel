@@ -235,7 +235,7 @@ function FleetManagement() {
       model: vehicle.model,
       brand: vehicle.brand,
       year: vehicle.year,
-      fuelType: vehicle.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10",
+      fuelType: vehicle.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10" | "flex",
       mileage: vehicle.mileage || "0",
       companyId: vehicle.companyId ?? null, // Use null if companyId is undefined or null
     });
@@ -263,6 +263,7 @@ function FleetManagement() {
       etanol: t("ethanol"),
       diesel: t("diesel"),
       diesel_s10: t("diesel-s10"),
+      flex: t("flex"),
     };
     return labels[fuelType as keyof typeof labels] || fuelType;
   };
@@ -433,6 +434,7 @@ function FleetManagement() {
                                 <SelectItem value="etanol">{t('ethanol')}</SelectItem>
                                 <SelectItem value="diesel">{t('diesel')}</SelectItem>
                                 <SelectItem value="diesel_s10">{t('diesel-s10')}</SelectItem>
+                                <SelectItem value="flex">{t('flex')}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />

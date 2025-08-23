@@ -541,6 +541,7 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
               <SelectItem value="etanol">Etanol</SelectItem>
               <SelectItem value="diesel">Diesel</SelectItem>
               <SelectItem value="diesel_s10">Diesel S10</SelectItem>
+              <SelectItem value="flex">Flex</SelectItem>
             </SelectContent>
           </Select>
         </div>

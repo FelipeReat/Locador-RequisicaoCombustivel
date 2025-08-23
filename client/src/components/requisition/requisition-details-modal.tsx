@@ -187,6 +187,7 @@ export default function RequisitionDetailsModal({
       etanol: "Etanol",
       diesel: "Diesel",
       diesel_s10: "Diesel S10",
+      flex: "Flex",
     };
     return labels[fuelType as keyof typeof labels] || fuelType;
   };

@@ -166,6 +166,7 @@ export default function Reports() {
       etanol: t('ethanol'),
       diesel: t('diesel'),
       diesel_s10: t('diesel-s10'),
+      flex: t('flex'),
     };
     return labels[fuelType as keyof typeof labels] || fuelType;
   };

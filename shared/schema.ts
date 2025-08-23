@@ -145,7 +145,7 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
   model: z.string().min(1, "Modelo é obrigatório"),
   brand: z.string().min(1, "Marca é obrigatória"),
   year: z.number().min(1900, "Ano inválido").max(new Date().getFullYear() + 1, "Ano inválido"),
-  fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
+  fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10", "flex"], {
     errorMap: () => ({ message: "Tipo de combustível inválido" }),
   }),
   mileage: z.string().optional(),
@@ -173,7 +173,7 @@ export const insertFuelRequisitionSchema = createInsertSchema(fuelRequisitions, 
     message: "KM rodado deve ser maior ou igual a 0",
   }),
   tanqueCheio: z.enum(["true", "false"]).default("false"),
-  fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
+  fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10", "flex"], {
     errorMap: () => ({ message: "Tipo de combustível inválido" }),
   }),
   quantity: z.string().optional().refine((val) => !val || parseFloat(val) > 0, {
@@ -268,7 +268,7 @@ export const insertFuelRecordSchema = createInsertSchema(fuelRecords, {
   distanceTraveled: z.string().refine((val) => parseFloat(val) >= 0, {
     message: "Distância rodada deve ser maior ou igual a 0",
   }),
-  fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10"], {
+  fuelType: z.enum(["gasolina", "etanol", "diesel", "diesel_s10", "flex"], {
     errorMap: () => ({ message: "Tipo de combustível inválido" }),
   }),
   litersRefueled: z.string().refine((val) => parseFloat(val) > 0, {
