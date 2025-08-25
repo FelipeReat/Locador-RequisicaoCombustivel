@@ -297,16 +297,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
 
-      // Allow editing of approved requisitions for values updates (quantity, pricePerLiter, fiscalCoupon)
+      // Allow editing of approved requisitions for values updates (quantity, pricePerLiter, discount, fiscalCoupon)
       // Only restrict editing of basic data for pending requisitions
-      const allowedFields = ['quantity', 'pricePerLiter', 'fiscalCoupon'];
+      const allowedFields = ['quantity', 'pricePerLiter', 'discount', 'fiscalCoupon'];
       const isValuesUpdate = Object.keys(validatedData).every(key => allowedFields.includes(key));
 
       if (currentRequisition.status === 'pending' || 
           (currentRequisition.status === 'approved' && isValuesUpdate)) {
         // Allow the update
       } else if (currentRequisition.status === 'approved' && !isValuesUpdate) {
-        return res.status(400).json({ message: "Para requisições aprovadas, só é possível editar valores (quantidade, preço, cupom fiscal)" });
+        return res.status(400).json({ message: "Para requisições aprovadas, só é possível editar valores (quantidade, preço, desconto, cupom fiscal)" });
       } else {
         return res.status(400).json({ message: "Não é possível editar requisições rejeitadas ou finalizadas" });
       }

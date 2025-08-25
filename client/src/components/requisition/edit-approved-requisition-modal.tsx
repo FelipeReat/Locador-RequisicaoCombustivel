@@ -31,18 +31,20 @@ export function EditApprovedRequisitionModal({
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState("");
   const [pricePerLiter, setPricePerLiter] = useState("");
+  const [discount, setDiscount] = useState("");
   const [fiscalCoupon, setFiscalCoupon] = useState("");
 
   useEffect(() => {
     if (requisition) {
       setQuantity(requisition.quantity || "");
       setPricePerLiter(requisition.pricePerLiter || "");
+      setDiscount(requisition.discount || "");
       setFiscalCoupon(requisition.fiscalCoupon || "");
     }
   }, [requisition]);
 
   const updateRequisition = useMutation({
-    mutationFn: async (data: { quantity: string; pricePerLiter: string; fiscalCoupon: string }) => {
+    mutationFn: async (data: { quantity: string; pricePerLiter: string; discount: string; fiscalCoupon: string }) => {
       const response = await apiRequest(
         "PUT",
         `/api/fuel-requisitions/${requisition?.id}`,
@@ -87,8 +89,18 @@ export function EditApprovedRequisitionModal({
       return;
     }
 
+    if (!fiscalCoupon.trim()) {
+      toast({
+        title: "Erro",
+        description: "O cupom fiscal é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const quantityNum = parseFloat(quantity.replace(",", "."));
     const priceNum = parseFloat(pricePerLiter.replace(",", "."));
+    const discountNum = discount.trim() ? parseFloat(discount.replace(",", ".")) : 0;
 
     if (isNaN(quantityNum) || quantityNum <= 0) {
       toast({
@@ -108,9 +120,19 @@ export function EditApprovedRequisitionModal({
       return;
     }
 
+    if (discount.trim() && (isNaN(discountNum) || discountNum < 0)) {
+      toast({
+        title: "Erro",
+        description: "Digite um valor de desconto válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
     updateRequisition.mutate({
       quantity: quantityNum.toString(),
       pricePerLiter: priceNum.toString(),
+      discount: discountNum.toString(),
       fiscalCoupon,
     });
   };
@@ -118,9 +140,11 @@ export function EditApprovedRequisitionModal({
   const calculateTotal = () => {
     const quantityNum = parseFloat(quantity.replace(",", "."));
     const priceNum = parseFloat(pricePerLiter.replace(",", "."));
+    const discountNum = discount.trim() ? parseFloat(discount.replace(",", ".")) : 0;
 
     if (!isNaN(quantityNum) && !isNaN(priceNum)) {
-      return (quantityNum * priceNum).toFixed(2).replace(".", ",");
+      const total = (quantityNum * priceNum) - discountNum;
+      return Math.max(0, total).toFixed(2).replace(".", ",");
     }
     return "0,00";
   };
@@ -172,7 +196,22 @@ export function EditApprovedRequisitionModal({
 
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Cupom da Nota Fiscal
+              Desconto (R$)
+            </Label>
+            <MoneyInput
+              value={discount}
+              onChange={(value) => setDiscount(value)}
+              placeholder="Ex: 10,00"
+              className="w-full"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Valor do desconto a ser subtraído do total (opcional)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Cupom da Nota Fiscal *
             </Label>
             <Input
               value={fiscalCoupon}
@@ -187,7 +226,7 @@ export function EditApprovedRequisitionModal({
               maxLength={6}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Número do cupom fiscal (máximo 6 dígitos)
+              Número do cupom fiscal obrigatório (máximo 6 dígitos)
             </p>
           </div>
 
