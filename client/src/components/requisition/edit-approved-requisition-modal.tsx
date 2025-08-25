@@ -129,6 +129,17 @@ export function EditApprovedRequisitionModal({
       return;
     }
 
+    // Validar se o desconto não é maior que o valor total
+    const totalValue = quantityNum * priceNum;
+    if (discountNum > totalValue) {
+      toast({
+        title: "Erro",
+        description: "O desconto não pode ser maior que o valor total da requisição",
+        variant: "destructive",
+      });
+      return;
+    }
+
     updateRequisition.mutate({
       quantity: quantityNum.toString(),
       pricePerLiter: priceNum.toString(),
