@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import StatusBadge from "./status-badge";
 import { PDFGenerator } from "@/lib/pdf-generator";
-import { X, Edit, Check, Loader2, FileText, Trash2 } from "lucide-react";
+import { X, Edit, Check, Loader2, FileText, Trash2, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -43,7 +43,7 @@ export default function RequisitionDetailsModal({
   const [rejectionReason, setRejectionReason] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  
+
 
   // Fetch vehicle details for this requisition
   const { data: vehicleDetails } = useQuery({
@@ -132,6 +132,34 @@ export default function RequisitionDetailsModal({
     },
   });
 
+  // Mutation para desfazer a requisição
+  const undoRequisition = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest(
+        "PATCH",
+        `/api/fuel-requisitions/${id}/undo`
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions", "stats"] });
+      toast({
+        title: "Sucesso",
+        description: "Requisição desfeita com sucesso",
+      });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao desfazer requisição",
+        variant: "destructive",
+      });
+    },
+  });
+
+
   const handleApprove = () => {
     updateStatus.mutate({
       status: "approved",
@@ -156,10 +184,23 @@ export default function RequisitionDetailsModal({
     });
   };
 
-  const handleDeleteRequisition = () => {
-    const confirmed = window.confirm("Tem certeza que deseja excluir esta requisição? Esta ação não pode ser desfeita.");
-    if (confirmed) {
-      deleteRequisition.mutate();
+  const handleDeleteRequisition = async () => {
+    if (window.confirm("Tem certeza que deseja excluir esta requisição? Esta ação não pode ser desfeita.")) {
+      try {
+        await deleteRequisition.mutateAsync(requisition.id);
+      } catch (error) {
+        console.error('Error deleting requisition:', error);
+      }
+    }
+  };
+
+  const handleUndoRequisition = async () => {
+    if (window.confirm("Tem certeza que deseja desfazer esta requisição realizada? Ela voltará para o status 'Aprovada'.")) {
+      try {
+        await undoRequisition.mutateAsync(requisition.id);
+      } catch (error) {
+        console.error('Error undoing requisition:', error);
+      }
     }
   };
 
@@ -210,10 +251,10 @@ export default function RequisitionDetailsModal({
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/companies"] });
-      
+
       // Aguarda um breve momento para o cache ser invalidado
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // Buscar dados do fornecedor, veículo e usuário responsável com dados atualizados
       const supplierResponse = await fetch(`/api/suppliers/${requisition?.supplierId}`, {
         cache: 'no-cache', // Força busca sem cache
@@ -237,13 +278,13 @@ export default function RequisitionDetailsModal({
       const supplier = supplierResponse.ok ? await supplierResponse.json() : null;
       const vehicle = vehicleResponse.ok ? await vehicleResponse.json() : null;
       const requesterUser = userResponse.ok ? await userResponse.json() : null;
-      
+
       // Buscar empresa específica baseada no nome do cliente
       let company = null;
       if (companiesResponse.ok) {
         const companies = await companiesResponse.json();
-        company = companies.find((comp: any) => 
-          comp.name === requisition?.client || 
+        company = companies.find((comp: any) =>
+          comp.name === requisition?.client ||
           comp.fullName === requisition?.client ||
           comp.name.includes(requisition?.client) ||
           requisition?.client.includes(comp.name)
@@ -365,7 +406,7 @@ export default function RequisitionDetailsModal({
 
   // Impedir que funcionários vejam detalhes de requisições que não são suas
   if (!requisition) return null;
-  
+
   if (userRole === 'employee' && user?.id !== requisition.requesterId) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -621,8 +662,8 @@ export default function RequisitionDetailsModal({
                     disabled={deleteRequisition.isPending}
                     className="flex items-center"
                     title={
-                      requisition.status === "fulfilled" && userRole !== 'admin' 
-                        ? "Apenas administradores podem excluir requisições realizadas" 
+                      requisition.status === "fulfilled" && userRole !== 'admin'
+                        ? "Apenas administradores podem excluir requisições realizadas"
                         : "Excluir requisição"
                     }
                   >
@@ -633,13 +674,29 @@ export default function RequisitionDetailsModal({
                     Excluir Requisição
                   </Button>
                 )}
+
+                {/* Botão para desfazer requisição realizada (apenas para admins) */}
+                {userRole === 'admin' && requisition.status === "fulfilled" && (
+                  <Button
+                    variant="outline"
+                    onClick={handleUndoRequisition}
+                    disabled={undoRequisition.isPending}
+                    className="flex items-center border-yellow-500 text-yellow-600 hover:bg-yellow-50 hover:border-yellow-600 hover:text-yellow-700"
+                  >
+                    {undoRequisition.isPending && (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    )}
+                    <Undo2 className="mr-1 h-4 w-4" />
+                    Desfazer Requisição
+                  </Button>
+                )}
               </>
             )}
 
             {/* Mensagem quando o usuário não pode agir na requisição */}
             {requisition && (!canActOnRequisition(requisition.requesterId) || (userRole === 'employee' && user?.id !== requisition.requesterId)) && (
               <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                {userRole === 'employee' && user?.id !== requisition.requesterId 
+                {userRole === 'employee' && user?.id !== requisition.requesterId
                   ? "Visualização apenas - Você só pode agir em suas próprias requisições"
                   : "Visualização apenas - Esta requisição pertence a outro usuário"
                 }

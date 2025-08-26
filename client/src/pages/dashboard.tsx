@@ -21,7 +21,8 @@ import {
   Building,
   Users,
   BarChart,
-  Trash2
+  Trash2,
+  Undo2
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
@@ -103,7 +104,43 @@ export default function Dashboard() {
     }
   });
 
-  // Mutation para confirmar requisição (mudar de approved para fulfilled)
+  // Mutation to undo a fulfilled requisition (admin only)
+  const undoRequisition = useMutation({
+    mutationFn: async (requisitionId: number) => {
+      const response = await fetch(`/api/fuel-requisitions/${requisitionId}/undo`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao desfazer requisição");
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+
+      toast({
+        title: "Sucesso",
+        description: "Requisição desfeita com sucesso. Status alterado para aprovada.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao desfazer requisição",
+        variant: "destructive",
+      });
+    }
+  });
+
+
+  // Mutation to confirm requisition (change from approved to fulfilled)
   const confirmRequisition = useMutation({
     mutationFn: async (requisitionId: number) => {
       const response = await fetch(`/api/fuel-requisitions/${requisitionId}/status`, {
@@ -199,6 +236,18 @@ export default function Dashboard() {
       }
     }
   };
+
+  const handleUndoRequisition = async (requisitionId: number) => {
+    const confirmed = window.confirm("Tem certeza que deseja desfazer esta requisição realizada? Ela voltará para o status 'Aprovada'.");
+    if (confirmed) {
+      try {
+        await undoRequisition.mutateAsync(requisitionId);
+      } catch (error) {
+        console.error('Error undoing requisition:', error);
+      }
+    }
+  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
@@ -547,8 +596,8 @@ export default function Dashboard() {
                             disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
                             className="flex-1 text-xs bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
                             title={
-                              requisition.status === "fulfilled" && userRole !== 'admin' 
-                                ? "Apenas administradores podem excluir requisições realizadas" 
+                              requisition.status === "fulfilled" && userRole !== 'admin'
+                                ? "Apenas administradores podem excluir requisições realizadas"
                                 : "Excluir requisição"
                             }
                           >
@@ -703,8 +752,8 @@ export default function Dashboard() {
                             disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
                             className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
                             title={
-                              requisition.status === "fulfilled" && userRole !== 'admin' 
-                                ? "Apenas administradores podem excluir requisições realizadas" 
+                              requisition.status === "fulfilled" && userRole !== 'admin'
+                                ? "Apenas administradores podem excluir requisições realizadas"
                                 : "Excluir requisição"
                             }
                           >
@@ -712,6 +761,24 @@ export default function Dashboard() {
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                             ) : (
                               <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+
+                        {/* Botão para desfazer requisições realizadas (apenas para administradores) */}
+                        {userRole === 'admin' && requisition.status === 'fulfilled' && canActOnRequisition(requisition.requesterId) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleUndoRequisition(requisition.id)}
+                            disabled={undoRequisition.isPending}
+                            className="h-8 w-8 p-0 bg-yellow-500 hover:bg-yellow-600 text-white"
+                            title="Desfazer Requisição Realizada"
+                          >
+                            {undoRequisition.isPending ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                              <Undo2 className="h-4 w-4" />
                             )}
                           </Button>
                         )}

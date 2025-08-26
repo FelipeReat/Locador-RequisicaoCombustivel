@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, Edit, Search, Filter, Check, Download, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2 } from "lucide-react";
+import { Eye, Edit, Search, Filter, Check, Download, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2, Undo2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -109,6 +109,82 @@ export default function Requisitions() {
       toast({
         title: "Erro",
         description: error.message || "Erro ao excluir requisição",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+    }
+  });
+
+  // Mutation to undo a fulfilled requisition (admin only)
+  const undoRequisition = useMutation({
+    mutationFn: async (requisitionId: number) => {
+      const response = await fetch(`/api/fuel-requisitions/${requisitionId}/undo`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao desfazer requisição");
+      }
+
+      return await response.json();
+    },
+    // Optimistic update
+    onMutate: async (requisitionId: number) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
+      const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
+      const previousStats = queryClient.getQueryData(["/api/fuel-requisitions/stats/overview"]);
+
+      queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
+        if (!old) return old;
+        return old.map(req => 
+          req.id === requisitionId 
+            ? { ...req, status: 'approved' as any, fulfilledAt: null }
+            : req
+        );
+      });
+
+      queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          approvedRequests: (old.approvedRequests || 0) + 1,
+          fulfilledRequests: Math.max(0, (old.fulfilledRequests || 0) - 1)
+        };
+      });
+
+      return { previousRequisitions, previousStats };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats"] });
+
+      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions"] });
+      queryClient.refetchQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
+
+      toast({
+        title: "Sucesso",
+        description: "Requisição desfeita com sucesso. Status alterado para aprovada.",
+      });
+    },
+    onError: (error: any, variables, context) => {
+      if (context?.previousRequisitions) {
+        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
+      }
+      if (context?.previousStats) {
+        queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], context.previousStats);
+      }
+
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao desfazer requisição",
         variant: "destructive",
       });
     },
@@ -265,6 +341,18 @@ export default function Requisitions() {
     } catch (error) {
       // Error is handled by the mutation's onError callback
       console.error('Error confirming requisition:', error);
+    }
+  };
+
+  const handleUndoRequisition = async (requisitionId: number) => {
+    const confirmed = window.confirm("Tem certeza que deseja desfazer esta requisição realizada? Ela voltará para o status 'Aprovada'.");
+    if (confirmed) {
+      try {
+        await undoRequisition.mutateAsync(requisitionId);
+      } catch (error) {
+        // Error is handled by the mutation's onError callback
+        console.error('Error undoing requisition:', error);
+      }
     }
   };
 
@@ -576,6 +664,24 @@ export default function Requisitions() {
                                 <Check className="h-4 w-4" />
                               </Button>
                             </>
+                          )}
+                          {/* Botão de desfazer para administradores - apenas requisições realizadas */}
+                          {userRole === 'admin' && requisition.status === "fulfilled" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUndoRequisition(requisition.id)}
+                              disabled={undoRequisition.isPending}
+                              className="h-8 w-8 p-0 bg-orange-500 hover:bg-orange-600 text-white"
+                              title="Desfazer requisição realizada (volta para aprovada)"
+                              data-testid={`button-undo-${requisition.id}`}
+                            >
+                              {undoRequisition.isPending ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              ) : (
+                                <Undo2 className="h-4 w-4" />
+                              )}
+                            </Button>
                           )}
                           {/* Botão de exclusão para gerentes/admins - realizadas só admin pode excluir */}
                           {(userRole === 'manager' || userRole === 'admin') && (

@@ -353,6 +353,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Undo a fulfilled requisition (admin only)
+  app.patch("/api/fuel-requisitions/:id/undo", async (req, res) => {
+    try {
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Sessão não encontrada" });
+      }
+
+      const currentUser = await getUserFromSession(sessionId);
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Acesso negado - apenas administradores podem desfazer requisições realizadas" });
+      }
+
+      const id = parseInt(req.params.id);
+      
+      // Get current requisition to verify it's fulfilled
+      const currentRequisition = await storage.getFuelRequisition(id);
+      if (!currentRequisition) {
+        return res.status(404).json({ message: "Requisição não encontrada" });
+      }
+
+      if (currentRequisition.status !== 'fulfilled') {
+        return res.status(400).json({ message: "Apenas requisições realizadas podem ser desfeitas" });
+      }
+
+      // Update status back to approved
+      const requisition = await storage.updateFuelRequisitionStatus(id, { 
+        status: 'approved',
+        rejectionReason: undefined 
+      });
+
+      if (!requisition) {
+        return res.status(404).json({ message: "Requisição não encontrada" });
+      }
+
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.json(requisition);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao desfazer requisição" });
+      }
+    }
+  });
+
   // Delete a fuel requisition
   app.delete("/api/fuel-requisitions/:id", async (req, res) => {
     try {
