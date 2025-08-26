@@ -340,6 +340,20 @@ export default function Requisitions() {
   };
 
   const handleConfirmRequisition = async (requisitionId: number) => {
+    // Verificar se a requisição tem os valores obrigatórios preenchidos
+    const requisition = requisitions?.find(req => req.id === requisitionId);
+    if (!requisition) return;
+
+    // Verificar se pricePerLiter foi preenchido (obrigatório para confirmar)
+    if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+      toast({
+        title: "Ação não permitida",
+        description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await confirmRequisition.mutateAsync(requisitionId);
     } catch (error) {
@@ -636,8 +650,16 @@ export default function Requisitions() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleConfirmRequisition(requisition.id)}
-                                className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
-                                title="Confirmar realização"
+                                className={`h-8 w-8 p-0 text-white ${
+                                  requisition.pricePerLiter && parseFloat(requisition.pricePerLiter) > 0
+                                    ? "bg-green-500 hover:bg-green-600"
+                                    : "bg-gray-400 hover:bg-gray-500"
+                                }`}
+                                title={
+                                  requisition.pricePerLiter && parseFloat(requisition.pricePerLiter) > 0
+                                    ? "Confirmar realização"
+                                    : "Edite os valores antes de confirmar"
+                                }
                                 data-testid={`button-confirm-${requisition.id}`}
                               >
                                 <Check className="h-4 w-4" />
@@ -661,8 +683,16 @@ export default function Requisitions() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleConfirmRequisition(requisition.id)}
-                                className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
-                                title="Confirmar realização"
+                                className={`h-8 w-8 p-0 text-white ${
+                                  requisition.pricePerLiter && parseFloat(requisition.pricePerLiter) > 0
+                                    ? "bg-green-500 hover:bg-green-600"
+                                    : "bg-gray-400 hover:bg-gray-500"
+                                }`}
+                                title={
+                                  requisition.pricePerLiter && parseFloat(requisition.pricePerLiter) > 0
+                                    ? "Confirmar realização"
+                                    : "Edite os valores antes de confirmar"
+                                }
                                 data-testid={`button-confirm-${requisition.id}`}
                               >
                                 <Check className="h-4 w-4" />

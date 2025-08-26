@@ -177,6 +177,24 @@ export default function RequisitionDetailsModal({
     });
   };
 
+  const handleConfirmRequisition = () => {
+    if (!requisition) return;
+    
+    // Verificar se pricePerLiter foi preenchido (obrigatório para confirmar)
+    if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+      toast({
+        title: "Ação não permitida",
+        description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateStatus.mutate({
+      status: "fulfilled"
+    });
+  };
+
   const handleReject = () => {
     if (!rejectionReason.trim()) {
       toast({

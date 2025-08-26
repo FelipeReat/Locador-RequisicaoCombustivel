@@ -555,7 +555,18 @@ export default function Dashboard() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              onClick={() => {
+                                // Verificar se pricePerLiter foi preenchido
+                                if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+                                  toast({
+                                    title: "Ação não permitida",
+                                    description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                confirmRequisition.mutate(requisition.id);
+                              }}
                               disabled={confirmRequisition.isPending}
                               className="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white"
                               title="Confirmar realização"
@@ -581,7 +592,18 @@ export default function Dashboard() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              onClick={() => {
+                                // Verificar se pricePerLiter foi preenchido
+                                if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+                                  toast({
+                                    title: "Ação não permitida",
+                                    description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                confirmRequisition.mutate(requisition.id);
+                              }}
                               disabled={confirmRequisition.isPending}
                               className="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white"
                               title="Confirmar realização"
@@ -706,7 +728,18 @@ export default function Dashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              onClick={() => {
+                                // Verificar se pricePerLiter foi preenchido
+                                if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+                                  toast({
+                                    title: "Ação não permitida",
+                                    description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                confirmRequisition.mutate(requisition.id);
+                              }}
                               disabled={confirmRequisition.isPending}
                               title="Confirmar como realizada"
                               className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
@@ -734,7 +767,18 @@ export default function Dashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => confirmRequisition.mutate(requisition.id)}
+                              onClick={() => {
+                                // Verificar se pricePerLiter foi preenchido
+                                if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+                                  toast({
+                                    title: "Ação não permitida",
+                                    description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
+                                confirmRequisition.mutate(requisition.id);
+                              }}
                               disabled={confirmRequisition.isPending}
                               title="Confirmar como realizada"
                               className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
