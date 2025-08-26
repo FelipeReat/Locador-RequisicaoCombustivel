@@ -8,36 +8,35 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
+  endpoint: string,
+  data?: any,
 ): Promise<Response> {
-  // Include session ID for authenticated requests
+  const config: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+
+  // Adicionar header de sessão se disponível
   const sessionId = localStorage.getItem('session-id');
-  const authUser = localStorage.getItem('auth-user');
-  const headers: Record<string, string> = {};
+  if (sessionId) {
+    (config.headers as Record<string, string>)['x-session-id'] = sessionId;
+  }
 
   if (data) {
-    headers["Content-Type"] = "application/json";
+    config.body = JSON.stringify(data);
   }
 
-  if (authUser) {
-    headers['x-auth-token'] = 'authenticated';
+  const response = await fetch(endpoint, config);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
   }
 
-  if (sessionId) {
-    headers['x-session-id'] = sessionId;
-  }
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
+  return response;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

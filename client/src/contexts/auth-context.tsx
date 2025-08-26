@@ -66,7 +66,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     mutationFn: async (credentials: LoginCredentials) => {
       try {
         console.log('Login API call started:', credentials.username);
-        const response = await apiRequest('POST', '/api/auth/login', credentials);
+        
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(credentials),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || `HTTP error! status: ${response.status}`);
+        }
+
         const user = await response.json();
         console.log('Login API call successful:', user);
         return user;

@@ -121,10 +121,12 @@ export default function Requisitions() {
   // Mutation to undo a fulfilled requisition (admin only)
   const undoRequisition = useMutation({
     mutationFn: async (requisitionId: number) => {
+      const sessionId = localStorage.getItem('session-id');
       const response = await fetch(`/api/fuel-requisitions/${requisitionId}/undo`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          "x-session-id": sessionId || "",
         }
       });
 
@@ -197,10 +199,12 @@ export default function Requisitions() {
   // Mutation to confirm requisition (change from approved to fulfilled)
   const confirmRequisition = useMutation({
     mutationFn: async (requisitionId: number) => {
+      const sessionId = localStorage.getItem('session-id');
       const response = await fetch(`/api/fuel-requisitions/${requisitionId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          "x-session-id": sessionId || "",
         },
         body: JSON.stringify({
           status: "fulfilled"

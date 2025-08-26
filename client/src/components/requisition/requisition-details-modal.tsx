@@ -135,10 +135,20 @@ export default function RequisitionDetailsModal({
   // Mutation para desfazer a requisição
   const undoRequisition = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest(
-        "PATCH",
-        `/api/fuel-requisitions/${id}/undo`
-      );
+      const sessionId = localStorage.getItem('session-id');
+      const response = await fetch(`/api/fuel-requisitions/${id}/undo`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-session-id": sessionId || "",
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erro ao desfazer requisição");
+      }
+
       return response.json();
     },
     onSuccess: () => {
