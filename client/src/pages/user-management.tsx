@@ -54,6 +54,9 @@ import {
   UserCheck,
   UserX,
   Shield,
+  Mail,
+  Phone,
+  Briefcase,
 } from "lucide-react";
 import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
@@ -477,76 +480,51 @@ function UserManagement() {
           </div>
 
           {/* Users List */}
-          <div className="space-y-3">
-            <div className="text-sm text-muted-foreground mb-4">
+          <div className="space-y-4">
+            <div className="text-center text-sm text-muted-foreground mb-6">
               Usuários ordenados alfabeticamente ({filteredUsers.length} total)
             </div>
             {filteredUsers.map((user) => (
-              <Card key={user.id} className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/30">
-                <CardContent className="p-4">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center ring-2 ring-primary/20">
-                        <Users className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                          {user.fullName}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                          @{user.username}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge
-                            variant={getRoleBadgeVariant(user.role)}
-                            className="text-xs font-medium"
-                          >
-                            <Shield className="w-3 h-3 mr-1" />
-                            {getRoleLabel(user.role)}
-                          </Badge>
-                          <Badge
-                            variant={user.active === "true" ? "default" : "secondary"}
-                            className="text-xs"
-                          >
-                            {user.active === "true" ? (
-                              <>✓ {t("active")}</>
-                            ) : (
-                              <>✗ {t("inactive")}</>
-                            )}
-                          </Badge>
+              <Card key={user.id} className="hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex flex-col space-y-6">
+                    {/* Header com Avatar e Info Principal */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/30 rounded-full flex items-center justify-center ring-4 ring-primary/10 shadow-lg">
+                          <Users className="h-8 w-8 text-primary" />
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-6 space-y-4 lg:space-y-0">
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 lg:gap-4 text-sm">
-                        <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
-                          <p className="font-medium text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide">
-                            {t("email")}
+                        <div className="text-center sm:text-left">
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                            {user.fullName}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                            @{user.username}
                           </p>
-                          <p className="text-gray-900 dark:text-gray-100 truncate">
-                            {user.email || <span className="text-muted-foreground italic">Não informado</span>}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
-                          <p className="font-medium text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide">
-                            {t("position")}
-                          </p>
-                          <p className="text-gray-900 dark:text-gray-100">
-                            {user.position || <span className="text-muted-foreground italic">Não informado</span>}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
-                          <p className="font-medium text-gray-700 dark:text-gray-300 text-xs uppercase tracking-wide">
-                            {t("phone")}
-                          </p>
-                          <p className="text-gray-900 dark:text-gray-100">
-                            {user.phone || <span className="text-muted-foreground italic">Não informado</span>}
-                          </p>
+                          <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2">
+                            <Badge
+                              variant={getRoleBadgeVariant(user.role)}
+                              className="text-xs font-medium px-3 py-1"
+                            >
+                              <Shield className="w-3 h-3 mr-1" />
+                              {getRoleLabel(user.role)}
+                            </Badge>
+                            <Badge
+                              variant={user.active === "true" ? "default" : "secondary"}
+                              className="text-xs px-3 py-1"
+                            >
+                              {user.active === "true" ? (
+                                <>✓ {t("active")}</>
+                              ) : (
+                                <>✗ {t("inactive")}</>
+                              )}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex space-x-2">
+                      {/* Action Buttons */}
+                      <div className="flex justify-center sm:justify-end space-x-2">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -556,7 +534,7 @@ function UserManagement() {
                               active: user.active !== "true",
                             })
                           }
-                          className={`px-3 py-2 ${user.active === "true" ? 'hover:bg-orange-100 hover:text-orange-600' : 'hover:bg-green-100 hover:text-green-600'}`}
+                          className={`px-4 py-2 rounded-lg transition-colors ${user.active === "true" ? 'hover:bg-orange-100 hover:text-orange-600 dark:hover:bg-orange-900/20' : 'hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-900/20'}`}
                           title={user.active === "true" ? "Desativar usuário" : "Ativar usuário"}
                         >
                           {user.active === "true" ? (
@@ -570,7 +548,7 @@ function UserManagement() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(user)}
-                          className="px-3 py-2 hover:bg-blue-100 hover:text-blue-600"
+                          className="px-4 py-2 rounded-lg hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/20 transition-colors"
                           title="Editar usuário"
                         >
                           <Edit className="h-4 w-4" />
@@ -584,11 +562,44 @@ function UserManagement() {
                               deleteUser.mutate(user.id);
                             }
                           }}
-                          className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-100"
+                          className="px-4 py-2 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
                           title="Excluir usuário"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
+                      </div>
+                    </div>
+
+                    {/* Informações Detalhadas */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700/50 text-center">
+                        <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+                        <p className="font-semibold text-blue-800 dark:text-blue-300 text-xs uppercase tracking-wider mb-1">
+                          {t("email")}
+                        </p>
+                        <p className="text-blue-900 dark:text-blue-100 font-medium break-all">
+                          {user.email || <span className="text-blue-500 dark:text-blue-400 italic">Não informado</span>}
+                        </p>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700/50 text-center">
+                        <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
+                        <p className="font-semibold text-purple-800 dark:text-purple-300 text-xs uppercase tracking-wider mb-1">
+                          {t("position")}
+                        </p>
+                        <p className="text-purple-900 dark:text-purple-100 font-medium">
+                          {user.position || <span className="text-purple-500 dark:text-purple-400 italic">Não informado</span>}
+                        </p>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-700/50 text-center">
+                        <Phone className="h-5 w-5 text-green-600 dark:text-green-400 mx-auto mb-2" />
+                        <p className="font-semibold text-green-800 dark:text-green-300 text-xs uppercase tracking-wider mb-1">
+                          {t("phone")}
+                        </p>
+                        <p className="text-green-900 dark:text-green-100 font-medium">
+                          {user.phone || <span className="text-green-500 dark:text-green-400 italic">Não informado</span>}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -598,15 +609,23 @@ function UserManagement() {
           </div>
 
           {filteredUsers.length === 0 && (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <Card className="border-dashed border-2 border-gray-300 dark:border-gray-600">
+              <CardContent className="p-16 text-center">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-primary/5">
+                  <Users className="h-10 w-10 text-primary/60" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   {t("no-users-found")}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
                   {searchTerm ? t("adjust-search") : t("start-creating-user")}
                 </p>
+                {!searchTerm && (
+                  <Button onClick={handleNew} className="mt-4">
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t("new-user")}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}
