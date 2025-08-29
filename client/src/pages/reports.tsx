@@ -19,7 +19,8 @@ import {
   Legend, 
   ResponsiveContainer,
   LineChart,
-  Line
+  Line,
+  Cell
 } from "recharts";
 import { Download, FileText, TrendingUp, Calendar, BarChart3, CheckCircle, Clock, Fuel } from "lucide-react";
 import type { FuelRequisition } from "@shared/schema";
