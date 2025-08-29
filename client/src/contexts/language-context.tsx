@@ -294,6 +294,10 @@ const translations: Record<Language, Record<string, string>> = {
     'consumption-by-department': 'Consumo por Departamento',
     
     'department-details': 'Detalhes por Departamento',
+      
+      // Session timeout
+      'session-expired': 'Sessão Expirada',
+      'session-expired-message': 'Sua sessão expirou devido à inatividade. Faça login novamente.',
     
     'requisitions-count': 'Requisições',
     'liters-count': 'Litros',

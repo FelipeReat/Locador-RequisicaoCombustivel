@@ -114,8 +114,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await loginMutation.mutateAsync({ username, password });
   };
 
-  const logout = async () => {
-    console.log('Logout function called');
+  const logout = async (reason?: 'manual' | 'inactivity') => {
+    console.log('Logout function called', reason ? `(${reason})` : '');
     try {
       // Call the logout endpoint to clear server-side session
       const sessionId = localStorage.getItem('session-id');
@@ -138,6 +138,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem('auth-token');
     localStorage.removeItem('auth-user');
     localStorage.removeItem('session-id');
+    
+    // Mostrar mensagem específica para logout por inatividade
+    if (reason === 'inactivity') {
+      // Adicionar um delay para garantir que o estado seja limpo antes de navegar
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
+    }
   };
 
   const value = {

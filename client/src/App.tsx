@@ -21,11 +21,12 @@ import Sidebar from "@/components/layout/sidebar";
 import Suppliers from "@/pages/suppliers";
 import Companies from "@/pages/companies";
 import Login from "@/pages/login";
+import InactivityWrapper from "@/components/InactivityWrapper";
 
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -33,7 +34,7 @@ function Router() {
       </div>
     );
   }
-  
+
   if (!isAuthenticated) {
     return <Login />;
   }
@@ -112,10 +113,14 @@ function App() {
         <ThemeProvider>
           <LanguageProvider>
             <NotificationProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Router />
-              </TooltipProvider>
+              <InactivityWrapper>
+                <TooltipProvider>
+                  <div className="min-h-screen bg-background">
+                    <Router />
+                  </div>
+                </TooltipProvider>
+              </InactivityWrapper>
+              <Toaster />
             </NotificationProvider>
           </LanguageProvider>
         </ThemeProvider>
