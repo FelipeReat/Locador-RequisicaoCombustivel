@@ -292,9 +292,9 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-analysis': 'Análise Mensal',
     'monthly-trend': 'Tendência Mensal',
     'consumption-by-department': 'Consumo por Departamento',
-    'distribution-by-fuel-type': 'Distribuição por Tipo de Combustível',
+    
     'department-details': 'Detalhes por Departamento',
-    'fuel-type-details': 'Detalhes por Tipo de Combustível',
+    
     'requisitions-count': 'Requisições',
     'liters-count': 'Litros',
     'fuel-label': 'Combustível',
@@ -769,9 +769,9 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-analysis': 'Monthly Analysis',
     'monthly-trend': 'Monthly Trend',
     'en-consumption-by-department': 'Consumption by Department',
-    'distribution-by-fuel-type': 'Distribution by Fuel Type',
+    
     'department-details': 'Department Details',
-    'fuel-type-details': 'Fuel Type Details',
+    
     'requisitions-count': 'Requisitions',
     'liters-count': 'Liters',
     'fuel-label': 'Fuel',
@@ -1260,9 +1260,9 @@ const translations: Record<Language, Record<string, string>> = {
     'monthly-analysis': 'Análisis Mensual',
     'monthly-trend': 'Tendencia Mensual',
     'es-consumption-by-department': 'Consumo por Departamento',
-    'distribution-by-fuel-type': 'Distribución por Tipo de Combustible',
+    
     'department-details': 'Detalles por Departamento',
-    'fuel-type-details': 'Detalles por Tipo de Combustible',
+    
     'requisitions-count': 'Requisiciones',
     'liters-count': 'Litros',
     'fuel-label': 'Combustible',

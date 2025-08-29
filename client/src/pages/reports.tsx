@@ -18,9 +18,6 @@ import {
   Tooltip, 
   Legend, 
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   LineChart,
   Line
 } from "recharts";
@@ -44,9 +41,7 @@ export default function Reports() {
     queryKey: ["/api/fuel-requisitions/stats/overview"],
   });
 
-  const { data: fuelTypeStats, isLoading: fuelTypeLoading } = useQuery<{fuelType: string; count: number; totalLiters: number}[]>({
-    queryKey: ["/api/fuel-requisitions/stats/fuel-type"],
-  });
+  
 
   const { data: fuelEfficiencyStats, isLoading: efficiencyLoading } = useQuery<{vehiclePlate: string; vehicleModel: string; totalKmRodado: number; totalLiters: number; kmPerLiter: number}[]>({
     queryKey: ["/api/fuel-requisitions/stats/fuel-efficiency"],
@@ -160,24 +155,7 @@ export default function Reports() {
   };
 
 
-  const getFuelTypeLabel = (fuelType: string) => {
-    const labels = {
-      gasolina: t('gasoline'),
-      etanol: t('ethanol'),
-      diesel: t('diesel'),
-      diesel_s10: t('diesel-s10'),
-      flex: t('flex'),
-    };
-    return labels[fuelType as keyof typeof labels] || fuelType;
-  };
-
-
-
-  const pieData = fuelTypeStats?.map((stat: any, index: number) => ({
-    name: getFuelTypeLabel(stat.fuelType),
-    value: stat.totalLiters,
-    color: ["#1976D2", "#FF9800", "#4CAF50", "#F44336"][index % 4],
-  })) || [];
+  
 
   const filterRequisitionsByMonth = (requisitions: FuelRequisition[], month: number, year: number) => {
     return requisitions.filter(req => {
@@ -217,7 +195,7 @@ export default function Reports() {
 
   const monthlyTrendData = generateMonthlyTrend();
 
-  if (statsLoading || fuelTypeLoading || requisitionsLoading || efficiencyLoading) {
+  if (statsLoading || requisitionsLoading || efficiencyLoading) {
     return <LoadingSpinner message={t('loading-reports')} />;
   }
 
@@ -473,64 +451,9 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        {/* Fuel Type Chart */}
-        <Card className="bg-white dark:bg-gray-800 mb-8">
-          <CardHeader>
-            <CardTitle className="text-gray-800 dark:text-white">Distribuição por Tipo de Combustível</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {pieData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        
 
-        {/* Fuel Type Details Table */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>{t('fuel-type-details')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2">Tipo de Combustível</th>
-                    <th className="text-right py-2">{t('requisitions-count')}</th>
-                    <th className="text-right py-2">{t('liters-count')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fuelTypeStats?.map((stat: any) => (
-                    <tr key={stat.fuelType} className="border-b">
-                      <td className="py-2">{getFuelTypeLabel(stat.fuelType)}</td>
-                      <td className="text-right py-2">{stat.count}</td>
-                      <td className="text-right py-2">
-                        {stat.totalLiters.toLocaleString("pt-BR")}L
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        
 
         {/* Fuel Efficiency Report */}
         <Card className="mb-8">
