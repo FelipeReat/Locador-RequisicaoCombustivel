@@ -291,8 +291,7 @@ const translations: Record<Language, Record<string, string>> = {
     'export-complete-report': 'Exportar Relatório Completo',
     'monthly-analysis': 'Análise Mensal',
     'monthly-trend': 'Tendência Mensal',
-    'consumption-by-department': 'Consumo por Departamento',
-    
+    'distribution-by-fuel-type': 'Distribuição por Tipo de Combustível',
     'department-details': 'Detalhes por Departamento',
       
       // Session timeout
