@@ -53,7 +53,8 @@ async function seedDatabase() {
 }
 
 // Executar automaticamente apenas se não houver dados
-if (require.main === module) {
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+if (isMainModule) {
   seedDatabase()
     .then(() => {
       console.log('🎉 Verificação concluída!');
