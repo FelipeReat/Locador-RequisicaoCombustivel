@@ -60,6 +60,7 @@ import {
 } from "lucide-react";
 import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { useSystemSettings } from "@/contexts/system-settings-context";
 
 function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -70,6 +71,11 @@ function UserManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { settings: systemSettings } = useSystemSettings();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = systemSettings.itemsPerPage;
 
   // Check if current user is admin or manager
   const isAdminOrManager = currentUser?.role === "admin" || currentUser?.role === "manager";
@@ -270,6 +276,13 @@ function UserManagement() {
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase())
     ).sort((a, b) => (a.fullName || a.username).localeCompare(b.fullName || b.username, 'pt-BR')) || [];
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getRoleLabel = (role: string) => {
     const labels = {
@@ -484,7 +497,7 @@ function UserManagement() {
             <div className="text-center text-sm text-muted-foreground mb-6">
               Usuários ordenados alfabeticamente ({filteredUsers.length} total)
             </div>
-            {filteredUsers.map((user) => (
+            {paginatedUsers.map((user) => (
               <Card key={user.id} className="hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <CardContent className="p-6">
                   <div className="flex flex-col space-y-6">
@@ -628,6 +641,60 @@ function UserManagement() {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Pagination */}
+          {filteredUsers.length > itemsPerPage && (
+            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 rounded-lg">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Mostrando <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> a{' '}
+                <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> de{' '}
+                <span className="font-medium">{filteredUsers.length}</span> usuários
+              </div>
+              <div className="flex items-center space-x-6 lg:space-x-8">
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Página {currentPage} de {totalPages}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    title="Primeira página"
+                  >
+                    ⟪
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    title="Página anterior"
+                  >
+                    ⟨
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    title="Próxima página"
+                  >
+                    ⟩
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    title="Última página"
+                  >
+                    ⟫
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </main>

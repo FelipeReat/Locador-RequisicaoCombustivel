@@ -485,14 +485,13 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  // Fuel Requisitions with caching
+  // Fuel Requisitions without caching (temporarily disabled to fix display issue)
   async getFuelRequisitions(): Promise<FuelRequisition[]> {
-    const cacheKey = this.getCacheKey('fuelRequisitions');
-    const cached = this.getFromCache<FuelRequisition[]>(cacheKey);
-    if (cached) return cached;
-
+    // Limpar cache completamente para garantir dados atualizados
+    this.invalidateCache('fuelRequisitions');
+    
     const result = await db.select().from(fuelRequisitions).orderBy(desc(fuelRequisitions.createdAt));
-    this.setCache(cacheKey, result, 1000); // Cache mínimo de 1 segundo
+    console.log(`DatabaseStorage: Fetched ${result.length} fuel requisitions from database`);
     return result;
   }
 

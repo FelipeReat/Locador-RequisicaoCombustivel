@@ -43,6 +43,7 @@ import {
 import { MileageResetDialog } from "@/components/mileage-reset-dialog";
 import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
+import { useSystemSettings } from "@/contexts/system-settings-context";
 
 function FleetManagement() {
   const { user: currentUser } = useAuth();
@@ -54,6 +55,11 @@ function FleetManagement() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const { settings: systemSettings } = useSystemSettings();
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = systemSettings.itemsPerPage;
 
   // Check if current user is admin or manager
   const isAdminOrManager = currentUser?.role === "admin" || currentUser?.role === "manager";
@@ -309,6 +315,13 @@ function FleetManagement() {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
+  const paginatedVehicles = filteredVehicles.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (vehiclesLoading) {
     return <LoadingSpinner message={t("loading-fleet")} />;
@@ -591,7 +604,7 @@ function FleetManagement() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredVehicles.map((vehicle) => (
+            {paginatedVehicles.map((vehicle) => (
               <Card key={vehicle.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
@@ -708,6 +721,60 @@ function FleetManagement() {
                 </p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Pagination */}
+          {filteredVehicles.length > itemsPerPage && (
+            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 rounded-lg">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Mostrando <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> a{' '}
+                <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredVehicles.length)}</span> de{' '}
+                <span className="font-medium">{filteredVehicles.length}</span> veículos
+              </div>
+              <div className="flex items-center space-x-6 lg:space-x-8">
+                <div className="flex w-[100px] items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Página {currentPage} de {totalPages}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    title="Primeira página"
+                  >
+                    ⟪
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    title="Página anterior"
+                  >
+                    ⟨
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    title="Próxima página"
+                  >
+                    ⟩
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    title="Última página"
+                  >
+                    ⟫
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </main>

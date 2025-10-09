@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/theme-context";
 import { useLanguage } from "@/contexts/language-context";
 import { useNotifications } from "@/contexts/notification-context";
+import { useSystemSettings } from "@/contexts/system-settings-context";
 import Header from "@/components/layout/header";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,7 @@ export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { settings: notificationSettings, updateSetting } = useNotifications();
+  const { settings: systemSettings, updateSetting: updateSystemSetting } = useSystemSettings();
 
   const { data: user, isLoading } = useQuery<User>({
     queryKey: ["/api/user/profile"],
@@ -538,7 +540,18 @@ export default function Settings() {
                         <h4 className="font-medium">{t('items-per-page-label')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('items-displayed-tables')}</p>
                       </div>
-                      <Select defaultValue="20">
+                      <Select 
+                        value={systemSettings.itemsPerPage.toString()} 
+                        onValueChange={(value) => {
+                          const newValue = parseInt(value);
+                          updateSystemSetting('itemsPerPage', newValue);
+                          toast({
+                            title: "Configuração salva",
+                            description: `Configuração global alterada para ${newValue} itens por página. Esta configuração será aplicada em todas as tabelas do sistema.`,
+                            duration: 4000,
+                          });
+                        }}
+                      >
                         <SelectTrigger className="w-32">
                           <SelectValue />
                         </SelectTrigger>

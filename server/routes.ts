@@ -197,18 +197,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all fuel requisitions
   app.get("/api/fuel-requisitions", async (req, res) => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
       const requisitions = await storage.getFuelRequisitions();
 
-      // Implementa paginação para melhor performance
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedRequisitions = requisitions.slice(startIndex, endIndex);
-
+      // Retorna todas as requisições sem paginação
       // Cache muito baixo para dados críticos
       res.set('Cache-Control', 'public, max-age=2');
-      res.json(paginatedRequisitions);
+      res.json(requisitions);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar requisições" });
     }

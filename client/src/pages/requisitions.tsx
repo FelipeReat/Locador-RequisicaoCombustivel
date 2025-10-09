@@ -15,12 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, Edit, Search, Filter, Check, Download, Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Trash2, Undo2 } from "lucide-react";
+import { Eye, Edit, Search, Filter, Check, Download, Plus, Trash2, Undo2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { useSystemSettings } from "@/contexts/system-settings-context";
 import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -39,10 +40,9 @@ export default function Requisitions() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { settings: systemSettings } = useSystemSettings();
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Number of items per page
+  // Removed pagination - showing all items
 
   // Hooks for real-time updates
   const { forceRefresh } = useRealTimeUpdates();
@@ -304,12 +304,8 @@ export default function Requisitions() {
     ), 
   [filteredRequisitions]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(sortedRequisitions.length / itemsPerPage);
-  const paginatedRequisitions = sortedRequisitions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Show all requisitions without pagination
+  const displayedRequisitions = sortedRequisitions;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
@@ -578,7 +574,7 @@ export default function Requisitions() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedRequisitions.length === 0 ? (
+                {displayedRequisitions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
                       <div className="flex flex-col items-center space-y-2">
@@ -589,7 +585,7 @@ export default function Requisitions() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedRequisitions.map((requisition, index) => (
+                  displayedRequisitions.map((requisition, index) => (
                     <TableRow 
                       key={requisition.id} 
                       className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
@@ -748,55 +744,11 @@ export default function Requisitions() {
             </Table>
           </div>
 
-          {sortedRequisitions.length > itemsPerPage && (
-            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 rounded-b-lg">
+          {/* Pagination removed - showing all requisitions */}
+          {sortedRequisitions.length > 0 && (
+            <div className="flex items-center justify-center px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 rounded-b-lg">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Mostrando <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> a{' '}
-                <span className="font-medium">{Math.min(currentPage * itemsPerPage, sortedRequisitions.length)}</span> de{' '}
-                <span className="font-medium">{sortedRequisitions.length}</span> requisições
-              </div>
-              <div className="flex items-center space-x-6 lg:space-x-8">
-                <div className="flex w-[100px] items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Página {currentPage} de {totalPages}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                    title="Primeira página"
-                  >
-                    <ChevronsLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    title="Página anterior"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    title="Próxima página"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                    title="Última página"
-                  >
-                    <ChevronsRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                Exibindo <span className="font-medium">{sortedRequisitions.length}</span> requisições
               </div>
             </div>
           )}

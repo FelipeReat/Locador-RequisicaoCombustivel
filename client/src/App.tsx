@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { LanguageProvider } from "@/contexts/language-context";
 import { NotificationProvider } from "@/contexts/notification-context";
+import { SystemSettingsProvider } from "@/contexts/system-settings-context";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "@/pages/dashboard";
@@ -112,16 +113,18 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
           <LanguageProvider>
-            <NotificationProvider>
-              <InactivityWrapper>
+            <SystemSettingsProvider>
+              <NotificationProvider>
+                <InactivityWrapper>
                 <TooltipProvider>
                   <div className="min-h-screen bg-background">
                     <Router />
                   </div>
                 </TooltipProvider>
-              </InactivityWrapper>
-              <Toaster />
-            </NotificationProvider>
+                </InactivityWrapper>
+                <Toaster />
+              </NotificationProvider>
+            </SystemSettingsProvider>
           </LanguageProvider>
         </ThemeProvider>
       </AuthProvider>
