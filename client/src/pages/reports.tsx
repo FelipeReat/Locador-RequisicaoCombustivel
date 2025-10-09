@@ -33,7 +33,8 @@ import type { FuelRequisition } from "@shared/schema";
 const COLORS = {
   approved: '#10B981',
   pending: '#F59E0B', 
-  rejected: '#EF4444'
+  rejected: '#EF4444',
+  fulfilled: '#3B82F6'
 };
 
 export default function Reports() {
@@ -70,15 +71,17 @@ export default function Reports() {
     const approved = filteredRequisitions.filter(req => req.status === 'approved');
     const pending = filteredRequisitions.filter(req => req.status === 'pending');
     const rejected = filteredRequisitions.filter(req => req.status === 'rejected');
+    const fulfilled = filteredRequisitions.filter(req => req.status === 'fulfilled');
     
-    const totalLiters = approved.reduce((sum, req) => sum + parseFloat(req.quantity || "0"), 0);
-    const totalCost = approved.reduce((sum, req) => sum + (parseFloat(req.quantity || "0") * parseFloat(req.pricePerLiter || "0")), 0);
+    const totalLiters = [...approved, ...fulfilled].reduce((sum, req) => sum + parseFloat(req.quantity || "0"), 0);
+    const totalCost = [...approved, ...fulfilled].reduce((sum, req) => sum + (parseFloat(req.quantity || "0") * parseFloat(req.pricePerLiter || "0")), 0);
     
     return {
       total: filteredRequisitions.length,
       approved: approved.length,
       pending: pending.length,
       rejected: rejected.length,
+      fulfilled: fulfilled.length,
       totalLiters: totalLiters,
       totalCost: totalCost
     };
@@ -88,7 +91,8 @@ export default function Reports() {
   const statusBarData = [
     { name: 'Aprovadas', value: monthlyStats.approved, color: COLORS.approved },
     { name: 'Pendentes', value: monthlyStats.pending, color: COLORS.pending },
-    { name: 'Rejeitadas', value: monthlyStats.rejected, color: COLORS.rejected }
+    { name: 'Rejeitadas', value: monthlyStats.rejected, color: COLORS.rejected },
+    { name: 'Realizadas', value: monthlyStats.fulfilled, color: COLORS.fulfilled }
   ];
 
   // Dados para gráfico de pizza
@@ -239,6 +243,21 @@ export default function Reports() {
             </CardContent>
           </Card>
 
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium">Realizadas</p>
+                  <div className="text-2xl font-bold">{monthlyStats.fulfilled}</div>
+                </div>
+                <CheckCircle className="h-8 w-8 text-blue-200" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Segunda linha de cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -369,10 +388,15 @@ export default function Reports() {
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               req.status === 'approved' ? 'bg-green-100 text-green-800' :
                               req.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
+                              req.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              req.status === 'fulfilled' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'
                             }`}>
-                              {req.status === 'approved' ? 'Aprovada' :
-                               req.status === 'pending' ? 'Pendente' : 'Rejeitada'}
+                              {req.status === 'approved' ? 'Aprovado' :
+                               req.status === 'pending' ? 'Pendente' :
+                               req.status === 'rejected' ? 'Rejeitado' :
+                               req.status === 'fulfilled' ? 'Realizado' :
+                               req.status}
                             </span>
                           </td>
                         </tr>
