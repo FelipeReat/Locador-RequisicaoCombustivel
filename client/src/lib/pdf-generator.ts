@@ -560,8 +560,174 @@ export class PDFGenerator {
     return prices[fuelType as keyof typeof prices] || 6.00;
   }
 
+  generateMonthlyFuelReport(
+    requisitions: FuelRequisition[], 
+    monthlyStats: any, 
+    month: number, 
+    year: number,
+    vehicles?: any[],
+    users?: any[]
+  ): void {
+    console.log('PDFGenerator.generateMonthlyFuelReport iniciado');
+    console.log('Parâmetros recebidos:', {
+      requisitionsCount: requisitions?.length || 0,
+      monthlyStats,
+      month,
+      year,
+      vehiclesCount: vehicles?.length || 0,
+      usersCount: users?.length || 0
+    });
+
+    try {
+      const monthName = new Date(year, month - 1).toLocaleDateString('pt-BR', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+
+      console.log('Adicionando cabeçalho...');
+      this.addHeader({
+        title: 'Relatório Mensal de Combustível',
+        subtitle: `Período: ${monthName}`,
+        date: new Date().toLocaleDateString('pt-BR')
+      });
+      console.log('Cabeçalho adicionado com sucesso');
+    } catch (error) {
+      console.error('Erro ao adicionar cabeçalho:', error);
+      throw error;
+    }
+
+    // Estatísticas resumidas
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('RESUMO ESTATÍSTICO', 20, this.currentY);
+    this.currentY += 10;
+
+    const statsData = [
+      ['Total de Requisições:', monthlyStats.total.toString()],
+      ['Requisições Pendentes:', monthlyStats.pending.toString()],
+      ['Requisições Aprovadas:', monthlyStats.approved.toString()],
+      ['Requisições Rejeitadas:', monthlyStats.rejected.toString()],
+      ['Requisições Realizadas:', monthlyStats.fulfilled.toString()],
+      ['Total de Litros:', `${monthlyStats.totalLiters} L`],
+      ['Custo Total:', `R$ ${Number(monthlyStats.totalCost || 0).toFixed(2).replace('.', ',')}`]
+    ];
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+
+    statsData.forEach(([label, value]) => {
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(label, 20, this.currentY);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(value, 80, this.currentY);
+      this.currentY += 6;
+    });
+
+    this.currentY += 10;
+
+    // Distribuição por Status (dados do gráfico em formato tabela)
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('DISTRIBUIÇÃO POR STATUS', 20, this.currentY);
+    this.currentY += 10;
+
+    const statusTableData = [
+      ['Pendentes', monthlyStats.pending.toString(), `${((Number(monthlyStats.pending || 0) / Number(monthlyStats.total || 1)) * 100).toFixed(1)}%`],
+      ['Aprovadas', monthlyStats.approved.toString(), `${((Number(monthlyStats.approved || 0) / Number(monthlyStats.total || 1)) * 100).toFixed(1)}%`],
+      ['Rejeitadas', monthlyStats.rejected.toString(), `${((Number(monthlyStats.rejected || 0) / Number(monthlyStats.total || 1)) * 100).toFixed(1)}%`],
+      ['Realizadas', monthlyStats.fulfilled.toString(), `${((Number(monthlyStats.fulfilled || 0) / Number(monthlyStats.total || 1)) * 100).toFixed(1)}%`]
+    ];
+
+    autoTable(this.doc, {
+      head: [['Status', 'Quantidade', 'Percentual']],
+      body: statusTableData,
+      startY: this.currentY,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [52, 144, 220] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { left: 20, right: 20 }
+    });
+
+    this.currentY = (this.doc as any).lastAutoTable.finalY + 15;
+
+    // Tabela detalhada de requisições
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('DETALHAMENTO DAS REQUISIÇÕES', 20, this.currentY);
+    this.currentY += 10;
+
+    const getVehiclePlate = (vehicleId: number) => {
+      const vehicle = vehicles?.find(v => v.id === vehicleId);
+      return vehicle?.plate || 'N/A';
+    };
+
+    const getUserName = (userId: number) => {
+      const user = users?.find(u => u.id === userId);
+      return user?.name || 'N/A';
+    };
+
+    const tableData = requisitions.map(req => {
+      // Garantir que pricePerLiter seja um número válido
+      const pricePerLiter = req.pricePerLiter ? Number(req.pricePerLiter) : 0;
+      const isValidPrice = !isNaN(pricePerLiter) && isFinite(pricePerLiter);
+      
+      // Garantir que totalCost seja um número válido
+      const totalCost = req.totalCost ? Number(req.totalCost) : 0;
+      const isValidCost = !isNaN(totalCost) && isFinite(totalCost);
+      
+      return [
+        new Date(req.createdAt).toLocaleDateString('pt-BR'),
+        getVehiclePlate(req.vehicleId),
+        getUserName(req.requesterId),
+        this.getFuelTypeLabel(req.fuelType),
+        req.quantity ? `${req.quantity}L` : 'Tanque cheio',
+        isValidPrice ? `R$ ${pricePerLiter.toFixed(2)}` : 'N/A',
+        isValidCost ? `R$ ${totalCost.toFixed(2)}` : 'N/A',
+        this.getStatusLabel(req.status)
+      ];
+    });
+
+    try {
+      console.log('Criando tabela detalhada com', tableData.length, 'linhas');
+      autoTable(this.doc, {
+        head: [['Data', 'Veículo', 'Solicitante', 'Combustível', 'Quantidade', 'Preço/L', 'Total', 'Status']],
+        body: tableData,
+        startY: this.currentY,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [52, 144, 220] },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        columnStyles: {
+          0: { cellWidth: 20 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 25 },
+          3: { cellWidth: 20 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 18 },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 18 }
+        }
+      });
+      console.log('Tabela detalhada criada com sucesso');
+
+      console.log('Adicionando rodapé...');
+      this.addFooter();
+      console.log('Rodapé adicionado com sucesso');
+      console.log('PDFGenerator.generateMonthlyFuelReport concluído');
+    } catch (error) {
+      console.error('Erro ao criar tabela ou rodapé:', error);
+      throw error;
+    }
+  }
+
   save(filename: string): void {
-    this.doc.save(filename);
+    try {
+      console.log('Salvando PDF com nome:', filename);
+      this.doc.save(filename);
+      console.log('PDF salvo com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar PDF:', error);
+      throw error;
+    }
   }
 
   private getSupplierLabel(supplierId: number): string {

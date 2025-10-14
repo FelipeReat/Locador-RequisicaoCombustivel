@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { PDFGenerator } from "@/lib/pdf-generator";
 import { 
   BarChart, 
   Bar, 
@@ -28,7 +29,7 @@ import {
   Fuel, 
   AlertCircle
 } from "lucide-react";
-import type { FuelRequisition } from "@shared/schema";
+import type { FuelRequisition, Vehicle, User } from "@shared/schema";
 
 const COLORS = {
   approved: '#10B981',
@@ -45,16 +46,16 @@ export default function Reports() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isExporting, setIsExporting] = useState(false);
 
-  // Buscar dados
+  // Buscar dados com tipos corretos
   const { data: requisitions = [], isLoading: requisitionsLoading } = useQuery<FuelRequisition[]>({
     queryKey: ["/api/fuel-requisitions"],
   });
 
-  const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery<Vehicle[]>({
     queryKey: ["/api/vehicles"],
   });
 
-  const { data: users = [], isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
 
@@ -98,29 +99,89 @@ export default function Reports() {
   // Dados para gráfico de pizza
   const statusPieData = statusBarData.filter(item => item.value > 0);
 
-  // Função para exportar relatório
+
+
+  // Função para exportar relatório em PDF
   const handleExportReport = async () => {
-    setIsExporting(true);
+    console.log('=== INÍCIO DA EXPORTAÇÃO ===');
+    alert('Função handleExportReport chamada!');
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsExporting(true);
+      console.log('Estado isExporting definido como true');
+
+      // Verificar se há dados para exportar
+      if (filteredRequisitions.length === 0) {
+        console.log('Nenhuma requisição encontrada para o período selecionado');
+        toast({
+          title: "Nenhum dado encontrado",
+          description: "Não há requisições para o período selecionado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Dados para exportar:', {
+        requisitions: filteredRequisitions.length,
+        monthlyStats,
+        vehicles: vehicles.length,
+        users: users.length
+      });
+
+      // Usar import estático
+      console.log('Criando instância PDFGenerator...');
+      const pdfGenerator = new PDFGenerator();
+      console.log('Instância PDFGenerator criada com sucesso');
       
       const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleDateString('pt-BR', { 
         month: 'long', 
         year: 'numeric' 
       });
       
+      // Gerar o PDF com os dados filtrados
+      console.log('Chamando generateMonthlyFuelReport...');
+      console.log('Parâmetros:', {
+        requisitions: filteredRequisitions.length,
+        monthlyStats,
+        selectedMonth,
+        selectedYear,
+        vehicles: vehicles.length,
+        users: users.length
+      });
+      
+      pdfGenerator.generateMonthlyFuelReport(
+        filteredRequisitions,
+        monthlyStats,
+        selectedMonth,
+        selectedYear,
+        vehicles,
+        users
+      );
+      console.log('PDF gerado com sucesso');
+      
+      // Salvar o arquivo PDF
+      const filename = `relatorio-combustivel-${selectedMonth.toString().padStart(2, '0')}-${selectedYear}.pdf`;
+      console.log('Salvando PDF com nome:', filename);
+      pdfGenerator.save(filename);
+      console.log('PDF salvo com sucesso');
+      
       toast({
         title: "Relatório exportado!",
-        description: `Relatório de ${monthName} foi baixado.`,
+        description: `Relatório de ${monthName} foi baixado com sucesso.`,
       });
     } catch (error) {
+      console.error('Erro detalhado ao gerar PDF:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      console.error('Stack trace:', errorStack);
       toast({
         title: "Erro ao exportar",
-        description: "Tente novamente.",
+        description: `Erro: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
       setIsExporting(false);
+      console.log('Exportação finalizada');
     }
   };
 
@@ -129,7 +190,7 @@ export default function Reports() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header title="Relatórios de Combustível" />
         <div className="flex items-center justify-center h-96">
           <LoadingSpinner />
         </div>
@@ -144,7 +205,7 @@ export default function Reports() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header title="Relatórios de Combustível" />
       
       <div className="container mx-auto px-4 py-8">
         {/* Cabeçalho */}
@@ -161,7 +222,7 @@ export default function Reports() {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              {/* Filtro de Mês */}
+              {/* Filtros de período */}
               <div className="flex gap-2">
                 <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
                   <SelectTrigger className="w-32">
@@ -182,7 +243,7 @@ export default function Reports() {
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 5 }, (_, i) => {
-                      const year = new Date().getFullYear() - i;
+                      const year = new Date().getFullYear() - 2 + i;
                       return (
                         <SelectItem key={year} value={year.toString()}>
                           {year}
@@ -193,168 +254,160 @@ export default function Reports() {
                 </Select>
               </div>
               
-              <Button 
-                onClick={handleExportReport} 
-                disabled={isExporting}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {isExporting ? 'Exportando...' : 'Exportar PDF'}
-              </Button>
+              {/* Botões de ação */}
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleExportReport}
+                  disabled={isExporting || filteredRequisitions.length === 0}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  {isExporting ? 'Exportando...' : 'Exportar PDF'}
+                </Button>
+              </div>
             </div>
           </div>
+          
+          <p className="text-gray-600 mt-2">
+            Relatório de {monthName} • {filteredRequisitions.length} requisições
+          </p>
         </div>
 
-        {/* Cards de Estatísticas */}
+        {/* Cards de estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Total de Requisições</p>
-                  <div className="text-2xl font-bold">{monthlyStats.total}</div>
-                </div>
-                <BarChart3 className="h-8 w-8 text-blue-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm font-medium">Aprovadas</p>
-                  <div className="text-2xl font-bold">{monthlyStats.approved}</div>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-yellow-100 text-sm font-medium">Pendentes</p>
-                  <div className="text-2xl font-bold">{monthlyStats.pending}</div>
-                </div>
-                <Clock className="h-8 w-8 text-yellow-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Realizadas</p>
-                  <div className="text-2xl font-bold">{monthlyStats.fulfilled}</div>
-                </div>
-                <CheckCircle className="h-8 w-8 text-blue-200" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Segunda linha de cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm font-medium">Total de Litros</p>
-                  <div className="text-2xl font-bold">{monthlyStats.totalLiters.toFixed(0)}L</div>
-                  <p className="text-xs text-purple-100">
-                    R$ {monthlyStats.totalCost.toFixed(2)}
-                  </p>
-                </div>
-                <Fuel className="h-8 w-8 text-purple-200" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Mensagem quando não há dados */}
-        {monthlyStats.total === 0 && (
-          <Card className="mb-8">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Nenhuma requisição encontrada
-              </h3>
-              <p className="text-gray-600 text-center">
-                Não há requisições de combustível para {monthName}.
-                <br />
-                Selecione outro período para visualizar os dados.
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Requisições</CardTitle>
+              <Fuel className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{monthlyStats.total}</div>
+              <p className="text-xs text-muted-foreground">
+                no período selecionado
               </p>
             </CardContent>
           </Card>
-        )}
-
-        {/* Gráficos */}
-        {monthlyStats.total > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Gráfico de Barras */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Requisições por Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={statusBarData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="#3B82F6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Gráfico de Pizza */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Distribuição por Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={statusPieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {statusPieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Lista de Requisições do Mês */}
-        {filteredRequisitions.length > 0 && (
+          
           <Card>
-            <CardHeader>
-              <CardTitle>Requisições de {monthName}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Aprovadas</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
+              <div className="text-2xl font-bold text-green-600">{monthlyStats.approved}</div>
+              <p className="text-xs text-muted-foreground">
+                {monthlyStats.total > 0 ? Math.round((monthlyStats.approved / monthlyStats.total) * 100) : 0}% do total
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600">{monthlyStats.pending}</div>
+              <p className="text-xs text-muted-foreground">
+                aguardando aprovação
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total em Litros</CardTitle>
+              <Fuel className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">
+                {monthlyStats.totalLiters.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}L
+              </div>
+              <p className="text-xs text-muted-foreground">
+                R$ {monthlyStats.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Gráfico de barras */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Requisições por Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={statusBarData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#8884d8">
+                    {statusBarData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de pizza */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Distribuição por Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={statusPieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {statusPieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabela de requisições */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Detalhes das Requisições - {monthName}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredRequisitions.length === 0 ? (
+              <div className="text-center py-8">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Nenhuma requisição encontrada
+                </h3>
+                <p className="text-gray-500">
+                  Não há requisições de combustível para o período selecionado.
+                </p>
+              </div>
+            ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
+                  <thead className="bg-gray-50">
+                    <tr>
                       <th className="text-left p-2">Data</th>
                       <th className="text-left p-2">Veículo</th>
+                      <th className="text-left p-2">Cliente</th>
+                      <th className="text-left p-2">Combustível</th>
                       <th className="text-left p-2">Quantidade</th>
                       <th className="text-left p-2">Preço/L</th>
                       <th className="text-left p-2">Total</th>
@@ -363,10 +416,11 @@ export default function Reports() {
                   </thead>
                   <tbody>
                     {filteredRequisitions.map((req) => {
-                      const vehicle = vehicles.find((v: any) => v.id === req.vehicleId);
+                      const vehicle = vehicles.find((v) => v.id === req.vehicleId);
                       const quantity = parseFloat(req.quantity || "0");
                       const pricePerLiter = parseFloat(req.pricePerLiter || "0");
-                      const total = quantity * pricePerLiter;
+                      const isValidPrice = !isNaN(pricePerLiter) && isFinite(pricePerLiter);
+                      const total = quantity * (isValidPrice ? pricePerLiter : 0);
                       
                       return (
                         <tr key={req.id} className="border-b hover:bg-gray-50">
@@ -377,25 +431,27 @@ export default function Reports() {
                             <div className="flex flex-col">
                               <span className="font-medium">{vehicle?.plate || 'N/A'}</span>
                               <span className="text-xs text-gray-500">
-                                {vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : 'N/A'}
+                                {vehicle?.model} {vehicle?.brand}
                               </span>
                             </div>
                           </td>
+                          <td className="p-2">{req.client}</td>
+                          <td className="p-2 capitalize">{req.fuelType}</td>
                           <td className="p-2">{quantity.toFixed(1)}L</td>
-                          <td className="p-2">R$ {pricePerLiter.toFixed(2)}</td>
+                          <td className="p-2">R$ {isValidPrice ? pricePerLiter.toFixed(2) : '0.00'}</td>
                           <td className="p-2">R$ {total.toFixed(2)}</td>
                           <td className="p-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               req.status === 'approved' ? 'bg-green-100 text-green-800' :
                               req.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                               req.status === 'rejected' ? 'bg-red-100 text-red-800' :
                               req.status === 'fulfilled' ? 'bg-blue-100 text-blue-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
-                              {req.status === 'approved' ? 'Aprovado' :
+                              {req.status === 'approved' ? 'Aprovada' :
                                req.status === 'pending' ? 'Pendente' :
-                               req.status === 'rejected' ? 'Rejeitado' :
-                               req.status === 'fulfilled' ? 'Realizado' :
+                               req.status === 'rejected' ? 'Rejeitada' :
+                               req.status === 'fulfilled' ? 'Realizada' :
                                req.status}
                             </span>
                           </td>
@@ -405,9 +461,9 @@ export default function Reports() {
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

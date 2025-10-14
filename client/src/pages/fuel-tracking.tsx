@@ -224,7 +224,7 @@ export default function FuelTracking() {
           record.currentMileage,
           record.distanceTraveled,
           parseFloat(record.litersRefueled).toFixed(1),
-          parseFloat(record.pricePerLiter).toFixed(2),
+          record.pricePerLiter ? parseFloat(record.pricePerLiter).toFixed(2) : '0.00',
           parseFloat(record.totalCost).toFixed(2),
           `"${record.fuelStation || ''}"`,
           `"${user?.fullName || user?.username || ''}"`,
