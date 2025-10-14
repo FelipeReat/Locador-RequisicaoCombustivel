@@ -488,7 +488,8 @@ export class PDFGenerator {
       currentY += 6;
 
       // Cabeçalho da tabela de combustível
-      const headers = ['QTD. / L', 'R$/L', '[R$] TOTAL'];
+      const fuelTypeLabel = this.getFuelTypeLabel(requisition.fuelType || '');
+      const headers = [`QTD. / L (${fuelTypeLabel})`, 'R$/L', '[R$] TOTAL'];
       const colX = [startX + 40, startX + 70, startX + 100];
 
       headers.forEach((header, index) => {
