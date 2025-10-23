@@ -201,14 +201,14 @@ export default function VehicleFilter({
                             {vehicle.plate}
                           </span>
                           <Badge
-                            variant={vehicle.isActive ? "default" : "secondary"}
+                            variant={vehicle.status === "active" ? "default" : "secondary"}
                             className={`text-xs ${
-                              vehicle.isActive 
+                              vehicle.status === "active"
                                 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" 
                                 : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
                             }`}
                           >
-                            {vehicle.isActive ? "Ativo" : "Inativo"}
+                            {vehicle.status === "active" ? "Ativo" : "Inativo"}
                           </Badge>
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-300">
