@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import Header from "@/components/layout/header";
 import LoadingSpinner from "@/components/ui/loading-spinner";
+import VehicleFilter from "@/components/filters/vehicle-filter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,9 +42,10 @@ const COLORS = {
 export default function Reports() {
   const { toast } = useToast();
   
-  // Filtro mensal simples
+  // Filtros
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedVehicleIds, setSelectedVehicleIds] = useState<number[]>([]);
   const [isExporting, setIsExporting] = useState(false);
 
   // Buscar dados com tipos corretos
@@ -59,13 +61,22 @@ export default function Reports() {
     queryKey: ["/api/users"],
   });
 
-  // Filtrar requisições pelo mês selecionado
+  // Filtrar requisições pelo mês selecionado e veículos selecionados
   const filteredRequisitions = useMemo(() => {
     return requisitions.filter(req => {
       const reqDate = new Date(req.createdAt);
-      return reqDate.getMonth() + 1 === selectedMonth && reqDate.getFullYear() === selectedYear;
+      const matchesDate = reqDate.getMonth() + 1 === selectedMonth && reqDate.getFullYear() === selectedYear;
+      
+      // Se nenhum veículo selecionado, mostrar todos
+      if (selectedVehicleIds.length === 0) {
+        return matchesDate;
+      }
+      
+      // Filtrar por veículos selecionados
+      const matchesVehicle = selectedVehicleIds.includes(req.vehicleId);
+      return matchesDate && matchesVehicle;
     });
-  }, [requisitions, selectedMonth, selectedYear]);
+  }, [requisitions, selectedMonth, selectedYear, selectedVehicleIds]);
 
   // Estatísticas do mês
   const monthlyStats = useMemo(() => {
@@ -98,8 +109,6 @@ export default function Reports() {
 
   // Dados para gráfico de pizza
   const statusPieData = statusBarData.filter(item => item.value > 0);
-
-
 
   // Função para exportar relatório em PDF
   const handleExportReport = async () => {
@@ -218,6 +227,11 @@ export default function Reports() {
               </h1>
               <p className="text-gray-600 mt-2">
                 Relatório mensal de requisições - {monthName}
+                {selectedVehicleIds.length > 0 && (
+                  <span className="ml-2 text-blue-600 font-medium">
+                    • {selectedVehicleIds.length} veículo{selectedVehicleIds.length !== 1 ? 's' : ''} selecionado{selectedVehicleIds.length !== 1 ? 's' : ''}
+                  </span>
+                )}
               </p>
             </div>
             
@@ -271,6 +285,19 @@ export default function Reports() {
           <p className="text-gray-600 mt-2">
             Relatório de {monthName} • {filteredRequisitions.length} requisições
           </p>
+        </div>
+
+        {/* Filtro de Veículos */}
+        <div className="mb-6">
+          <VehicleFilter
+            vehicles={vehicles}
+            selectedVehicleIds={selectedVehicleIds}
+            onSelectionChange={setSelectedVehicleIds}
+            multiSelect={true}
+            title="Filtrar por Veículos"
+            placeholder="Buscar por placa, modelo ou marca..."
+            storageKey="reports-vehicle-filter"
+          />
         </div>
 
         {/* Cards de estatísticas */}
@@ -396,7 +423,10 @@ export default function Reports() {
                   Nenhuma requisição encontrada
                 </h3>
                 <p className="text-gray-500">
-                  Não há requisições de combustível para o período selecionado.
+                  {selectedVehicleIds.length > 0 
+                    ? "Não há requisições de combustível para os veículos e período selecionados."
+                    : "Não há requisições de combustível para o período selecionado."
+                  }
                 </p>
               </div>
             ) : (
