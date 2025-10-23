@@ -116,20 +116,20 @@ export default function VehicleFilter({
     <Card className={`w-full ${className}`}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+          <CardHeader className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CardTitle className="text-lg">{title}</CardTitle>
+                <CardTitle className="text-lg text-gray-900 dark:text-gray-100">{title}</CardTitle>
                 {selectedCount > 0 && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                     {selectedCount} de {totalCount}
                   </Badge>
                 )}
               </div>
               {isOpen ? (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               )}
             </div>
           </CardHeader>
@@ -139,7 +139,7 @@ export default function VehicleFilter({
           <CardContent className="pt-0">
             {/* Barra de busca */}
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
               <Input
                 placeholder={placeholder}
                 value={searchTerm}
@@ -177,14 +177,14 @@ export default function VehicleFilter({
             {/* Lista de veículos */}
             <div className="max-h-64 overflow-y-auto space-y-2">
               {filteredVehicles.length === 0 ? (
-                <div className="text-center text-gray-500 py-4">
+                <div className="text-center text-gray-500 dark:text-gray-400 py-4">
                   {searchTerm ? "Nenhum veículo encontrado" : "Nenhum veículo disponível"}
                 </div>
               ) : (
                 filteredVehicles.map((vehicle) => (
                   <div
                     key={vehicle.id}
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <Checkbox
                       id={`vehicle-${vehicle.id}`}
@@ -197,25 +197,25 @@ export default function VehicleFilter({
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
                             {vehicle.plate}
                           </span>
                           <Badge
                             variant={vehicle.isActive ? "default" : "secondary"}
                             className={`text-xs ${
                               vehicle.isActive 
-                                ? "bg-green-100 text-green-800" 
-                                : "bg-gray-100 text-gray-600"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" 
+                                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
                             }`}
                           >
                             {vehicle.isActive ? "Ativo" : "Inativo"}
                           </Badge>
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-gray-300">
                           {vehicle.brand} {vehicle.model} ({vehicle.year})
                         </div>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {vehicle.fuelType} • {vehicle.currentMileage?.toLocaleString()} km
                       </div>
                     </label>
@@ -226,11 +226,11 @@ export default function VehicleFilter({
 
             {/* Resumo da seleção */}
             {selectedCount > 0 && (
-              <div className="mt-4 pt-4 border-t">
-                <div className="text-sm text-gray-600">
+              <div className="mt-4 pt-4 border-t dark:border-gray-700">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   <strong>{selectedCount}</strong> veículo{selectedCount !== 1 ? 's' : ''} selecionado{selectedCount !== 1 ? 's' : ''}
                   {searchTerm && filteredVehicles.length < totalCount && (
-                    <span className="ml-2 text-gray-500">
+                    <span className="ml-2 text-gray-500 dark:text-gray-400">
                       ({filteredVehicles.filter(v => selectedVehicleIds.includes(v.id)).length} nos resultados filtrados)
                     </span>
                   )}

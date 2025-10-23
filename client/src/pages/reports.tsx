@@ -198,7 +198,7 @@ export default function Reports() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header title="Relatórios de Combustível" />
         <div className="flex items-center justify-center h-96">
           <LoadingSpinner />
@@ -213,7 +213,7 @@ export default function Reports() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header title="Relatórios de Combustível" />
       
       <div className="container mx-auto px-4 py-8">
@@ -221,14 +221,14 @@ export default function Reports() {
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                <BarChart3 className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <BarChart3 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 Relatórios de Combustível
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 dark:text-gray-300 mt-2">
                 Relatório mensal de requisições - {monthName}
                 {selectedVehicleIds.length > 0 && (
-                  <span className="ml-2 text-blue-600 font-medium">
+                  <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
                     • {selectedVehicleIds.length} veículo{selectedVehicleIds.length !== 1 ? 's' : ''} selecionado{selectedVehicleIds.length !== 1 ? 's' : ''}
                   </span>
                 )}
@@ -282,7 +282,7 @@ export default function Reports() {
             </div>
           </div>
           
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
             Relatório de {monthName} • {filteredRequisitions.length} requisições
           </p>
         </div>
@@ -418,11 +418,11 @@ export default function Reports() {
           <CardContent>
             {filteredRequisitions.length === 0 ? (
               <div className="text-center py-8">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <AlertCircle className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                   Nenhuma requisição encontrada
                 </h3>
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   {selectedVehicleIds.length > 0 
                     ? "Não há requisições de combustível para os veículos e período selecionados."
                     : "Não há requisições de combustível para o período selecionado."
@@ -432,19 +432,19 @@ export default function Reports() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <th className="text-left p-2">Data</th>
-                      <th className="text-left p-2">Veículo</th>
-                      <th className="text-left p-2">Cliente</th>
-                      <th className="text-left p-2">Combustível</th>
-                      <th className="text-left p-2">Quantidade</th>
-                      <th className="text-left p-2">Preço/L</th>
-                      <th className="text-left p-2">Total</th>
-                      <th className="text-left p-2">Status</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Data</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Veículo</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Cliente</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Combustível</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Quantidade</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Preço/L</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Total</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Status</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {filteredRequisitions.map((req) => {
                       const vehicle = vehicles.find((v) => v.id === req.vehicleId);
                       const quantity = parseFloat(req.quantity || "0");
@@ -453,30 +453,30 @@ export default function Reports() {
                       const total = quantity * (isValidPrice ? pricePerLiter : 0);
                       
                       return (
-                        <tr key={req.id} className="border-b hover:bg-gray-50">
-                          <td className="p-2">
+                        <tr key={req.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <td className="p-2 text-gray-900 dark:text-gray-100">
                             {new Date(req.createdAt).toLocaleDateString('pt-BR')}
                           </td>
                           <td className="p-2">
                             <div className="flex flex-col">
-                              <span className="font-medium">{vehicle?.plate || 'N/A'}</span>
-                              <span className="text-xs text-gray-500">
+                              <span className="font-medium text-gray-900 dark:text-gray-100">{vehicle?.plate || 'N/A'}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {vehicle?.model} {vehicle?.brand}
                               </span>
                             </div>
                           </td>
-                          <td className="p-2">{req.client}</td>
-                          <td className="p-2 capitalize">{req.fuelType}</td>
-                          <td className="p-2">{quantity.toFixed(1)}L</td>
-                          <td className="p-2">R$ {isValidPrice ? pricePerLiter.toFixed(2) : '0.00'}</td>
-                          <td className="p-2">R$ {total.toFixed(2)}</td>
+                          <td className="p-2 text-gray-900 dark:text-gray-100">{req.client}</td>
+                          <td className="p-2 capitalize text-gray-900 dark:text-gray-100">{req.fuelType}</td>
+                          <td className="p-2 text-gray-900 dark:text-gray-100">{quantity.toFixed(1)}L</td>
+                          <td className="p-2 text-gray-900 dark:text-gray-100">R$ {isValidPrice ? pricePerLiter.toFixed(2) : '0.00'}</td>
+                          <td className="p-2 text-gray-900 dark:text-gray-100">R$ {total.toFixed(2)}</td>
                           <td className="p-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              req.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              req.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              req.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              req.status === 'fulfilled' ? 'bg-blue-100 text-blue-800' :
-                              'bg-gray-100 text-gray-800'
+                              req.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                              req.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                              req.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                              req.status === 'fulfilled' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                              'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                             }`}>
                               {req.status === 'approved' ? 'Aprovada' :
                                req.status === 'pending' ? 'Pendente' :
@@ -489,6 +489,28 @@ export default function Reports() {
                       );
                     })}
                   </tbody>
+                  <tfoot className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
+                    <tr>
+                      <td className="p-2 font-bold text-gray-900 dark:text-gray-100" colSpan={4}>TOTAL</td>
+                      <td className="p-2 font-bold text-gray-900 dark:text-gray-100">
+                        {filteredRequisitions.reduce((sum, req) => {
+                          const quantity = parseFloat(req.quantity || "0");
+                          return sum + quantity;
+                        }, 0).toFixed(1)}L
+                      </td>
+                      <td className="p-2"></td>
+                      <td className="p-2 font-bold text-gray-900 dark:text-gray-100">
+                        R$ {filteredRequisitions.reduce((sum, req) => {
+                          const quantity = parseFloat(req.quantity || "0");
+                          const pricePerLiter = parseFloat(req.pricePerLiter || "0");
+                          const isValidPrice = !isNaN(pricePerLiter) && isFinite(pricePerLiter);
+                          const total = quantity * (isValidPrice ? pricePerLiter : 0);
+                          return sum + total;
+                        }, 0).toFixed(2)}
+                      </td>
+                      <td className="p-2"></td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             )}
