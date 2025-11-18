@@ -19,8 +19,10 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  Label
 } from "recharts";
+import { LabelList } from "recharts";
 import { 
   Download, 
   BarChart3, 
@@ -47,6 +49,7 @@ export default function Reports() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<number[]>([]);
   const [isExporting, setIsExporting] = useState(false);
+  const [showAllVehicles, setShowAllVehicles] = useState(false);
 
   // Buscar dados com tipos corretos
   const { data: requisitions = [], isLoading: requisitionsLoading } = useQuery<FuelRequisition[]>({
@@ -109,6 +112,35 @@ export default function Reports() {
 
   // Dados para gráfico de pizza
   const statusPieData = statusBarData.filter(item => item.value > 0);
+
+  // Dados acumulados por veículo (Litros e R$)
+  const vehicleBarData = useMemo(() => {
+    const map = new Map<number, { vehicleId: number; vehicleLabel: string; fullLabel: string; liters: number; cost: number }>();
+
+    filteredRequisitions.forEach((req) => {
+      const vehicle = vehicles.find((v) => v.id === req.vehicleId);
+      const label = vehicle?.plate || `Veículo ${req.vehicleId}`;
+      const fullLabel = vehicle ? `${vehicle.brand || ''} ${vehicle.model || ''}`.trim() : label;
+      const quantity = parseFloat(req.quantity || "0");
+      const pricePerLiter = parseFloat(req.pricePerLiter || "0");
+      const isValidPrice = !isNaN(pricePerLiter) && isFinite(pricePerLiter);
+
+      if (!map.has(req.vehicleId)) {
+        map.set(req.vehicleId, { vehicleId: req.vehicleId, vehicleLabel: label, fullLabel, liters: 0, cost: 0 });
+      }
+
+      const acc = map.get(req.vehicleId)!;
+      acc.liters += isNaN(quantity) ? 0 : quantity;
+      acc.cost += (isNaN(quantity) || !isValidPrice) ? 0 : quantity * pricePerLiter;
+    });
+
+    return Array.from(map.values())
+      .sort((a, b) => b.cost - a.cost);
+  }, [filteredRequisitions, vehicles]);
+
+  const visibleVehicleBarData = useMemo(() => {
+    return showAllVehicles ? vehicleBarData : vehicleBarData.slice(0, 12);
+  }, [vehicleBarData, showAllVehicles]);
 
   // Função para exportar relatório em PDF
   const handleExportReport = async () => {
@@ -409,6 +441,117 @@ export default function Reports() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Consumo por Veículo: Litros vs R$</CardTitle>
+            <Button size="sm" variant="outline" onClick={() => setShowAllVehicles(v => !v)}>
+              {showAllVehicles ? 'Mostrar Top 12' : 'Ver todos'}
+            </Button>
+          </CardHeader>
+          <CardContent role="img" aria-label="Gráfico de colunas comparando litros e valores em reais por veículo">
+            <ResponsiveContainer width="100%" height={520}>
+              <BarChart
+                data={visibleVehicleBarData}
+                margin={{ top: 32, right: 32, left: 24, bottom: 120 }}
+                barCategoryGap={"30%"}
+                barGap={10}
+                maxBarSize={60}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="vehicleLabel"
+                  tick={{ fontSize: 14 }}
+                  angle={-20}
+                  height={80}
+                  tickMargin={16}
+                  minTickGap={10}
+                  interval={0}
+                >
+                  <Label value="Veículos" position="bottom" offset={12} />
+                </XAxis>
+                <YAxis
+                  yAxisId="left"
+                  allowDecimals={false}
+                  tick={{ fontSize: 13 }}
+                  tickFormatter={(v) => `${Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`}
+                >
+                  <Label value="Litros" angle={-90} position="insideLeft" />
+                </YAxis>
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  allowDecimals={false}
+                  tick={{ fontSize: 13 }}
+                  tickFormatter={(v) => {
+                    const n = Number(v);
+                    if (n >= 1000) {
+                      return `R$ ${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}k`;
+                    }
+                    return `R$ ${n.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+                  }}
+                >
+                </YAxis>
+                <Tooltip
+                  formatter={(value: number, name: string, item: any) => {
+                    const isLiters = name === 'Litros' || item?.dataKey === 'liters';
+                    if (isLiters) {
+                      return [
+                        `${Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} L`,
+                        'Litros'
+                      ];
+                    }
+                    return [
+                      `${Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 2 })}`,
+                      'Valor (R$)'
+                    ];
+                  }}
+                  labelFormatter={(label) => `Veículo: ${label}`}
+                />
+                <Legend verticalAlign="top" wrapperStyle={{ marginBottom: 12, fontSize: 14 }} />
+                <Bar yAxisId="left" dataKey="liters" name="Litros" fill="#3B82F6" radius={[8,8,0,0]}>
+                  <LabelList content={(props: any) => {
+                    const { x, y, width, value } = props;
+                    const v = Number(value);
+                    if (!isFinite(v)) return null;
+                    const t = `${v.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} L`;
+                    return (
+                      <text x={x + width / 2} y={y - 8} textAnchor="middle" fontSize={14}>{t}</text>
+                    );
+                  }} />
+                </Bar>
+                <Bar yAxisId="right" dataKey="cost" name="Valor (R$)" fill="#10B981" radius={[8,8,0,0]}>
+                  <LabelList content={(props: any) => {
+                    const { x, y, width, height, value } = props;
+                    const n = Number(value);
+                    if (!isFinite(n)) return null;
+                    const t = n >= 1000
+                      ? `R$ ${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}k`
+                      : `R$ ${n.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+                    return (
+                      <text x={x + width / 2} y={y + Math.min(20, Math.max(16, height * 0.3))} textAnchor="middle" fontSize={13}>{t}</text>
+                    );
+                  }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-2">
+              <div className="text-center text-sm text-muted-foreground mb-1">Veículos exibidos</div>
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                {visibleVehicleBarData.map((item) => {
+                  const v = vehicles.find((veh) => (veh.plate || '') === item.vehicleLabel || veh.id === (item as any).vehicleId);
+                  const plate = v?.plate || item.vehicleLabel;
+                  const name = v ? `${v.brand || ''} ${v.model || ''}`.trim() : '';
+                  const label = name ? `${name} — ${plate}` : plate;
+                  return (
+                    <span key={plate} className="text-xs text-foreground">{label}</span>
+                  );
+                })}
+              </div>
+            </div>
+            <p className="sr-only">Cada veículo possui duas colunas agrupadas representando o volume abastecido em litros e o valor total em reais.</p>
+          </CardContent>
+        </Card>
 
         {/* Tabela de requisições */}
         <Card>
