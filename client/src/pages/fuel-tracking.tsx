@@ -13,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
 import { Plus, Search, Filter, Download, Clock, AlertTriangle, BarChart3, Calendar, Car, Fuel, Calculator } from 'lucide-react';
-import { insertFuelRecordSchema, type InsertFuelRecord, type FuelRecord, type Vehicle, type User } from '@shared/schema';
+import { insertFuelRecordSchema, type InsertFuelRecord, type FuelRecord, type Vehicle, type User, type Company } from '@shared/schema';
 import { useToast } from '../hooks/use-toast';
 
 interface VehicleCheckIn {
@@ -49,6 +49,8 @@ export default function FuelTracking() {
   const [isMonthlyReportModalOpen, setIsMonthlyReportModalOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [expandedVehicles, setExpandedVehicles] = useState<Record<number, boolean>>({});
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -72,6 +74,12 @@ export default function FuelTracking() {
   // Fetch users
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ['/api/users'],
+  });
+
+  // Fetch companies
+  const { data: companies = [] } = useQuery<Company[]>({
+    queryKey: ['/api/companies'],
+    select: (data) => [...data].sort((a, b) => a.name.localeCompare(b.name)),
   });
 
   // Fetch monthly report
@@ -147,8 +155,12 @@ export default function FuelTracking() {
     }
   }, [watchedValues, form]);
 
-  // Filter vehicles
-  const filteredVehicles = vehicles.filter(vehicle => 
+  // Only show vehicles linked to any company, optionally filter by selected company, then apply search filter
+  const linkedVehicles = vehicles.filter(v => v.companyId !== null);
+  const companyFilteredVehicles = selectedCompanyId === null 
+    ? linkedVehicles 
+    : linkedVehicles.filter(v => v.companyId === selectedCompanyId);
+  const filteredVehicles = companyFilteredVehicles.filter(vehicle => 
     vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
     vehicle.model.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -167,6 +179,28 @@ export default function FuelTracking() {
       record.vehicleId === vehicleId && 
       record.recordDate === today
     );
+  };
+
+  // Get records for a vehicle in selected month/year
+  const getMonthRecordsForVehicle = (vehicleId: number) => {
+    return fuelRecords
+      .filter(r => r.vehicleId === vehicleId)
+      .filter(r => {
+        const d = new Date(r.recordDate);
+        return d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
+      })
+      .sort((a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
+  };
+
+  // Compute monthly stats per vehicle
+  const getMonthStatsForVehicle = (vehicleId: number) => {
+    const records = getMonthRecordsForVehicle(vehicleId);
+    const totalKm = records.reduce((s, r) => s + parseFloat(r.distanceTraveled || '0'), 0);
+    const totalLiters = records.reduce((s, r) => s + parseFloat(r.litersRefueled || '0'), 0);
+    const totalCost = records.reduce((s, r) => s + parseFloat(r.totalCost || '0'), 0);
+    const averageKmPerLiter = totalLiters > 0 ? totalKm / totalLiters : 0;
+    const costPerKm = totalKm > 0 ? totalCost / totalKm : 0;
+    return { records, totalKm, totalLiters, totalCost, averageKmPerLiter, costPerKm };
   };
 
   const handleVehicleCheckIn = (vehicle: Vehicle) => {
@@ -306,7 +340,7 @@ export default function FuelTracking() {
             Buscar Veículo
           </CardTitle>
         </CardHeader>
-        <CardContent className="mobile-card pt-0">
+        <CardContent className="mobile-card pt-0 space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
@@ -315,6 +349,20 @@ export default function FuelTracking() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+          <div>
+            <Label className="mb-1 block">Empresa</Label>
+            <Select value={selectedCompanyId?.toString() ?? 'all'} onValueChange={(value) => setSelectedCompanyId(value === 'all' ? null : parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas as empresas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as empresas</SelectItem>
+                {companies.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -397,6 +445,103 @@ export default function FuelTracking() {
                   <Plus className="h-4 w-4 mr-2" />
                   {hasRecordToday ? "Novo Registro" : "Registrar Abastecimento"}
                 </Button>
+
+                {/* Ficha técnica do mês */}
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-800">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      <span className="text-sm font-medium">Ficha técnica do mês</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setExpandedVehicles(prev => ({ ...prev, [vehicle.id]: !prev[vehicle.id] }))}
+                    >
+                      {expandedVehicles[vehicle.id] ? 'Ocultar' : 'Exibir'}
+                    </Button>
+                  </div>
+
+                  {expandedVehicles[vehicle.id] && (() => {
+                    const stats = getMonthStatsForVehicle(vehicle.id);
+                    return (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                          <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                            <div className="text-gray-500">Registros</div>
+                            <div className="font-bold">{stats.records.length}</div>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                            <div className="text-gray-500">KM Rodados</div>
+                            <div className="font-bold font-mono">{stats.totalKm.toFixed(1)} km</div>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                            <div className="text-gray-500">Litros</div>
+                            <div className="font-bold font-mono">{stats.totalLiters.toFixed(1)} L</div>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                            <div className="text-gray-500">Média km/L</div>
+                            <div className="font-bold">
+                              {stats.averageKmPerLiter.toFixed(1)} km/L
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                            <div className="text-gray-500">Custo Total</div>
+                            <div className="font-bold text-green-600">R$ {stats.totalCost.toFixed(2)}</div>
+                          </div>
+                          <div className="bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                            <div className="text-gray-500">Custo por km</div>
+                            <div className="font-bold">R$ {stats.costPerKm.toFixed(2)}/km</div>
+                          </div>
+                        </div>
+
+                        <div className="mobile-table-container">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Data</TableHead>
+                                <TableHead>KM Inicial</TableHead>
+                                <TableHead>KM Final</TableHead>
+                                <TableHead>KM</TableHead>
+                                <TableHead>Litros</TableHead>
+                                <TableHead>Preço/L</TableHead>
+                                <TableHead>Total</TableHead>
+                                <TableHead>km/L</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {stats.records.map(r => {
+                                const liters = parseFloat(r.litersRefueled || '0');
+                                const km = parseFloat(r.distanceTraveled || '0');
+                                const price = parseFloat(r.pricePerLiter || '0');
+                                const total = parseFloat(r.totalCost || (liters * price).toString());
+                                const eff = liters > 0 ? km / liters : 0;
+                                return (
+                                  <TableRow key={`${r.vehicleId}-${r.recordDate}`}>
+                                    <TableCell>{new Date(r.recordDate).toLocaleDateString('pt-BR')}</TableCell>
+                                    <TableCell className="font-mono">{r.previousMileage}</TableCell>
+                                    <TableCell className="font-mono">{r.currentMileage}</TableCell>
+                                    <TableCell className="font-mono">{km.toFixed(1)}</TableCell>
+                                    <TableCell className="font-mono">{liters.toFixed(1)}L</TableCell>
+                                    <TableCell className="font-mono">R$ {price.toFixed(2)}</TableCell>
+                                    <TableCell className="font-mono">R$ {total.toFixed(2)}</TableCell>
+                                    <TableCell>
+                                      <Badge 
+                                        variant={eff >= 10 ? "default" : eff >= 7 ? "secondary" : "destructive"}
+                                      >
+                                        {eff.toFixed(1)} km/L
+                                      </Badge>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
               </CardContent>
             </Card>
           );
@@ -406,7 +551,10 @@ export default function FuelTracking() {
       {filteredVehicles.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <p className="text-gray-500">Nenhum veículo encontrado com os filtros aplicados.</p>
+            <p className="text-gray-500">
+              Nenhum veículo vinculado a empresas encontrado.
+              Ajuste o vínculo do veículo ou os filtros de busca.
+            </p>
           </CardContent>
         </Card>
       )}
@@ -569,6 +717,30 @@ export default function FuelTracking() {
                         const liters = parseFloat(form.watch('litersRefueled') || '0');
                         const price = parseFloat(form.watch('pricePerLiter') || '0');
                         return (liters * price).toFixed(2);
+                      })()}
+                    </p>
+                  </div>
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
+                    <FormLabel className="text-sm">Eficiência estimada</FormLabel>
+                    <p className="text-lg font-bold">
+                      {(() => {
+                        const km = parseFloat(form.watch('distanceTraveled') || '0');
+                        const liters = parseFloat(form.watch('litersRefueled') || '0');
+                        const eff = liters > 0 ? km / liters : 0;
+                        return `${eff.toFixed(2)} km/L`;
+                      })()}
+                    </p>
+                  </div>
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
+                    <FormLabel className="text-sm">Custo por km</FormLabel>
+                    <p className="text-lg font-bold">
+                      {(() => {
+                        const km = parseFloat(form.watch('distanceTraveled') || '0');
+                        const liters = parseFloat(form.watch('litersRefueled') || '0');
+                        const price = parseFloat(form.watch('pricePerLiter') || '0');
+                        const total = liters * price;
+                        const cpkm = km > 0 ? total / km : 0;
+                        return `R$ ${cpkm.toFixed(2)}/km`;
                       })()}
                     </p>
                   </div>

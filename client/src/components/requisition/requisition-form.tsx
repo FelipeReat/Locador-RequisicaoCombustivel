@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandDialog } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
@@ -43,6 +43,8 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
 
   const [isTanqueCheio, setIsTanqueCheio] = useState(initialData?.tanqueCheio === "true");
   const [openVehicleCombobox, setOpenVehicleCombobox] = useState(false);
+  const [openVehicleDialog, setOpenVehicleDialog] = useState(false);
+  
 
   // Get current user from auth context or use default
   const { data: currentUser } = useQuery({
@@ -427,41 +429,40 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
         {/* Veículo com busca */}
         <div className="space-y-2">
           <Label htmlFor="vehicleId">Veículo *</Label>
-          <Popover open={openVehicleCombobox} onOpenChange={setOpenVehicleCombobox}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={openVehicleCombobox}
-                className="w-full justify-between"
-              >
-                {formData.vehicleId
-                  ? filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.plate + 
-                    " - " + 
-                    filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.brand + 
-                    " " + 
-                    filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.model
-                  : "Buscar veículo..."}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
-              <Command>
-                <CommandInput placeholder="Digite placa, modelo ou marca..." />
-                <CommandEmpty>
-                  {formData.client 
-                    ? "Nenhum veículo encontrado para esta empresa."
-                    : "Selecione primeiro um cliente para ver os veículos disponíveis."
-                  }
-                </CommandEmpty>
-                <CommandGroup>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={openVehicleDialog}
+            className="w-full justify-between"
+            onClick={() => setOpenVehicleDialog(true)}
+          >
+            {formData.vehicleId
+              ? filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.plate + 
+                " - " + 
+                filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.brand + 
+                " " + 
+                filteredVehicles.find((vehicle) => vehicle.id === formData.vehicleId)?.model
+              : "Buscar veículo..."}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+          <CommandDialog open={openVehicleDialog} onOpenChange={setOpenVehicleDialog}>
+            <Command>
+              <CommandInput placeholder="Digite placa, modelo ou marca..." />
+              <CommandEmpty>
+                {formData.client 
+                  ? "Nenhum veículo encontrado para esta empresa."
+                  : "Selecione primeiro um cliente para ver os veículos disponíveis."
+                }
+              </CommandEmpty>
+              <CommandList>
+                <CommandGroup heading="Veículos">
                   {filteredVehicles.map((vehicle) => (
                     <CommandItem
                       key={vehicle.id}
                       value={`${vehicle.plate} ${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
                       onSelect={() => {
                         handleInputChange("vehicleId", vehicle.id);
-                        setOpenVehicleCombobox(false);
+                        setOpenVehicleDialog(false);
                       }}
                     >
                       <Check
@@ -479,9 +480,9 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
                     </CommandItem>
                   ))}
                 </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
+              </CommandList>
+            </Command>
+          </CommandDialog>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Digite para buscar por placa, modelo ou marca
           </p>
