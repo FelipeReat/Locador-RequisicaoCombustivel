@@ -23,6 +23,7 @@ import {
   Label
 } from "recharts";
 import { LabelList } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 import { 
   Download, 
   BarChart3, 
@@ -450,6 +451,13 @@ export default function Reports() {
             </Button>
           </CardHeader>
           <CardContent role="img" aria-label="Gráfico de colunas comparando litros e valores em reais por veículo">
+            <ChartContainer
+              config={{
+                liters: { label: "Litros", color: "#3B82F6" },
+                cost: { label: "Valor (R$)", color: "#10B981" }
+              }}
+              className="dark:[&_.recharts-cartesian-axis-tick_text]:fill-white dark:[&_text]:fill-white"
+            >
             <ResponsiveContainer width="100%" height={520}>
               <BarChart
                 data={visibleVehicleBarData}
@@ -535,6 +543,7 @@ export default function Reports() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            </ChartContainer>
             <div className="mt-2">
               <div className="text-center text-sm text-muted-foreground mb-1">Veículos exibidos</div>
               <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">

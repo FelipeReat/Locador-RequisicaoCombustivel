@@ -9,10 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from '../components/ui/alert-dialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
-import { Plus, Search, Filter, Download, Clock, AlertTriangle, BarChart3, Calendar, Car, Fuel, Calculator } from 'lucide-react';
+import { Plus, Search, Filter, Download, Clock, AlertTriangle, BarChart3, Calendar, Car, Fuel, Calculator, Trash } from 'lucide-react';
 import { insertFuelRecordSchema, type InsertFuelRecord, type FuelRecord, type Vehicle, type User, type Company } from '@shared/schema';
 import { useToast } from '../hooks/use-toast';
 
@@ -51,6 +52,7 @@ export default function FuelTracking() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [expandedVehicles, setExpandedVehicles] = useState<Record<number, boolean>>({});
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [confirmDeleteRecordId, setConfirmDeleteRecordId] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -117,6 +119,23 @@ export default function FuelTracking() {
         description: error.message || "Erro ao criar registro de abastecimento",
         variant: "destructive",
       });
+    },
+  });
+
+  const deleteFuelRecordMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/fuel-records/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete fuel record');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fuel-records'] });
+      refetchMonthlyReport();
+      setConfirmDeleteRecordId(null);
+      toast({ title: 'Registro excluído', description: 'O registro de abastecimento foi removido.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro', description: error.message || 'Erro ao excluir registro de abastecimento', variant: 'destructive' });
     },
   });
 
@@ -507,6 +526,7 @@ export default function FuelTracking() {
                                 <TableHead>Preço/L</TableHead>
                                 <TableHead>Total</TableHead>
                                 <TableHead>km/L</TableHead>
+                                <TableHead>Ações</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -531,6 +551,16 @@ export default function FuelTracking() {
                                       >
                                         {eff.toFixed(1)} km/L
                                       </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => setConfirmDeleteRecordId((r as any).id)}
+                                        aria-label="Excluir registro"
+                                      >
+                                        <Trash className="h-4 w-4" />
+                                      </Button>
                                     </TableCell>
                                   </TableRow>
                                 );
@@ -665,6 +695,7 @@ export default function FuelTracking() {
                             <SelectItem value="etanol">Etanol</SelectItem>
                             <SelectItem value="diesel">Diesel</SelectItem>
                             <SelectItem value="diesel_s10">Diesel S10</SelectItem>
+                            <SelectItem value="flex">Flex</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -929,6 +960,23 @@ export default function FuelTracking() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDeleteRecordId !== null} onOpenChange={(open) => !open && setConfirmDeleteRecordId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Confirme para remover o registro de abastecimento selecionado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmDeleteRecordId !== null && deleteFuelRecordMutation.mutate(confirmDeleteRecordId)}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

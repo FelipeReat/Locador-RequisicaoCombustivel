@@ -1,4 +1,4 @@
-import { User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { User, Settings, LogOut, ChevronDown, Sun, Moon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { NotificationsPopover } from "@/components/notifications-popover";
@@ -15,6 +15,7 @@ import {
 import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
+import { useTheme } from "@/contexts/theme-context";
 import type { User as UserType } from "@shared/schema";
 
 interface HeaderProps {
@@ -27,6 +28,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
   const { toast } = useToast();
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
+  const { actualTheme, setTheme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -56,6 +58,18 @@ export default function Header({ title, subtitle }: HeaderProps) {
           </div>
           <div className="flex items-center space-x-1 lg:space-x-4 ml-2 lg:ml-4">
             <SyncIndicator />
+            <Button
+              variant="ghost"
+              className="p-2"
+              aria-label={actualTheme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+              onClick={() => setTheme(actualTheme === 'dark' ? 'light' : 'dark')}
+            >
+              {actualTheme === 'dark' ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
             <NotificationsPopover />
 
             <DropdownMenu>

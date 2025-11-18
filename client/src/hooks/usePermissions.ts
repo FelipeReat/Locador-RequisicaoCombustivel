@@ -41,7 +41,7 @@ export const PERMISSIONS: Permission[] = [
     path: '/fuel-tracking',
     label: 'fuel-tracking',
     icon: 'Calculator',
-    allowedRoles: ['admin'], // Apenas admins podem usar o controle de combustível
+    allowedRoles: ['manager', 'admin'], // Gerentes e admins podem usar o controle de combustível
   },
   {
     path: '/user-management',
