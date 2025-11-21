@@ -228,16 +228,16 @@ export function EditApprovedRequisitionModal({
               value={fiscalCoupon}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, '');
-                if (value.length <= 6) {
+                if (value.length <= 12) {
                   setFiscalCoupon(value);
                 }
               }}
-              placeholder="Ex: 123456"
+              placeholder="Ex: 123456789012"
               className="w-full"
-              maxLength={6}
+              maxLength={12}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Número do cupom fiscal obrigatório (máximo 6 dígitos)
+              Número do cupom fiscal obrigatório (máximo 12 dígitos)
             </p>
           </div>
 
