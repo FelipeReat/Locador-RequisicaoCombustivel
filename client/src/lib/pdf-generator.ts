@@ -675,12 +675,16 @@ export class PDFGenerator {
       // Garantir que totalCost seja um número válido
       const totalCost = req.totalCost ? Number(req.totalCost) : 0;
       const isValidCost = !isNaN(totalCost) && isFinite(totalCost);
+      const kmAtual = req.kmAtual ? Number(req.kmAtual) : 0;
+      const kmAnterior = req.kmAnterior ? Number(req.kmAnterior) : 0;
+      const kmRodado = req.kmRodado ? Number(req.kmRodado) : (isFinite(kmAtual) && isFinite(kmAnterior) ? Math.max(kmAtual - kmAnterior, 0) : 0);
       
       return [
         new Date(req.createdAt).toLocaleDateString('pt-BR'),
         getVehiclePlate(req.vehicleId),
         getUserName(req.requesterId),
         this.getFuelTypeLabel(req.fuelType),
+        Number.isFinite(kmRodado) ? `${kmRodado.toFixed(0)} km` : 'N/A',
         req.quantity ? `${req.quantity}L` : 'Tanque cheio',
         isValidPrice ? `R$ ${pricePerLiter.toFixed(2)}` : 'N/A',
         isValidCost ? `R$ ${totalCost.toFixed(2)}` : 'N/A',
@@ -691,7 +695,7 @@ export class PDFGenerator {
     try {
       console.log('Criando tabela detalhada com', tableData.length, 'linhas');
       autoTable(this.doc, {
-        head: [['Data', 'Veículo', 'Solicitante', 'Combustível', 'Quantidade', 'Preço/L', 'Total', 'Status']],
+        head: [['Data', 'Veículo', 'Solicitante', 'Combustível', 'KM Rodado', 'Quantidade', 'Preço/L', 'Total', 'Status']],
         body: tableData,
         startY: this.currentY,
         styles: { fontSize: 8 },
@@ -703,9 +707,10 @@ export class PDFGenerator {
           2: { cellWidth: 25 },
           3: { cellWidth: 20 },
           4: { cellWidth: 20 },
-          5: { cellWidth: 18 },
+          5: { cellWidth: 20 },
           6: { cellWidth: 18 },
-          7: { cellWidth: 18 }
+          7: { cellWidth: 18 },
+          8: { cellWidth: 18 }
         }
       });
       console.log('Tabela detalhada criada com sucesso');

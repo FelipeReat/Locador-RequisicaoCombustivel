@@ -590,6 +590,7 @@ export default function Reports() {
                       <th className="text-left p-2 text-gray-900 dark:text-gray-100">Veículo</th>
                       <th className="text-left p-2 text-gray-900 dark:text-gray-100">Cliente</th>
                       <th className="text-left p-2 text-gray-900 dark:text-gray-100">Combustível</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">KM Rodado</th>
                       <th className="text-left p-2 text-gray-900 dark:text-gray-100">Quantidade</th>
                       <th className="text-left p-2 text-gray-900 dark:text-gray-100">Preço/L</th>
                       <th className="text-left p-2 text-gray-900 dark:text-gray-100">Total</th>
@@ -603,7 +604,10 @@ export default function Reports() {
                       const pricePerLiter = parseFloat(req.pricePerLiter || "0");
                       const isValidPrice = !isNaN(pricePerLiter) && isFinite(pricePerLiter);
                       const total = quantity * (isValidPrice ? pricePerLiter : 0);
-                      
+                      const kmAtual = parseFloat((req as any).kmAtual || "0");
+                      const kmAnterior = parseFloat((req as any).kmAnterior || "0");
+                      const kmRodadoValue = (req as any).kmRodado ? parseFloat((req as any).kmRodado) : (isFinite(kmAtual) && isFinite(kmAnterior) ? Math.max(kmAtual - kmAnterior, 0) : 0);
+
                       return (
                         <tr key={req.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                           <td className="p-2 text-gray-900 dark:text-gray-100">
@@ -619,6 +623,7 @@ export default function Reports() {
                           </td>
                           <td className="p-2 text-gray-900 dark:text-gray-100">{req.client}</td>
                           <td className="p-2 capitalize text-gray-900 dark:text-gray-100">{req.fuelType}</td>
+                          <td className="p-2 text-gray-900 dark:text-gray-100">{Number.isFinite(kmRodadoValue) ? `${kmRodadoValue.toFixed(0)} km` : 'N/A'}</td>
                           <td className="p-2 text-gray-900 dark:text-gray-100">{quantity.toFixed(1)}L</td>
                           <td className="p-2 text-gray-900 dark:text-gray-100">R$ {isValidPrice ? pricePerLiter.toFixed(2) : '0.00'}</td>
                           <td className="p-2 text-gray-900 dark:text-gray-100">R$ {total.toFixed(2)}</td>
@@ -643,7 +648,7 @@ export default function Reports() {
                   </tbody>
                   <tfoot className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
                     <tr>
-                      <td className="p-2 font-bold text-gray-900 dark:text-gray-100" colSpan={4}>TOTAL</td>
+                      <td className="p-2 font-bold text-gray-900 dark:text-gray-100" colSpan={5}>TOTAL</td>
                       <td className="p-2 font-bold text-gray-900 dark:text-gray-100">
                         {filteredRequisitions.reduce((sum, req) => {
                           const quantity = parseFloat(req.quantity || "0");
