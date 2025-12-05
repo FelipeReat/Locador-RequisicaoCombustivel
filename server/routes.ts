@@ -399,8 +399,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/fuel-requisitions/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteFuelRequisition(id);
 
+      const requisition = await storage.getFuelRequisition(id);
+      if (!requisition) {
+        return res.status(404).json({ message: "Requisição não encontrada" });
+      }
+
+      // Apenas reverte o KM se a requisição não foi realizada
+      if (requisition.status !== 'fulfilled') {
+        try {
+          const vehicle = await storage.getVehicle(requisition.vehicleId);
+          if (vehicle) {
+            const currentMileage = parseFloat(vehicle.mileage || '0');
+            const kmAtual = parseFloat(requisition.kmAtual || '0');
+            const kmAnterior = parseFloat(requisition.kmAnterior || '0');
+
+            // Reverte somente quando o hodômetro do veículo coincide com o kmAtual informado na requisição
+            if (Number.isFinite(currentMileage) && Number.isFinite(kmAtual) && currentMileage === kmAtual) {
+              await storage.updateVehicleMileage(requisition.vehicleId, kmAnterior.toString());
+            }
+          }
+        } catch (_err) {
+          // Ignora erro de reversão de KM para não bloquear exclusão
+        }
+      }
+
+      const deleted = await storage.deleteFuelRequisition(id);
       if (!deleted) {
         return res.status(404).json({ message: "Requisição não encontrada" });
       }
