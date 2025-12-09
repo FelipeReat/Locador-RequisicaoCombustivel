@@ -32,6 +32,12 @@ export const PERMISSIONS: Permission[] = [
     allowedRoles: ['employee', 'manager', 'admin'], // Todos podem criar requisições
   },
   {
+    path: '/vehicle-checklist',
+    label: 'vehicle-checklist',
+    icon: 'ClipboardCheck',
+    allowedRoles: ['employee', 'manager', 'admin'],
+  },
+  {
     path: '/reports',
     label: 'reports',
     icon: 'BarChart3',

@@ -315,3 +315,21 @@ export const dataBackups = pgTable("data_backups", {
 });
 
 export type DataBackup = typeof dataBackups.$inferSelect;
+
+// Checklists de veículos (saída/retorno)
+export const vehicleChecklists = pgTable("vehicle_checklists", {
+  id: serial("id").primaryKey(),
+  vehicleId: integer("vehicle_id").notNull(),
+  userId: integer("user_id").notNull(),
+  kmInitial: text("km_initial").notNull(),
+  kmFinal: text("km_final"),
+  fuelLevelStart: text("fuel_level_start").notNull(),
+  fuelLevelEnd: text("fuel_level_end"),
+  status: text("status").notNull().default("open"),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export type VehicleChecklist = typeof vehicleChecklists.$inferSelect;

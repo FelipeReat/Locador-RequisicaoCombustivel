@@ -1063,6 +1063,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ================== Vehicle Checklist Routes ==================
+  app.get("/api/checklists/open", async (req, res) => {
+    try {
+      const list = await storage.getOpenChecklists();
+      res.json(list);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar checklists em aberto" });
+    }
+  });
+
+  app.get("/api/checklists/closed", async (req, res) => {
+    try {
+      const list = await storage.getClosedChecklists();
+      res.json(list);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar checklists fechados" });
+    }
+  });
+
+  app.post("/api/checklists/exit", async (req, res) => {
+    try {
+      const { vehicleId, userId, kmInitial, fuelLevelStart, startDate } = req.body;
+      const created = await storage.createExitChecklist({ vehicleId: parseInt(vehicleId), userId: parseInt(userId), kmInitial: parseFloat(kmInitial), fuelLevelStart, startDate });
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json(created);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao criar checklist de saída" });
+      }
+    }
+  });
+
+  app.post("/api/checklists/return/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { kmFinal, fuelLevelEnd, endDate } = req.body;
+      const updated = await storage.closeReturnChecklist(id, { kmFinal: parseFloat(kmFinal), fuelLevelEnd, endDate });
+      if (!updated) {
+        return res.status(404).json({ message: "Checklist não encontrado" });
+      }
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao fechar checklist de retorno" });
+      }
+    }
+  });
+
+  app.get("/api/checklists/stats/analytics", async (req, res) => {
+    try {
+      const analytics = await storage.getChecklistAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao gerar analytics do checklist" });
+    }
+  });
+
   // ============== ROTAS DE AUDITORIA E BACKUP - GARANTEM PERSISTÊNCIA PERMANENTE ==============
   
   // Buscar logs de auditoria geral

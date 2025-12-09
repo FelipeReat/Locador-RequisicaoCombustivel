@@ -488,6 +488,16 @@ const translations: Record<Language, Record<string, string>> = {
     'users': 'Usuários',
     'departments': 'Departamentos',
     'fleet': 'Frota',
+    'vehicle-checklist': 'Checklist de Veículos',
+    'new-exit-checklist': 'Nova Saída',
+    'register-return-checklist': 'Registrar Retorno',
+    'open-exits': 'Saídas em Aberto',
+    'fuel-level': 'Nível de Combustível',
+    'initial-mileage': 'Quilometragem Inicial',
+    'final-mileage': 'Quilometragem Final',
+    'vehicle': 'Veículo',
+    'confirm-exit': 'Confirmar Saída',
+    'confirm-return': 'Confirmar Retorno',
 
     // Dicas de segurança
     'security-tip-1': 'Use uma senha com pelo menos 6 caracteres',
@@ -503,6 +513,16 @@ const translations: Record<Language, Record<string, string>> = {
     'new-requisition': 'New Requisition',
     'reports': 'Reports',
     'settings': 'Settings',
+    'vehicle-checklist': 'Vehicle Checklist',
+    'new-exit-checklist': 'New Exit',
+    'register-return-checklist': 'Register Return',
+    'open-exits': 'Open Exits',
+    'fuel-level': 'Fuel Level',
+    'initial-mileage': 'Initial Mileage',
+    'final-mileage': 'Final Mileage',
+    'vehicle': 'Vehicle',
+    'confirm-exit': 'Confirm Exit',
+    'confirm-return': 'Confirm Return',
 
     // Actions
     'save': 'Save',

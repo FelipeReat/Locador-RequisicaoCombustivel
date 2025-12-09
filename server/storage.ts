@@ -1,5 +1,20 @@
 import { users, fuelRequisitions, vehicles, suppliers, companies, fuelRecords, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany, type LoginUser, type FuelRecord, type InsertFuelRecord } from "@shared/schema";
 
+// Checklist de veículos - modelo in-memory
+export type FuelLevel = 'empty' | 'quarter' | 'half' | 'three_quarters' | 'full';
+export interface VehicleChecklist {
+  id: number;
+  vehicleId: number;
+  userId: number;
+  kmInitial: number;
+  kmFinal?: number;
+  fuelLevelStart: FuelLevel;
+  fuelLevelEnd?: FuelLevel;
+  status: 'open' | 'closed';
+  startDate: string;
+  endDate?: string;
+}
+
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -75,6 +90,13 @@ export interface IStorage {
     averageKmPerLiter: number;
     totalCost: number;
   }[]>;
+
+  // Vehicle Checklists
+  getOpenChecklists(): Promise<VehicleChecklist[]>;
+  getClosedChecklists(): Promise<VehicleChecklist[]>;
+  createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string }): Promise<VehicleChecklist>;
+  closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string }): Promise<VehicleChecklist | undefined>;
+  getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }>;
 }
 
 export class MemStorage implements IStorage {
@@ -84,12 +106,14 @@ export class MemStorage implements IStorage {
   private companies: Map<number, Company>;
   private vehicles: Map<number, Vehicle>;
   private fuelRecords: Map<number, FuelRecord>;
+  private vehicleChecklists: Map<number, VehicleChecklist>;
   private currentUserId: number;
   private currentRequisitionId: number;
   private currentSupplierId: number;
   private currentCompanyId: number;
   private currentVehicleId: number;
   private currentFuelRecordId: number;
+  private currentChecklistId: number;
   private loggedInUserId: number | null = null;
   
   // Cache para melhorar performance
@@ -104,12 +128,14 @@ export class MemStorage implements IStorage {
     this.companies = new Map();
     this.vehicles = new Map();
     this.fuelRecords = new Map();
+    this.vehicleChecklists = new Map();
     this.currentUserId = 1;
     this.currentRequisitionId = 1;
     this.currentSupplierId = 1;
     this.currentCompanyId = 1;
     this.currentVehicleId = 1;
     this.currentFuelRecordId = 1;
+    this.currentChecklistId = 1;
 
     // Add sample data for demonstration
     this.addSampleData();
@@ -1173,6 +1199,75 @@ export class MemStorage implements IStorage {
         kmPerLiter: parseFloat((data.totalKmRodado / data.totalLiters).toFixed(2))
       }))
       .sort((a, b) => b.kmPerLiter - a.kmPerLiter);
+  }
+
+  // ================== Vehicle Checklists ==================
+  async getOpenChecklists(): Promise<VehicleChecklist[]> {
+    return Array.from(this.vehicleChecklists.values()).filter(c => c.status === 'open');
+  }
+
+  async getClosedChecklists(): Promise<VehicleChecklist[]> {
+    return Array.from(this.vehicleChecklists.values()).filter(c => c.status === 'closed');
+  }
+
+  async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string }): Promise<VehicleChecklist> {
+    const vehicle = this.vehicles.get(payload.vehicleId);
+    if (!vehicle) throw new Error('Veículo não encontrado');
+    if (vehicle.status !== 'active') throw new Error('Veículo inativo');
+    const existingOpen = Array.from(this.vehicleChecklists.values()).some(c => c.vehicleId === payload.vehicleId && c.status === 'open');
+    if (existingOpen) throw new Error('Já existe uma saída aberta para este veículo');
+    if (payload.kmInitial < 0) throw new Error('Quilometragem inicial inválida');
+
+    const now = new Date().toISOString();
+    const checklist: VehicleChecklist = {
+      id: this.currentChecklistId++,
+      vehicleId: payload.vehicleId,
+      userId: payload.userId,
+      kmInitial: payload.kmInitial,
+      fuelLevelStart: payload.fuelLevelStart,
+      status: 'open',
+      startDate: payload.startDate || now,
+    };
+
+    this.vehicleChecklists.set(checklist.id, checklist);
+    this.statsCache = null;
+    return checklist;
+  }
+
+  async closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string }): Promise<VehicleChecklist | undefined> {
+    const checklist = this.vehicleChecklists.get(id);
+    if (!checklist) return undefined;
+    if (checklist.status !== 'open') throw new Error('Checklist já fechado');
+    if (payload.kmFinal < checklist.kmInitial) throw new Error('Km final deve ser maior ou igual ao km inicial');
+
+    checklist.kmFinal = payload.kmFinal;
+    checklist.fuelLevelEnd = payload.fuelLevelEnd;
+    checklist.endDate = payload.endDate || new Date().toISOString();
+    checklist.status = 'closed';
+
+    this.vehicleChecklists.set(id, checklist);
+    this.statsCache = null;
+    return checklist;
+  }
+
+  async getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }> {
+    const open = await this.getOpenChecklists();
+    const closed = await this.getClosedChecklists();
+    const total = open.length + closed.length;
+    const completenessRate = total === 0 ? 0 : parseFloat(((closed.length / total) * 100).toFixed(1));
+    const openCount = open.length;
+    const closedCount = closed.length;
+    const avgKmPerTrip = closed.length === 0 ? 0 : parseFloat((closed.reduce((sum, c) => sum + ((c.kmFinal || 0) - c.kmInitial), 0) / closed.length).toFixed(2));
+    const activeVehiclesWithOpen = Array.from(new Set(open.map(c => c.vehicleId))).length;
+
+    const trendMap = new Map<string, number>();
+    [...open, ...closed].forEach(c => {
+      const dateKey = (c.endDate || c.startDate).slice(0, 10);
+      trendMap.set(dateKey, (trendMap.get(dateKey) || 0) + 1);
+    });
+    const dailyTrend = Array.from(trendMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
+
+    return { completenessRate, openCount, closedCount, avgKmPerTrip, activeVehiclesWithOpen, dailyTrend };
   }
 
   // Fuel Records (New Vehicle Check-in System) Implementation

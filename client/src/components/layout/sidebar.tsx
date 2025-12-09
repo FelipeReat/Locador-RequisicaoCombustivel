@@ -8,6 +8,7 @@ import {
   Fuel, 
   LayoutDashboard, 
   ClipboardList, 
+  ClipboardCheck,
   Plus, 
   BarChart3, 
   Calculator,
@@ -26,6 +27,7 @@ import {
 const iconMap = {
   LayoutDashboard,
   ClipboardList,
+  ClipboardCheck,
   Plus,
   BarChart3,
   Calculator,

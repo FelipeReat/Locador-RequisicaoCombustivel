@@ -7,6 +7,7 @@ import {
   vehicles, 
   companies,
   fuelRecords,
+  vehicleChecklists,
   auditLog,
   dataBackups,
   type User, 
@@ -29,7 +30,7 @@ import {
   type AuditLog,
   type DataBackup
 } from '@shared/schema';
-import { IStorage } from './storage';
+import { IStorage, type VehicleChecklist, type FuelLevel } from './storage';
 
 export class DatabaseStorage implements IStorage {
   // Remove the shared loggedInUserId - this was causing session conflicts
@@ -687,6 +688,84 @@ export class DatabaseStorage implements IStorage {
       console.error('Error fetching fuel records:', error);
       return [];
     }
+  }
+
+  // ====== Vehicle Checklists (DB implementation) ======
+  async getOpenChecklists(): Promise<VehicleChecklist[]> {
+    const rows = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.status, 'open'));
+    return rows as unknown as VehicleChecklist[];
+  }
+
+  async getClosedChecklists(): Promise<VehicleChecklist[]> {
+    const rows = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.status, 'closed'));
+    return rows as unknown as VehicleChecklist[];
+  }
+
+  async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string }): Promise<VehicleChecklist> {
+    const vehicleRow = await db.select().from(vehicles).where(eq(vehicles.id, payload.vehicleId)).limit(1);
+    const vehicle = vehicleRow[0];
+    if (!vehicle) throw new Error('Veículo não encontrado');
+    if (vehicle.status !== 'active') throw new Error('Veículo inativo');
+
+    const existingOpen = await db.select().from(vehicleChecklists)
+      .where(and(eq(vehicleChecklists.vehicleId, payload.vehicleId), eq(vehicleChecklists.status, 'open')))
+      .limit(1);
+    if (existingOpen[0]) throw new Error('Já existe uma saída aberta para este veículo');
+
+    const now = new Date().toISOString();
+    const created = await db.insert(vehicleChecklists).values({
+      vehicleId: payload.vehicleId,
+      userId: payload.userId,
+      kmInitial: String(payload.kmInitial),
+      fuelLevelStart: payload.fuelLevelStart,
+      status: 'open',
+      startDate: payload.startDate || now,
+      createdAt: now,
+      updatedAt: now,
+    }).returning();
+
+    return created[0] as unknown as VehicleChecklist;
+  }
+
+  async closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string }): Promise<VehicleChecklist | undefined> {
+    const row = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.id, id)).limit(1);
+    const checklist = row[0];
+    if (!checklist) return undefined;
+    if (checklist.status !== 'open') throw new Error('Checklist já fechado');
+    if (payload.kmFinal < parseFloat(checklist.kmInitial)) throw new Error('Km final deve ser maior ou igual ao km inicial');
+
+    const now = new Date().toISOString();
+    const updated = await db.update(vehicleChecklists)
+      .set({
+        kmFinal: String(payload.kmFinal),
+        fuelLevelEnd: payload.fuelLevelEnd,
+        endDate: payload.endDate || now,
+        status: 'closed',
+        updatedAt: now,
+      })
+      .where(eq(vehicleChecklists.id, id))
+      .returning();
+
+    return updated[0] as unknown as VehicleChecklist;
+  }
+
+  async getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }> {
+    const all = await db.select().from(vehicleChecklists);
+    const openCount = all.filter(c => c.status === 'open').length;
+    const closed = all.filter(c => c.status === 'closed');
+    const closedCount = closed.length;
+    const total = all.length;
+    const completenessRate = total === 0 ? 0 : parseFloat(((closedCount / total) * 100).toFixed(1));
+    const avgKmPerTrip = closedCount === 0 ? 0 : parseFloat((closed.reduce((sum, c) => sum + ((parseFloat(c.kmFinal || '0')) - parseFloat(c.kmInitial)), 0) / closedCount).toFixed(2));
+    const activeOpenVehicles = new Set(all.filter(c => c.status === 'open').map(c => c.vehicleId)).size;
+    const trendMap = new Map<string, number>();
+    all.forEach(c => {
+      const dateKey = (c.endDate || c.startDate).slice(0, 10);
+      trendMap.set(dateKey, (trendMap.get(dateKey) || 0) + 1);
+    });
+    const dailyTrend = Array.from(trendMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
+
+    return { completenessRate, openCount, closedCount, avgKmPerTrip, activeVehiclesWithOpen: activeOpenVehicles, dailyTrend };
   }
 
   async getFuelRecord(id: number): Promise<FuelRecord | undefined> {
