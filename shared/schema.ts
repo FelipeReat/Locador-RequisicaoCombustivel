@@ -325,6 +325,8 @@ export const vehicleChecklists = pgTable("vehicle_checklists", {
   kmFinal: text("km_final"),
   fuelLevelStart: text("fuel_level_start").notNull(),
   fuelLevelEnd: text("fuel_level_end"),
+  inspectionStart: text("inspection_start"),
+  inspectionEnd: text("inspection_end"),
   status: text("status").notNull().default("open"),
   startDate: text("start_date").notNull(),
   endDate: text("end_date"),

@@ -10,6 +10,8 @@ export interface VehicleChecklist {
   kmFinal?: number;
   fuelLevelStart: FuelLevel;
   fuelLevelEnd?: FuelLevel;
+  inspectionStart?: string;
+  inspectionEnd?: string;
   status: 'open' | 'closed';
   startDate: string;
   endDate?: string;
@@ -94,8 +96,9 @@ export interface IStorage {
   // Vehicle Checklists
   getOpenChecklists(): Promise<VehicleChecklist[]>;
   getClosedChecklists(): Promise<VehicleChecklist[]>;
-  createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string }): Promise<VehicleChecklist>;
-  closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string }): Promise<VehicleChecklist | undefined>;
+  createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string }): Promise<VehicleChecklist>;
+  closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string; inspectionEnd?: string }): Promise<VehicleChecklist | undefined>;
+  deleteChecklist(id: number): Promise<boolean>;
   getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }>;
 }
 
@@ -1210,7 +1213,7 @@ export class MemStorage implements IStorage {
     return Array.from(this.vehicleChecklists.values()).filter(c => c.status === 'closed');
   }
 
-  async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string }): Promise<VehicleChecklist> {
+  async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string }): Promise<VehicleChecklist> {
     const vehicle = this.vehicles.get(payload.vehicleId);
     if (!vehicle) throw new Error('Veículo não encontrado');
     if (vehicle.status !== 'active') throw new Error('Veículo inativo');
@@ -1225,6 +1228,7 @@ export class MemStorage implements IStorage {
       userId: payload.userId,
       kmInitial: payload.kmInitial,
       fuelLevelStart: payload.fuelLevelStart,
+      inspectionStart: payload.inspectionStart || null as any,
       status: 'open',
       startDate: payload.startDate || now,
     };
@@ -1234,7 +1238,7 @@ export class MemStorage implements IStorage {
     return checklist;
   }
 
-  async closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string }): Promise<VehicleChecklist | undefined> {
+  async closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string; inspectionEnd?: string }): Promise<VehicleChecklist | undefined> {
     const checklist = this.vehicleChecklists.get(id);
     if (!checklist) return undefined;
     if (checklist.status !== 'open') throw new Error('Checklist já fechado');
@@ -1244,10 +1248,19 @@ export class MemStorage implements IStorage {
     checklist.fuelLevelEnd = payload.fuelLevelEnd;
     checklist.endDate = payload.endDate || new Date().toISOString();
     checklist.status = 'closed';
+    (checklist as any).inspectionEnd = payload.inspectionEnd || null;
 
     this.vehicleChecklists.set(id, checklist);
     this.statsCache = null;
     return checklist;
+  }
+
+  async deleteChecklist(id: number): Promise<boolean> {
+    const deleted = this.vehicleChecklists.delete(id);
+    if (deleted) {
+      this.statsCache = null;
+    }
+    return deleted;
   }
 
   async getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }> {

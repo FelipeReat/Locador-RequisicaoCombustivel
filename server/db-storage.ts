@@ -701,7 +701,7 @@ export class DatabaseStorage implements IStorage {
     return rows as unknown as VehicleChecklist[];
   }
 
-  async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string }): Promise<VehicleChecklist> {
+  async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string }): Promise<VehicleChecklist> {
     const vehicleRow = await db.select().from(vehicles).where(eq(vehicles.id, payload.vehicleId)).limit(1);
     const vehicle = vehicleRow[0];
     if (!vehicle) throw new Error('Veículo não encontrado');
@@ -718,6 +718,7 @@ export class DatabaseStorage implements IStorage {
       userId: payload.userId,
       kmInitial: String(payload.kmInitial),
       fuelLevelStart: payload.fuelLevelStart,
+      inspectionStart: payload.inspectionStart || null,
       status: 'open',
       startDate: payload.startDate || now,
       createdAt: now,
@@ -727,7 +728,7 @@ export class DatabaseStorage implements IStorage {
     return created[0] as unknown as VehicleChecklist;
   }
 
-  async closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string }): Promise<VehicleChecklist | undefined> {
+  async closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string; inspectionEnd?: string }): Promise<VehicleChecklist | undefined> {
     const row = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.id, id)).limit(1);
     const checklist = row[0];
     if (!checklist) return undefined;
@@ -741,12 +742,39 @@ export class DatabaseStorage implements IStorage {
         fuelLevelEnd: payload.fuelLevelEnd,
         endDate: payload.endDate || now,
         status: 'closed',
+        inspectionEnd: payload.inspectionEnd || null,
         updatedAt: now,
       })
       .where(eq(vehicleChecklists.id, id))
       .returning();
 
     return updated[0] as unknown as VehicleChecklist;
+  }
+
+  async deleteChecklist(id: number): Promise<boolean> {
+    // Capture old values for audit
+    const existing = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.id, id)).limit(1);
+    if (!existing[0]) return false;
+
+    const deleted = await db.delete(vehicleChecklists)
+      .where(eq(vehicleChecklists.id, id))
+      .returning();
+
+    // Audit log for deletion
+    try {
+      await db.insert(auditLog).values({
+        tableName: 'vehicle_checklists',
+        recordId: String(id),
+        action: 'DELETE',
+        oldValues: JSON.stringify(existing[0]),
+        newValues: null,
+        userId: undefined,
+        timestamp: new Date().toISOString(),
+        description: 'Checklist de veículo excluído',
+      });
+    } catch {}
+
+    return (deleted?.length || 0) > 0;
   }
 
   async getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }> {
