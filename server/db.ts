@@ -1,6 +1,8 @@
-import { drizzle } from 'drizzle-orm/neon-http';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http';
+import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { neon } from '@neondatabase/serverless';
-import { users, vehicles, fuelRequisitions, suppliers, companies } from '@shared/schema';
+import { Client } from 'pg';
+import { users, vehicles, fuelRequisitions, suppliers, companies, fuelRecords, vehicleChecklists } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');
@@ -16,16 +18,39 @@ if (databaseUrl.includes('DATABASE_URL=')) {
   }
 }
 
-// Create the connection
-const sql = neon(databaseUrl);
-export const db = drizzle(sql, {
-  schema: {
-    users,
-    vehicles,
-    fuelRequisitions,
-    suppliers,
-    companies,
-  },
-});
+const isNeon = /neon\.tech/.test(databaseUrl) || /neondb_owner/.test(databaseUrl);
+const needsSSL = isNeon || /sslmode=require/.test(databaseUrl) || /ssl=true/.test(databaseUrl);
+
+let db: any;
+if (isNeon) {
+  const sql = neon(databaseUrl);
+  db = drizzleNeon(sql, {
+    schema: {
+      users,
+      vehicles,
+      fuelRequisitions,
+      suppliers,
+      companies,
+      fuelRecords,
+      vehicleChecklists,
+    },
+  });
+} else {
+  const client = new Client({ connectionString: databaseUrl, ssl: needsSSL ? { rejectUnauthorized: false } : false });
+  await client.connect();
+  db = drizzlePg(client, {
+    schema: {
+      users,
+      vehicles,
+      fuelRequisitions,
+      suppliers,
+      companies,
+      fuelRecords,
+      vehicleChecklists,
+    },
+  });
+}
+
+export { db };
 
 export type Database = typeof db;

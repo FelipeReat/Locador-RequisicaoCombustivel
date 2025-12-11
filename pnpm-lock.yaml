@@ -176,6 +176,9 @@ importers:
       passport-local:
         specifier: ^1.0.0
         version: 1.0.0
+      pg:
+        specifier: ^8.13.0
+        version: 8.16.3
       react:
         specifier: ^18.3.1
         version: 18.3.1

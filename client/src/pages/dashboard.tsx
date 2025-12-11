@@ -48,7 +48,7 @@ export default function Dashboard() {
   const { forceRefresh } = useRealTimeUpdates();
   const { invalidateByOperation } = useSmartInvalidation();
 
-  const { data: stats, isLoading: statsLoading } = useQuery<any>({
+  const { data: stats = { totalRequests: 0, pendingRequests: 0, approvedRequests: 0, rejectedRequests: 0, fulfilledRequests: 0, totalLiters: 0 }, isLoading: statsLoading } = useQuery<any>({
     queryKey: ["/api/fuel-requisitions/stats/overview"],
   });
 
