@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { ClipboardCheck, Search, CalendarCheck } from "lucide-react";
+import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSmartInvalidation, useRealTimeUpdates } from "@/hooks/useRealTimeUpdates";
@@ -76,6 +76,58 @@ export default function VehicleChecklistPage() {
   const [activeTab, setActiveTab] = useState("saida");
   const [confirmDeleteChecklistId, setConfirmDeleteChecklistId] = useState<number | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [lockedVehicleId, setLockedVehicleId] = useState<number | null>(null);
+  const [exitObsDefaults, setExitObsDefaults] = useState({
+    scratches: false,
+    dents: false,
+    tireOk: true,
+    lightsOk: true,
+    documentsOk: true,
+    cleanInterior: true,
+    cleanExterior: true,
+    notes: "",
+  });
+  const [showObsEditor, setShowObsEditor] = useState(false);
+  const [obsConfig, setObsConfig] = useState<ObsItem[]>([
+    { key: 'scratches', label: 'Arranhões', defaultChecked: false, column: 1, order: 1 },
+    { key: 'dents', label: 'Batidas', defaultChecked: false, column: 2, order: 2 },
+    { key: 'tireOk', label: 'Pneus OK', defaultChecked: true, column: 1, order: 3 },
+    { key: 'lightsOk', label: 'Iluminação OK', defaultChecked: true, column: 2, order: 4 },
+    { key: 'documentsOk', label: 'Documentos OK', defaultChecked: true, column: 1, order: 5 },
+    { key: 'cleanInterior', label: 'Limpeza interna', defaultChecked: true, column: 2, order: 6 },
+    { key: 'cleanExterior', label: 'Limpeza externa', defaultChecked: true, column: 1, order: 7 },
+  ]);
+  const [extraNotes, setExtraNotes] = useState<string[]>([]);
+  const [newNoteText, setNewNoteText] = useState("");
+
+  const obsLabels: Record<ObsKey, string> = useMemo(() => {
+    const map: Record<ObsKey, string> = {
+      scratches: 'Arranhões', dents: 'Batidas', tireOk: 'Pneus OK', lightsOk: 'Iluminação OK', documentsOk: 'Documentos OK', cleanInterior: 'Limpeza interna', cleanExterior: 'Limpeza externa'
+    } as Record<ObsKey, string>;
+    obsConfig.forEach(i => { map[i.key] = i.label });
+    return map;
+  }, [obsConfig]);
+
+  function applyObsDefaultsToFormFor(vehicleId: string | null) {
+    const defaults: Record<ObsKey, boolean> = obsConfig.reduce((acc, i) => { acc[i.key] = i.defaultChecked; return acc; }, {
+      scratches: false, dents: false, tireOk: true, lightsOk: true, documentsOk: true, cleanInterior: true, cleanExterior: true
+    } as Record<ObsKey, boolean>);
+    const notesText = [exitObsDefaults.notes, ...extraNotes].filter(Boolean).join('\n');
+    exitForm.reset({
+      vehicleId: vehicleId ?? "",
+      kmInitial: "",
+      fuelLevelStart: "half",
+      startDate: nowManausLocalInput(),
+      scratches: defaults.scratches,
+      dents: defaults.dents,
+      tireOk: defaults.tireOk,
+      lightsOk: defaults.lightsOk,
+      documentsOk: defaults.documentsOk,
+      cleanInterior: defaults.cleanInterior,
+      cleanExterior: defaults.cleanExterior,
+      notes: notesText,
+    });
+  }
 
   const { data: vehicles = [] } = useQuery<Vehicle[]>({ queryKey: ["/api/vehicles"] });
   const { data: openChecklists = [] } = useQuery<VehicleChecklist[]>({ queryKey: ["/api/checklists/open"] });
@@ -261,10 +313,17 @@ export default function VehicleChecklistPage() {
 
       <div className="mobile-container space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="saida">Saída</TabsTrigger>
-            <TabsTrigger value="entrada">Entrada</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between">
+            <TabsList className="w-full sm:w-auto">
+              <TabsTrigger value="saida">Saída</TabsTrigger>
+              <TabsTrigger value="entrada">Entrada</TabsTrigger>
+            </TabsList>
+            {(user?.role === 'admin' || user?.role === 'manager') && (
+              <Button variant="outline" size="sm" onClick={() => setShowObsEditor(v => !v)}>
+                Editar observações
+              </Button>
+            )}
+          </div>
 
           <TabsContent value="saida" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -277,10 +336,90 @@ export default function VehicleChecklistPage() {
                   <p className="text-sm text-muted-foreground">Checklist de saída: estado, combustível e condições</p>
                 </div>
               </div>
-              <Button onClick={() => setIsExitDialogOpen(true)} className="w-full sm:w-auto">
+              <Button onClick={() => { 
+                setLockedVehicleId(null); 
+                setIsExitDialogOpen(true);
+                applyObsDefaultsToFormFor(null);
+              }} className="w-full sm:w-auto">
                 {t('new-exit-checklist')}
               </Button>
             </div>
+
+            {(user?.role === 'admin' || user?.role === 'manager') && showObsEditor && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Editar observações</CardTitle>
+                  <CardDescription>Personalize rótulos, posições, ordem e padrões</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    {obsConfig.sort((a,b)=>a.order-b.order).map((item, idx) => (
+                      <div key={item.key} className="grid grid-cols-1 sm:grid-cols-5 gap-2 items-center">
+                        <div className="sm:col-span-2">
+                          <Label>Nome</Label>
+                          <Input value={item.label} onChange={(e)=> setObsConfig(cfg=> cfg.map(x=> x.key===item.key? { ...x, label: e.target.value }: x))} />
+                        </div>
+                        <div>
+                          <Label>Padrão</Label>
+                          <div className="flex items-center gap-2">
+                            <Checkbox checked={item.defaultChecked} onCheckedChange={(v)=> setObsConfig(cfg=> cfg.map(x=> x.key===item.key? { ...x, defaultChecked: !!v }: x))} />
+                            <span>Marcado</span>
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Coluna</Label>
+                          <Select value={String(item.column)} onValueChange={(val)=> setObsConfig(cfg=> cfg.map(x=> x.key===item.key? { ...x, column: parseInt(val) as 1|2 }: x))}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">Esquerda</SelectItem>
+                              <SelectItem value="2">Direita</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-2 justify-end">
+                          <Button type="button" variant="outline" size="icon" onClick={()=> setObsConfig(cfg=> {
+                            const arr = [...cfg];
+                            const pos = arr.findIndex(x=>x.key===item.key);
+                            if (pos>0) { const prevOrder = arr[pos-1].order; arr[pos-1].order = arr[pos].order; arr[pos].order = prevOrder; }
+                            return arr;
+                          })}><ArrowUp className="h-4 w-4" /></Button>
+                          <Button type="button" variant="outline" size="icon" onClick={()=> setObsConfig(cfg=> {
+                            const arr = [...cfg];
+                            const pos = arr.findIndex(x=>x.key===item.key);
+                            if (pos<arr.length-1) { const nextOrder = arr[pos+1].order; arr[pos+1].order = arr[pos].order; arr[pos].order = nextOrder; }
+                            return arr;
+                          })}><ArrowDown className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Observações adicionais</Label>
+                    <div className="space-y-2">
+                      {extraNotes.map((n, i)=> (
+                        <div key={i} className="flex items-center gap-2">
+                          <Input value={n} onChange={(e)=> setExtraNotes(arr=> arr.map((x,idx)=> idx===i ? e.target.value : x))} />
+                          <Button type="button" variant="outline" size="icon" onClick={()=> setExtraNotes(arr=> arr.filter((_,idx)=> idx!==i))}><Trash2 className="h-4 w-4" /></Button>
+                          <Button type="button" variant="outline" size="icon" onClick={()=> setExtraNotes(arr=> { if(i===0) return arr; const b=[...arr]; [b[i-1], b[i]] = [b[i], b[i-1]]; return b; })}><ArrowUp className="h-4 w-4" /></Button>
+                          <Button type="button" variant="outline" size="icon" onClick={()=> setExtraNotes(arr=> { if(i===arr.length-1) return arr; const b=[...arr]; [b[i+1], b[i]] = [b[i], b[i+1]]; return b; })}><ArrowDown className="h-4 w-4" /></Button>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-2">
+                        <Input placeholder="Nova observação" value={newNoteText} onChange={(e)=> setNewNoteText(e.target.value)} />
+                        <Button type="button" onClick={()=> { if(newNoteText.trim()) { setExtraNotes(arr=> [...arr, newNoteText.trim()]); setNewNoteText(''); } }}><Plus className="h-4 w-4 mr-2" />Adicionar linha</Button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Observação livre padrão</Label>
+                      <Input value={exitObsDefaults.notes} onChange={(e)=> setExitObsDefaults(s=> ({...s, notes: e.target.value}))} placeholder="Texto livre padrão" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>
@@ -316,6 +455,7 @@ export default function VehicleChecklistPage() {
                         <TableHead>Placa</TableHead>
                         <TableHead>Modelo</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -329,6 +469,21 @@ export default function VehicleChecklistPage() {
                             ) : (
                               <Badge variant="secondary">Disponível</Badge>
                             )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setIsExitDialogOpen(true);
+                                setLockedVehicleId(v.id);
+                                applyObsDefaultsToFormFor(String(v.id));
+                              }}
+                              disabled={openByVehicle.has(v.id)}
+                              aria-label="Iniciar checklist de saída"
+                            >
+                              {t('new-exit-checklist')}
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -748,48 +903,22 @@ export default function VehicleChecklistPage() {
                                               </FormItem>
                                             )} />
                                                 <div className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                  <FormField control={returnForm.control} name="scratches" render={({ field }) => (
-                                                    <FormItem className="flex items-center gap-2">
-                                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                                      <FormLabel>Arranhões</FormLabel>
-                                                    </FormItem>
-                                                  )} />
-                                                  <FormField control={returnForm.control} name="dents" render={({ field }) => (
-                                                    <FormItem className="flex items-center gap-2">
-                                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                                      <FormLabel>Batidas</FormLabel>
-                                                    </FormItem>
-                                                  )} />
-                                                  <FormField control={returnForm.control} name="tireOk" render={({ field }) => (
-                                                    <FormItem className="flex items-center gap-2">
-                                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                                      <FormLabel>Pneus OK</FormLabel>
-                                                    </FormItem>
-                                                  )} />
-                                                  <FormField control={returnForm.control} name="lightsOk" render={({ field }) => (
-                                                    <FormItem className="flex items-center gap-2">
-                                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                                      <FormLabel>Iluminação OK</FormLabel>
-                                                    </FormItem>
-                                                  )} />
-                                                  <FormField control={returnForm.control} name="documentsOk" render={({ field }) => (
-                                                    <FormItem className="flex items-center gap-2">
-                                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                                      <FormLabel>Documentos OK</FormLabel>
-                                                    </FormItem>
-                                                  )} />
-                                                  <FormField control={returnForm.control} name="cleanInterior" render={({ field }) => (
-                                                    <FormItem className="flex items-center gap-2">
-                                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                                      <FormLabel>Limpeza interna</FormLabel>
-                                                    </FormItem>
-                                                  )} />
-                                                  <FormField control={returnForm.control} name="cleanExterior" render={({ field }) => (
-                                                    <FormItem className="flex items-center gap-2">
-                                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                                      <FormLabel>Limpeza externa</FormLabel>
-                                                    </FormItem>
-                                                  )} />
+                                                  {obsConfig.filter(i=>i.column===1).sort((a,b)=>a.order-b.order).map(i=> (
+                                                    <FormField key={i.key} control={returnForm.control} name={i.key} render={({ field }) => (
+                                                      <FormItem className="flex items-center gap-2">
+                                                        <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
+                                                        <FormLabel>{obsLabels[i.key]}</FormLabel>
+                                                      </FormItem>
+                                                    )} />
+                                                  ))}
+                                                  {obsConfig.filter(i=>i.column===2).sort((a,b)=>a.order-b.order).map(i=> (
+                                                    <FormField key={i.key} control={returnForm.control} name={i.key} render={({ field }) => (
+                                                      <FormItem className="flex items-center gap-2">
+                                                        <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
+                                                        <FormLabel>{obsLabels[i.key]}</FormLabel>
+                                                      </FormItem>
+                                                    )} />
+                                                  ))}
                                                 </div>
                                                 <FormField control={returnForm.control} name="notes" render={({ field }) => (
                                                   <FormItem className="sm:col-span-2">
@@ -864,8 +993,8 @@ export default function VehicleChecklistPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('vehicle')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
+                    <Select value={field.value} onValueChange={(val) => { if (lockedVehicleId === null) field.onChange(val); }}>
+                      <SelectTrigger disabled={lockedVehicleId !== null}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -931,48 +1060,22 @@ export default function VehicleChecklistPage() {
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormField control={exitForm.control} name="scratches" render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                    <FormLabel>Arranhões</FormLabel>
-                  </FormItem>
-                )} />
-                <FormField control={exitForm.control} name="dents" render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                    <FormLabel>Batidas</FormLabel>
-                  </FormItem>
-                )} />
-                <FormField control={exitForm.control} name="tireOk" render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                    <FormLabel>Pneus OK</FormLabel>
-                  </FormItem>
-                )} />
-                <FormField control={exitForm.control} name="lightsOk" render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                    <FormLabel>Iluminação OK</FormLabel>
-                  </FormItem>
-                )} />
-                <FormField control={exitForm.control} name="documentsOk" render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                    <FormLabel>Documentos OK</FormLabel>
-                  </FormItem>
-                )} />
-                <FormField control={exitForm.control} name="cleanInterior" render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                    <FormLabel>Limpeza interna</FormLabel>
-                  </FormItem>
-                )} />
-                <FormField control={exitForm.control} name="cleanExterior" render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                    <FormLabel>Limpeza externa</FormLabel>
-                  </FormItem>
-                )} />
+                {obsConfig.filter(i=>i.column===1).sort((a,b)=>a.order-b.order).map(i=> (
+                  <FormField key={i.key} control={exitForm.control} name={i.key} render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
+                      <FormLabel>{obsLabels[i.key]}</FormLabel>
+                    </FormItem>
+                  )} />
+                ))}
+                {obsConfig.filter(i=>i.column===2).sort((a,b)=>a.order-b.order).map(i=> (
+                  <FormField key={i.key} control={exitForm.control} name={i.key} render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
+                      <FormLabel>{obsLabels[i.key]}</FormLabel>
+                    </FormItem>
+                  )} />
+                ))}
               </div>
 
               <FormField
@@ -1019,3 +1122,5 @@ export default function VehicleChecklistPage() {
     </div>
   );
 }
+type ObsKey = 'scratches' | 'dents' | 'tireOk' | 'lightsOk' | 'documentsOk' | 'cleanInterior' | 'cleanExterior';
+type ObsItem = { key: ObsKey; label: string; defaultChecked: boolean; column: 1 | 2; order: number };
