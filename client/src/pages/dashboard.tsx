@@ -845,10 +845,6 @@ export default function Dashboard() {
         requisition={selectedRequisition}
         isOpen={!!selectedRequisition}
         onClose={() => setSelectedRequisition(null)}
-        onEdit={(req) => {
-          setSelectedRequisition(null);
-          setLocation("/requisitions");
-        }}
         onEditRequisition={(req) => {
           setSelectedRequisition(null);
           setEditingRequisition(req);

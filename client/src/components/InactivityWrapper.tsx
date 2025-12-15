@@ -21,7 +21,7 @@ export default function InactivityWrapper({ children }: InactivityWrapperProps) 
       variant: 'destructive',
       duration: 5000,
     });
-    logout('inactivity');
+    logout();
   };
 
   const { pauseTimeout, resumeTimeout } = useInactivityTimeout({

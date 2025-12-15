@@ -1,7 +1,7 @@
 import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { neon } from '@neondatabase/serverless';
-import * as pg from 'pg';
+import pg from 'pg';
 import { users, vehicles, fuelRequisitions, suppliers, companies, fuelRecords, vehicleChecklists } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -37,7 +37,7 @@ if (isNeon) {
   });
 } else {
   const client = new pg.Client({ connectionString: databaseUrl, ssl: needsSSL ? { rejectUnauthorized: false } : false });
-  await client.connect();
+  void client.connect();
   db = drizzlePg(client, {
     schema: {
       users,

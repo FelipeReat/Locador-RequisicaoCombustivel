@@ -672,8 +672,9 @@ export class PDFGenerator {
       const pricePerLiter = req.pricePerLiter ? Number(req.pricePerLiter) : 0;
       const isValidPrice = !isNaN(pricePerLiter) && isFinite(pricePerLiter);
       
-      // Garantir que totalCost seja um número válido
-      const totalCost = req.totalCost ? Number(req.totalCost) : 0;
+      // Calcular total com base na quantidade e preço por litro
+      const quantity = req.quantity ? Number(req.quantity) : 0;
+      const totalCost = isValidPrice && !isNaN(quantity) && isFinite(quantity) ? pricePerLiter * quantity : 0;
       const isValidCost = !isNaN(totalCost) && isFinite(totalCost);
       const kmAtual = req.kmAtual ? Number(req.kmAtual) : 0;
       const kmAnterior = req.kmAnterior ? Number(req.kmAnterior) : 0;

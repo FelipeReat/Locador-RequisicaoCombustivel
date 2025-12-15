@@ -214,8 +214,9 @@ export default function RequisitionDetailsModal({
 
   const handleDeleteRequisition = async () => {
     if (window.confirm("Tem certeza que deseja excluir esta requisição? Esta ação não pode ser desfeita.")) {
+      if (!requisition) return;
       try {
-        await deleteRequisition.mutateAsync(requisition.id);
+        await deleteRequisition.mutateAsync();
       } catch (error) {
         console.error('Error deleting requisition:', error);
       }
@@ -224,6 +225,7 @@ export default function RequisitionDetailsModal({
 
   const handleUndoRequisition = async () => {
     if (window.confirm("Tem certeza que deseja desfazer esta requisição realizada? Ela voltará para o status 'Aprovada'.")) {
+      if (!requisition) return;
       try {
         await undoRequisition.mutateAsync(requisition.id);
       } catch (error) {

@@ -616,7 +616,7 @@ export class DatabaseStorage implements IStorage {
       totalLiters: sql<number>`sum(case when status IN ('approved', 'fulfilled') and quantity is not null then cast(quantity as decimal) else 0 end)`,
     }).from(fuelRequisitions).groupBy(fuelRequisitions.requesterId);
 
-    return result.map(row => ({
+    return result.map((row: { department: string; count: number; totalLiters: number }) => ({
       department: row.department,
       count: row.count,
       totalLiters: row.totalLiters || 0,
@@ -630,7 +630,7 @@ export class DatabaseStorage implements IStorage {
       totalLiters: sql<number>`sum(case when status IN ('approved', 'fulfilled') and quantity is not null then cast(quantity as decimal) else 0 end)`,
     }).from(fuelRequisitions).groupBy(fuelRequisitions.fuelType);
 
-    return result.map(row => ({
+    return result.map((row: { fuelType: string; count: number; totalLiters: number }) => ({
       fuelType: row.fuelType,
       count: row.count,
       totalLiters: row.totalLiters || 0,
@@ -649,13 +649,13 @@ export class DatabaseStorage implements IStorage {
     .groupBy(vehicles.plate, vehicles.model, fuelRequisitions.vehicleId)
     .having(sql`sum(cast(fuel_requisitions.quantity as decimal)) > 0`);
 
-    return result.map(row => ({
+    return result.map((row: { vehiclePlate: string; vehicleModel: string; totalKmRodado: number; totalLiters: number }) => ({
       vehiclePlate: row.vehiclePlate,
       vehicleModel: row.vehicleModel,
       totalKmRodado: row.totalKmRodado || 0,
       totalLiters: row.totalLiters || 0,
       kmPerLiter: row.totalLiters > 0 ? parseFloat((row.totalKmRodado / row.totalLiters).toFixed(2)) : 0
-    })).sort((a, b) => b.kmPerLiter - a.kmPerLiter);
+    })).sort((a: { kmPerLiter: number }, b: { kmPerLiter: number }) => b.kmPerLiter - a.kmPerLiter);
   }
 
   // Data cleanup methods - Optimized to avoid unnecessary SELECT before DELETE
@@ -778,16 +778,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }> {
-    const all = await db.select().from(vehicleChecklists);
-    const openCount = all.filter(c => c.status === 'open').length;
-    const closed = all.filter(c => c.status === 'closed');
+    const all = await db.select().from(vehicleChecklists) as unknown as VehicleChecklist[];
+    const openCount = all.filter((c: VehicleChecklist) => c.status === 'open').length;
+    const closed = all.filter((c: VehicleChecklist) => c.status === 'closed');
     const closedCount = closed.length;
     const total = all.length;
     const completenessRate = total === 0 ? 0 : parseFloat(((closedCount / total) * 100).toFixed(1));
-    const avgKmPerTrip = closedCount === 0 ? 0 : parseFloat((closed.reduce((sum, c) => sum + ((parseFloat(c.kmFinal || '0')) - parseFloat(c.kmInitial)), 0) / closedCount).toFixed(2));
-    const activeOpenVehicles = new Set(all.filter(c => c.status === 'open').map(c => c.vehicleId)).size;
+    const avgKmPerTrip = closedCount === 0
+      ? 0
+      : Math.round(
+          (closed.reduce((sum: number, c: VehicleChecklist) => {
+            const kmFinal = Number((c as any).kmFinal ?? 0);
+            const kmInitial = Number((c as any).kmInitial ?? 0);
+            return sum + (kmFinal - kmInitial);
+          }, 0) / closedCount) * 100
+        ) / 100;
+    const activeOpenVehicles = new Set(all.filter((c: VehicleChecklist) => c.status === 'open').map((c: VehicleChecklist) => c.vehicleId)).size;
     const trendMap = new Map<string, number>();
-    all.forEach(c => {
+    all.forEach((c: VehicleChecklist) => {
       const dateKey = (c.endDate || c.startDate).slice(0, 10);
       trendMap.set(dateKey, (trendMap.get(dateKey) || 0) + 1);
     });
@@ -889,8 +897,8 @@ export class DatabaseStorage implements IStorage {
           )
         );
 
-      const vehicleData = await db.select().from(vehicles);
-      const vehicleMap = new Map(vehicleData.map(v => [v.id, v]));
+      const vehicleData = await db.select().from(vehicles) as unknown as Vehicle[];
+      const vehicleMap = new Map<number, Vehicle>(vehicleData.map((v: Vehicle) => [v.id, v]));
 
       const reportMap = new Map<number, {
         vehiclePlate: string;
@@ -900,7 +908,7 @@ export class DatabaseStorage implements IStorage {
         totalCost: number;
       }>();
 
-      records.forEach(record => {
+      records.forEach((record: FuelRecord) => {
         const vehicle = vehicleMap.get(record.vehicleId);
         if (!vehicle) return;
 
@@ -919,7 +927,7 @@ export class DatabaseStorage implements IStorage {
         reportMap.set(record.vehicleId, current);
       });
 
-      return Array.from(reportMap.entries()).map(([vehicleId, data]) => ({
+      return Array.from(reportMap.entries()).map(([vehicleId, data]: [number, { vehiclePlate: string; vehicleModel: string; totalKm: number; totalLiters: number; totalCost: number }]) => ({
         vehicleId,
         ...data,
         averageKmPerLiter: data.totalLiters > 0 ? data.totalKm / data.totalLiters : 0,

@@ -100,7 +100,9 @@ export default function VehicleFilter({
       onSelectionChange(newSelection);
     } else {
       // Selecionar todos os filtrados
-      const newSelection = [...new Set([...selectedVehicleIds, ...filteredIds])];
+      const newSelection = selectedVehicleIds
+        .concat(filteredIds)
+        .filter((id, idx, arr) => arr.indexOf(id) === idx);
       onSelectionChange(newSelection);
     }
   };
@@ -216,7 +218,7 @@ export default function VehicleFilter({
                         </div>
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {vehicle.fuelType} • {vehicle.currentMileage?.toLocaleString()} km
+                        {vehicle.fuelType} • {vehicle.mileage ? Number(vehicle.mileage).toLocaleString() : '0'} km
                       </div>
                     </label>
                   </div>

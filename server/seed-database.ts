@@ -9,10 +9,14 @@ async function seedDatabase() {
     // Verificar se as tabelas estão funcionando corretamente
     console.log('🔍 Verificando conexão com o banco de dados...');
 
-    const userCount = await db.select().from(users).then(result => result.length);
-    const vehicleCount = await db.select().from(vehicles).then(result => result.length);
-    const supplierCount = await db.select().from(suppliers).then(result => result.length);
-    const companyCount = await db.select().from(companies).then(result => result.length);
+    const userRows = await db.select().from(users);
+    const vehicleRows = await db.select().from(vehicles);
+    const supplierRows = await db.select().from(suppliers);
+    const companyRows = await db.select().from(companies);
+    const userCount = userRows.length;
+    const vehicleCount = vehicleRows.length;
+    const supplierCount = supplierRows.length;
+    const companyCount = companyRows.length;
 
     console.log('\n📊 Dados atuais no banco:');
     console.log(`- ${userCount} usuários`);
