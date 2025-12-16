@@ -80,7 +80,7 @@ export const insertUserManagementSchema = createInsertSchema(users, {
   departmentId: z.number().optional(),
   phone: z.string().optional(),
   position: z.string().optional(),
-  role: z.enum(["admin", "manager", "employee"]).default("employee"),
+  role: z.enum(["admin", "manager", "employee", "driver"]).default("employee"),
 }).omit({
   id: true,
   active: true,

@@ -134,6 +134,7 @@ export default function VehicleChecklistPage() {
   const { data: closedChecklists = [] } = useQuery<VehicleChecklist[]>({ queryKey: ["/api/checklists/closed"] });
   const { data: analytics } = useQuery<Analytics>({ queryKey: ["/api/checklists/stats/analytics"] });
   const { data: companies = [] } = useQuery<Company[]>({ queryKey: ["/api/companies"] });
+  const { data: users = [] } = useQuery<any[]>({ queryKey: ["/api/users"] });
 
   const activeVehicles = useMemo(() => vehicles.filter(v => v.status === "active" && v.companyId !== null), [vehicles]);
   const filteredVehicles = useMemo(() => {
@@ -684,6 +685,7 @@ export default function VehicleChecklistPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Veículo</TableHead>
+                        <TableHead>Motorista</TableHead>
                         <TableHead>KM Inicial</TableHead>
                         <TableHead>Nível Comb. (início)</TableHead>
                         <TableHead>Data Saída</TableHead>
@@ -698,6 +700,7 @@ export default function VehicleChecklistPage() {
                         .sort((a, b) => new Date((b.endDate || b.startDate)).getTime() - new Date((a.endDate || a.startDate)).getTime())
                         .map(c => {
                           const v = vehicles.find(v => v.id === c.vehicleId);
+                          const checklistUser = users.find(u => u.id === c.userId);
                           const isClosed = c.status === 'closed';
                           const isExpanded = c.status === 'closed' ? expandedClosedId === c.id : expandedReturnId === c.id;
                           const start = c.inspectionStart ? JSON.parse(c.inspectionStart) : {};
@@ -706,6 +709,7 @@ export default function VehicleChecklistPage() {
                             <Fragment key={`hist-${c.id}-${c.status}`}>
                               <TableRow>
                                 <TableCell className="font-medium">{v ? v.plate : c.vehicleId}</TableCell>
+                                <TableCell>{checklistUser?.fullName || checklistUser?.username || '-'}</TableCell>
                                 <TableCell className="font-mono">{c.kmInitial} km</TableCell>
                                 <TableCell className="text-center">{fuelLabel(c.fuelLevelStart)}</TableCell>
                                 <TableCell>{formatDateBR(c.startDate)}</TableCell>
@@ -731,7 +735,8 @@ export default function VehicleChecklistPage() {
                                           import('@/lib/pdf-generator')
                                             .then(({ PDFGenerator }) => {
                                               const gen = new PDFGenerator('portrait');
-                                              gen.generateReturnedChecklistPDF(c, v, { company: 'Sistema de Controle de Abastecimento' });
+                                              const pdfUser = users.find(u => u.id === c.userId) || user;
+                                              gen.generateReturnedChecklistPDF(c, v, pdfUser, { company: 'Sistema de Controle de Abastecimento' });
                                               const dateStr = (c.endDate || c.startDate || '').toString().slice(0, 10);
                                               const plate = v?.plate || String(c.vehicleId);
                                               gen.save(`checklist-retorno-${plate}-${dateStr || new Date().toISOString().slice(0,10)}.pdf`);
@@ -781,7 +786,7 @@ export default function VehicleChecklistPage() {
                               </TableRow>
                               {isExpanded && (
                                 <TableRow>
-                                  <TableCell colSpan={8}>
+                                  <TableCell colSpan={9}>
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                       <Card>
                                         <CardHeader>

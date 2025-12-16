@@ -758,7 +758,7 @@ export class PDFGenerator {
   /*
   export const BLOMAQ_LOGO_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAByCAYAAADbV0QYAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nO3dS3bjuJYV8H7YVYLf2Nq3C0L1zBRtFvpgrJpGQweO37VwS40cCbrs7tYbWwJwYI3e9aK8JYxPZxH6kCkRr1tCeeO9w1W1JxkzH2oZBf5g0jqGWwBfA+8fC3jvzeS/9y8ueJb2f7yH3yB4nT0ZlQkqHf1h3e/4Efrgs9AFyGqMZr1BRERERERkTKcEhIiIiIiIiLSekpwSEiIiIiIiIrafEh4iIiIiIiIi0nhIcIiIiIiIiItJ6SnCIiIiIiIiISOsowSEiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLTe/wcLpXztq8GO7gAAAABJRU5ErkJggg==';
   */
-  generateReturnedChecklistPDF(checklist: any, vehicle?: any, options: PDFOptions = {}): void {
+  generateReturnedChecklistPDF(checklist: any, vehicle?: any, user?: any, options: PDFOptions = {}): void {
     this.doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -807,6 +807,7 @@ export class PDFGenerator {
     this.currentY += 10;
 
     const exitInfo = [
+      ['Motorista/Responsável:', user?.fullName || user?.username || 'N/A'],
       ['Data da Saída:', startDate],
       ['KM Inicial:', `${kmInitialNum} km`],
       ['Combustível (início):', this.getFuelLevelLabel(checklist.fuelLevelStart)],
@@ -836,7 +837,10 @@ export class PDFGenerator {
     this.doc.line(20, this.currentY, 90, this.currentY);
     this.doc.line(110, this.currentY, 180, this.currentY);
     this.doc.setFontSize(8);
-    this.doc.text('Motorista / Responsável', 35, this.currentY + 5);
+    
+    // Nome do motorista abaixo da linha de assinatura
+    const driverName = user?.fullName || user?.username || 'Motorista / Responsável';
+    this.doc.text(driverName, 35, this.currentY + 5);
     this.doc.text('Visto do Conferente', 125, this.currentY + 5);
 
 
@@ -873,6 +877,7 @@ export class PDFGenerator {
     this.currentY += 10;
 
     const returnInfo = [
+      ['Motorista/Responsável:', user?.fullName || user?.username || 'N/A'],
       ['Data do Retorno:', endDate],
       ['KM Final:', checklist.kmFinal ? `${kmFinalNum} km` : 'N/A'],
       ['Combustível (retorno):', this.getFuelLevelLabel(checklist.fuelLevelEnd)],
@@ -902,7 +907,7 @@ export class PDFGenerator {
     this.doc.line(20, this.currentY, 90, this.currentY);
     this.doc.line(110, this.currentY, 180, this.currentY);
     this.doc.setFontSize(8);
-    this.doc.text('Motorista / Responsável', 35, this.currentY + 5);
+    this.doc.text(driverName, 35, this.currentY + 5);
     this.doc.text('Visto do Conferente', 125, this.currentY + 5);
 
     this.currentY += 10;

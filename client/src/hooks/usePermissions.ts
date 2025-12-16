@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useMemo } from 'react';
 
 // Definição das permissões por função
-export type UserRole = 'employee' | 'manager' | 'admin';
+export type UserRole = 'employee' | 'manager' | 'admin' | 'driver';
 
 export interface Permission {
   path: string;
@@ -35,7 +35,7 @@ export const PERMISSIONS: Permission[] = [
     path: '/vehicle-checklist',
     label: 'vehicle-checklist',
     icon: 'ClipboardCheck',
-    allowedRoles: ['employee', 'manager', 'admin'],
+    allowedRoles: ['employee', 'manager', 'admin', 'driver'],
   },
   {
     path: '/reports',
@@ -94,6 +94,8 @@ export function usePermissions() {
         return 'admin';
       case 'manager':
         return 'manager';
+      case 'driver':
+        return 'driver';
       case 'employee':
       default:
         return 'employee';

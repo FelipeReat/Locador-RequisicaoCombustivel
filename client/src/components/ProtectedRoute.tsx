@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ path, children }: ProtectedRouteProps) {
-  const { hasAccess } = usePermissions();
+  const { hasAccess, userRole } = usePermissions();
   const { user, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
 
@@ -27,13 +27,17 @@ export default function ProtectedRoute({ path, children }: ProtectedRouteProps) 
     if (!hasAccess(path)) {
       // Redireciona de forma segura
       queueMicrotask(() => {
-        navigate('/dashboard');
+        if (userRole === 'driver') {
+          navigate('/vehicle-checklist');
+        } else {
+          navigate('/dashboard');
+        }
       });
       return 'no-access';
     }
     
     return 'allowed';
-  }, [authLoading, user, hasAccess, path, navigate]);
+  }, [authLoading, user, hasAccess, path, navigate, userRole]);
 
   // Renderização baseada no estado
   switch (accessState) {

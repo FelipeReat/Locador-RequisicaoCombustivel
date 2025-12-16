@@ -246,7 +246,7 @@ function UserManagement() {
       fullName: user.fullName || "",
       phone: user.phone || "",
       position: user.position || "",
-      role: user.role as "admin" | "manager" | "employee",
+      role: user.role as "admin" | "manager" | "employee" | "driver",
     });
     setIsDialogOpen(true);
   };
@@ -289,6 +289,7 @@ function UserManagement() {
       admin: t("administrator"),
       manager: t("manager"),
       employee: t("employee"),
+      driver: "Motorista",
     };
     return labels[role as keyof typeof labels] || role;
   };
@@ -298,6 +299,7 @@ function UserManagement() {
       admin: "destructive" as const,
       manager: "default" as const,
       employee: "secondary" as const,
+      driver: "secondary" as const,
     };
     return variants[role as keyof typeof variants] || "secondary";
   };
@@ -461,6 +463,7 @@ function UserManagement() {
                                 <SelectItem value="employee">{t("employee")}</SelectItem>
                                 <SelectItem value="manager">{t("manager")}</SelectItem>
                                 <SelectItem value="admin">{t("administrator")}</SelectItem>
+                                <SelectItem value="driver">Motorista</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />

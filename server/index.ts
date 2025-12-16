@@ -1,5 +1,8 @@
 import 'dotenv/config';
 
+// Force restart
+
+
 // Set NODE_ENV if not already set
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';

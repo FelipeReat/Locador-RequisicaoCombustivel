@@ -86,6 +86,8 @@ export default function Sidebar() {
         return 'Administrador';
       case 'manager':
         return 'Gerente';
+      case 'driver':
+        return 'Motorista';
       case 'employee':
       default:
         return 'Funcionário';
