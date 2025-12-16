@@ -729,7 +729,8 @@ export default function VehicleChecklistPage() {
                                       </Button>
                                     </div>
                                   ) : (
-                                    <Button size="sm" variant={isExpanded ? 'secondary' : 'default'} onClick={() => {
+                                    <div className="flex items-center justify-end gap-2">
+                                      <Button size="sm" variant={isExpanded ? 'secondary' : 'default'} onClick={() => {
                                       const next = isExpanded ? null : c.id;
                                       setExpandedReturnId(next);
                                       if (!next) return;
@@ -748,9 +749,13 @@ export default function VehicleChecklistPage() {
                                         cleanExterior: startVals.cleanExterior !== false,
                                         notes: '',
                                       });
-                                    }}>
-                                      {isExpanded ? 'Fechar' : t('register-return-checklist')}
-                                    </Button>
+                                      }}>
+                                        {isExpanded ? 'Fechar' : t('register-return-checklist')}
+                                      </Button>
+                                      <Button size="sm" variant="destructive" onClick={() => setConfirmDeleteChecklistId(c.id)}>
+                                        Excluir
+                                      </Button>
+                                    </div>
                                   )}
                                 </TableCell>
                               </TableRow>
