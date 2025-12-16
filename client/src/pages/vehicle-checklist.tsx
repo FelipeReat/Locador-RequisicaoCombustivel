@@ -724,6 +724,26 @@ export default function VehicleChecklistPage() {
                                       <Button size="sm" variant={isExpanded ? 'secondary' : 'outline'} onClick={() => setExpandedClosedId(isExpanded ? null : c.id)}>
                                         {isExpanded ? 'Fechar' : 'Ver detalhes'}
                                       </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          import('@/lib/pdf-generator')
+                                            .then(({ PDFGenerator }) => {
+                                              const gen = new PDFGenerator('portrait');
+                                              gen.generateReturnedChecklistPDF(c, v, { company: 'Sistema de Controle de Abastecimento' });
+                                              const dateStr = (c.endDate || c.startDate || '').toString().slice(0, 10);
+                                              const plate = v?.plate || String(c.vehicleId);
+                                              gen.save(`checklist-retorno-${plate}-${dateStr || new Date().toISOString().slice(0,10)}.pdf`);
+                                              toast({ title: "PDF Gerado", description: "Documento exportado com sucesso." });
+                                            })
+                                            .catch(() => {
+                                              toast({ title: "Erro", description: "Falha ao gerar PDF do checklist.", variant: "destructive" });
+                                            });
+                                        }}
+                                      >
+                                        Exportar PDF
+                                      </Button>
                                       <Button size="sm" variant="destructive" onClick={() => setConfirmDeleteChecklistId(c.id)}>
                                         Excluir
                                       </Button>

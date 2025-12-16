@@ -9,6 +9,8 @@ export interface PDFOptions {
   date?: string;
 }
 
+export const BLOMAQ_LOGO_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAByCAYAAADbV0QYAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nO3dS3bjuJYV8H7YVYLf2Nq3C0L1zBRtFvpgrJpGQweO37VwS40cCbrs7tYbWwJwYI3e9aK8JYxPZxH6kCkRr1tCeeO9w1W1JxkzH2oZBf5g0jqGWwBfA+8fC3jvzeS/9y8ueJb2f7yH3yB4nT0ZlQkqHf1h3e/4Efrgs9AFyGqMZr1BRERERERkTKcEhIiIiIiIiLSekpwSEiIiIiIiIrafEh4iIiIiIiIi0nhIcIiIiIiIiItJ6SnCIiIiIiIiISOsowSEiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLTe/wcLpXztq8GO7gAAAABJRU5ErkJggg==';
+
 export class PDFGenerator {
   private doc: jsPDF;
   private currentY: number = 20;
@@ -305,6 +307,17 @@ export class PDFGenerator {
       'urgente': 'Urgente'
     };
     return labels[priority as keyof typeof labels] || priority;
+  }
+
+  private getFuelLevelLabel(level: string): string {
+    const labels = {
+      'empty': 'Vazio',
+      'quarter': '1/4',
+      'half': '1/2',
+      'three_quarters': '3/4',
+      'full': 'Cheio'
+    };
+    return labels[level as keyof typeof labels] || level;
   }
 
   private calculateEstimatedValue(fuelType: string, quantity: number): string {
@@ -741,5 +754,185 @@ export class PDFGenerator {
     // Este método deveria buscar os dados do fornecedor
     // Por enquanto retorna um placeholder
     return `Fornecedor #${supplierId}`;
+  }
+  /*
+  export const BLOMAQ_LOGO_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAByCAYAAADbV0QYAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nO3dS3bjuJYV8H7YVYLf2Nq3C0L1zBRtFvpgrJpGQweO37VwS40cCbrs7tYbWwJwYI3e9aK8JYxPZxH6kCkRr1tCeeO9w1W1JxkzH2oZBf5g0jqGWwBfA+8fC3jvzeS/9y8ueJb2f7yH3yB4nT0ZlQkqHf1h3e/4Efrgs9AFyGqMZr1BRERERERkTKcEhIiIiIiIiLSekpwSEiIiIiIiIrafEh4iIiIiIiIi0nhIcIiIiIiIiItJ6SnCIiIiIiIiISOsowSEiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLTe/wcLpXztq8GO7gAAAABJRU5ErkJggg==';
+  */
+  generateReturnedChecklistPDF(checklist: any, vehicle?: any, options: PDFOptions = {}): void {
+    this.doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+    this.currentY = 20;
+
+    const plate = vehicle?.plate || String(checklist.vehicleId);
+    const startDate = checklist.startDate ? new Date(checklist.startDate).toLocaleString('pt-BR') : 'N/A';
+    const endDate = checklist.endDate ? new Date(checklist.endDate).toLocaleString('pt-BR') : 'N/A';
+    const kmInitialNum = Number(checklist.kmInitial || 0);
+    const kmFinalNum = Number(checklist.kmFinal || 0);
+    const kmRodado = kmFinalNum > kmInitialNum ? kmFinalNum - kmInitialNum : Math.max(kmFinalNum - kmInitialNum, 0);
+
+    this.addHeader({
+      title: 'Checklist de Saída do Veículo',
+      subtitle: `Veículo ${plate} • Saída #${String(checklist.id).padStart(4, '0')}`,
+      company: options.company || 'Sistema de Controle de Abastecimento',
+      date: checklist.startDate ? new Date(checklist.startDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')
+    });
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('DADOS DO VEÍCULO', 20, this.currentY);
+    this.currentY += 10;
+
+    const vehicleInfo = [
+      ['Placa:', plate],
+      ['Modelo:', vehicle?.model || 'N/A'],
+      ['Marca:', vehicle?.brand || 'N/A'],
+    ];
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    vehicleInfo.forEach(([label, value]) => {
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(label, 20, this.currentY);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(String(value), 60, this.currentY);
+      this.currentY += 6;
+    });
+
+    this.currentY += 4;
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('DADOS DA SAÍDA', 20, this.currentY);
+    this.currentY += 10;
+
+    const exitInfo = [
+      ['Data da Saída:', startDate],
+      ['KM Inicial:', `${kmInitialNum} km`],
+      ['Combustível (início):', this.getFuelLevelLabel(checklist.fuelLevelStart)],
+      ['Status:', (checklist.status || '').toString().toLowerCase() === 'closed' ? 'Concluída' : (checklist.status || 'Aberta')]
+    ];
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    exitInfo.forEach(([label, value]) => {
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(label, 20, this.currentY);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(String(value || 'N/A'), 80, this.currentY);
+      this.currentY += 6;
+    });
+
+    this.currentY += 8;
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('INSPEÇÃO NA SAÍDA', 20, this.currentY);
+    this.currentY += 8;
+    const start = checklist.inspectionStart ? safeParseJSON(checklist.inspectionStart) : {};
+    this.renderInspectionBlock(start);
+
+    // Assinaturas Saída
+    this.currentY = 250;
+    this.doc.setLineWidth(0.5);
+    this.doc.line(20, this.currentY, 90, this.currentY);
+    this.doc.line(110, this.currentY, 180, this.currentY);
+    this.doc.setFontSize(8);
+    this.doc.text('Motorista / Responsável', 35, this.currentY + 5);
+    this.doc.text('Visto do Conferente', 125, this.currentY + 5);
+
+
+    // --- PÁGINA 2: RETORNO ---
+    this.doc.addPage();
+    this.currentY = 20;
+
+    this.addHeader({
+      title: 'Checklist de Retorno do Veículo',
+      subtitle: `Veículo ${plate} • Retorno #${String(checklist.id).padStart(4, '0')}`,
+      company: options.company || 'Sistema de Controle de Abastecimento',
+      date: checklist.endDate ? new Date(checklist.endDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')
+    });
+
+    // Repete dados do veículo para contexto
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('DADOS DO VEÍCULO', 20, this.currentY);
+    this.currentY += 10;
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    vehicleInfo.forEach(([label, value]) => {
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(label, 20, this.currentY);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(String(value), 60, this.currentY);
+      this.currentY += 6;
+    });
+
+    this.currentY += 4;
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('DADOS DO RETORNO', 20, this.currentY);
+    this.currentY += 10;
+
+    const returnInfo = [
+      ['Data do Retorno:', endDate],
+      ['KM Final:', checklist.kmFinal ? `${kmFinalNum} km` : 'N/A'],
+      ['Combustível (retorno):', this.getFuelLevelLabel(checklist.fuelLevelEnd)],
+      ['KM Rodado:', `${kmRodado} km`],
+    ];
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    returnInfo.forEach(([label, value]) => {
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(label, 20, this.currentY);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(String(value || 'N/A'), 80, this.currentY);
+      this.currentY += 6;
+    });
+
+    this.currentY += 6;
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('INSPEÇÃO NO RETORNO', 20, this.currentY);
+    this.currentY += 8;
+    const end = checklist.inspectionEnd ? safeParseJSON(checklist.inspectionEnd) : {};
+    this.renderInspectionBlock(end);
+
+    // Assinaturas Retorno
+    this.currentY = 250;
+    this.doc.setLineWidth(0.5);
+    this.doc.line(20, this.currentY, 90, this.currentY);
+    this.doc.line(110, this.currentY, 180, this.currentY);
+    this.doc.setFontSize(8);
+    this.doc.text('Motorista / Responsável', 35, this.currentY + 5);
+    this.doc.text('Visto do Conferente', 125, this.currentY + 5);
+
+    this.currentY += 10;
+    this.addFooter();
+  }
+
+  private renderInspectionBlock(vals: any) {
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    const lines = [
+      `- Arranhões: ${vals?.scratches ? 'Sim' : 'Não'}`,
+      `- Batidas: ${vals?.dents ? 'Sim' : 'Não'}`,
+      `- Pneus OK: ${vals?.tireOk === false ? 'Não' : 'Sim'}`,
+      `- Iluminação OK: ${vals?.lightsOk === false ? 'Não' : 'Sim'}`,
+      `- Documentos OK: ${vals?.documentsOk === false ? 'Não' : 'Sim'}`,
+      `- Limpeza interna: ${vals?.cleanInterior === false ? 'Não' : 'Sim'}`,
+      `- Limpeza externa: ${vals?.cleanExterior === false ? 'Não' : 'Sim'}`,
+      `- Observações: ${vals?.notes || '-'}`
+    ];
+    const wrapped = lines.map(l => this.doc.splitTextToSize(l, 160)).flat();
+    this.doc.text(wrapped, 20, this.currentY);
+    this.currentY += wrapped.length * 5;
+  }
+}
+
+function safeParseJSON(text: any): any {
+  try {
+    if (typeof text === 'string') return JSON.parse(text);
+    return text || {};
+  } catch {
+    return {};
   }
 }
