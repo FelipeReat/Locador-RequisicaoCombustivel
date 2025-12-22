@@ -749,9 +749,11 @@ export default function VehicleChecklistPage() {
                                       >
                                         Exportar PDF
                                       </Button>
-                                      <Button size="sm" variant="destructive" onClick={() => setConfirmDeleteChecklistId(c.id)}>
-                                        Excluir
-                                      </Button>
+                                      {(user?.role === 'admin' || user?.role === 'manager') && (
+                                        <Button size="sm" variant="destructive" onClick={() => setConfirmDeleteChecklistId(c.id)}>
+                                          Excluir
+                                        </Button>
+                                      )}
                                     </div>
                                   ) : (
                                     <div className="flex items-center justify-end gap-2">
@@ -777,9 +779,11 @@ export default function VehicleChecklistPage() {
                                       }}>
                                         {isExpanded ? 'Fechar' : t('register-return-checklist')}
                                       </Button>
-                                      <Button size="sm" variant="destructive" onClick={() => setConfirmDeleteChecklistId(c.id)}>
-                                        Excluir
-                                      </Button>
+                                      {(user?.role === 'admin' || user?.role === 'manager') && (
+                                        <Button size="sm" variant="destructive" onClick={() => setConfirmDeleteChecklistId(c.id)}>
+                                          Excluir
+                                        </Button>
+                                      )}
                                     </div>
                                   )}
                                 </TableCell>

@@ -1118,6 +1118,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/checklists/:id", async (req, res) => {
     try {
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+
+      const user = await getUserFromSession(sessionId);
+      if (!user) {
+        return res.status(401).json({ message: "Sessão inválida" });
+      }
+
+      if (user.role !== 'admin' && user.role !== 'manager') {
+        return res.status(403).json({ message: "Acesso negado - Apenas gerentes e administradores podem excluir checklists" });
+      }
+
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteChecklist(id);
       if (!deleted) {
@@ -1133,6 +1147,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Fallback para ambientes que bloqueiam DELETE
   app.post("/api/checklists/:id/delete", async (req, res) => {
     try {
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+
+      const user = await getUserFromSession(sessionId);
+      if (!user) {
+        return res.status(401).json({ message: "Sessão inválida" });
+      }
+
+      if (user.role !== 'admin' && user.role !== 'manager') {
+        return res.status(403).json({ message: "Acesso negado - Apenas gerentes e administradores podem excluir checklists" });
+      }
+
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteChecklist(id);
       if (!deleted) {

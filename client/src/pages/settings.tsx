@@ -537,6 +537,35 @@ export default function Settings() {
 
                     <div className="flex items-center justify-between">
                       <div>
+                        <h4 className="font-medium">Tela Inicial</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">Escolha a tela que será exibida ao iniciar o sistema</p>
+                      </div>
+                      <Select 
+                        value={systemSettings.startScreen || '/dashboard'} 
+                        onValueChange={(value) => {
+                          updateSystemSetting('startScreen', value);
+                          toast({
+                            title: "Configuração salva",
+                            description: "Tela inicial atualizada com sucesso.",
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="/dashboard">Dashboard</SelectItem>
+                          <SelectItem value="/requisitions">Requisições</SelectItem>
+                          <SelectItem value="/new-requisition">Nova Requisição</SelectItem>
+                          <SelectItem value="/fuel-tracking">Rastreio de Combustível</SelectItem>
+                          <SelectItem value="/vehicle-checklist">Checklist de Veículo</SelectItem>
+                          <SelectItem value="/reports">Relatórios</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
                         <h4 className="font-medium">{t('items-per-page-label')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('items-displayed-tables')}</p>
                       </div>

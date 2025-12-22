@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { LanguageProvider } from "@/contexts/language-context";
 import { NotificationProvider } from "@/contexts/notification-context";
-import { SystemSettingsProvider } from "@/contexts/system-settings-context";
+import { SystemSettingsProvider, useSystemSettings } from "@/contexts/system-settings-context";
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "@/pages/dashboard";
@@ -25,6 +25,23 @@ import Suppliers from "@/pages/suppliers";
 import Companies from "@/pages/companies";
 import Login from "@/pages/login";
 import InactivityWrapper from "@/components/InactivityWrapper";
+import { useEffect } from "react";
+
+
+function HomeRedirect() {
+  const { settings } = useSystemSettings();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    setLocation(settings.startScreen || "/dashboard");
+  }, [settings.startScreen, setLocation]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-lg">Carregando...</div>
+    </div>
+  );
+}
 
 
 function Router() {
@@ -48,9 +65,7 @@ function Router() {
       <div className="flex-1 flex flex-col lg:ml-0 ml-0 min-w-0">
         <Switch>
           <Route path="/">
-            <ProtectedRoute path="/dashboard">
-              <Dashboard />
-            </ProtectedRoute>
+            <HomeRedirect />
           </Route>
           <Route path="/dashboard">
             <ProtectedRoute path="/dashboard">

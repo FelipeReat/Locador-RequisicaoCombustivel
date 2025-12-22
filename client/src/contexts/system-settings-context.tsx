@@ -5,6 +5,7 @@ interface SystemSettings {
   dateFormat: string;
   theme: string;
   language: string;
+  startScreen: string;
 }
 
 interface SystemSettingsContextType {
@@ -18,6 +19,7 @@ const defaultSettings: SystemSettings = {
   dateFormat: 'DD/MM/YYYY',
   theme: 'system',
   language: 'pt-BR',
+  startScreen: '/dashboard',
 };
 
 const SystemSettingsContext = createContext<SystemSettingsContextType | undefined>(undefined);
