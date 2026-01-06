@@ -98,8 +98,22 @@ export interface IStorage {
   getClosedChecklists(): Promise<VehicleChecklist[]>;
   createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string }): Promise<VehicleChecklist>;
   closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string; inspectionEnd?: string }): Promise<VehicleChecklist | undefined>;
+  approveChecklist(id: number, approver: { userId: number; name: string; date?: string }): Promise<VehicleChecklist | undefined>;
   deleteChecklist(id: number): Promise<boolean>;
   getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }>;
+
+  // Settings
+  getSetting(key: string): Promise<any>;
+  saveSetting(key: string, value: any): Promise<void>;
+}
+
+function safeParseJSON(text: any): any {
+  try {
+    if (typeof text === 'string') return JSON.parse(text);
+    return text || {};
+  } catch {
+    return {};
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -1255,6 +1269,20 @@ export class MemStorage implements IStorage {
     return checklist;
   }
 
+  async approveChecklist(id: number, approver: { userId: number; name: string; date?: string }): Promise<VehicleChecklist | undefined> {
+    const checklist = this.vehicleChecklists.get(id);
+    if (!checklist) return undefined;
+    if (checklist.status !== 'closed') throw new Error('Checklist ainda não possui entrada registrada');
+    const endObj = checklist.inspectionEnd ? safeParseJSON(checklist.inspectionEnd) : {};
+    endObj.approvedByUserId = approver.userId;
+    endObj.approvedByName = approver.name;
+    endObj.approvedAt = approver.date || new Date().toISOString();
+    (checklist as any).inspectionEnd = JSON.stringify(endObj);
+    this.vehicleChecklists.set(id, checklist);
+    this.statsCache = null;
+    return checklist;
+  }
+
   async deleteChecklist(id: number): Promise<boolean> {
     const deleted = this.vehicleChecklists.delete(id);
     if (deleted) {
@@ -1444,6 +1472,17 @@ export class MemStorage implements IStorage {
     this.fuelRecords.clear();
     this.currentFuelRecordId = 1;
     return count;
+  }
+
+  // Settings
+  private settings: Map<string, any> = new Map();
+
+  async getSetting(key: string): Promise<any> {
+    return this.settings.get(key) || null;
+  }
+
+  async saveSetting(key: string, value: any): Promise<void> {
+    this.settings.set(key, value);
   }
 }
 

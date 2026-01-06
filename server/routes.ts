@@ -1116,6 +1116,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/checklists/:id/approve", async (req, res) => {
+    try {
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+      const user = await getUserFromSession(sessionId);
+      if (!user) {
+        return res.status(401).json({ message: "Sessão inválida" });
+      }
+      if (user.role === 'driver') {
+        return res.status(403).json({ message: "Apenas não-motoristas podem conferir checklists" });
+      }
+      const id = parseInt(req.params.id);
+      const approved = await storage.approveChecklist(id, { userId: user.id, name: user.fullName || user.username, date: new Date().toISOString() });
+      if (!approved) {
+        return res.status(404).json({ message: "Checklist não encontrado" });
+      }
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json(approved);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao aprovar checklist" });
+      }
+    }
+  });
+
   app.delete("/api/checklists/:id", async (req, res) => {
     try {
       const sessionId = req.headers['x-session-id'] as string;
@@ -1256,6 +1285,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Erro ao criar backup completo:', error);
       res.status(500).json({ message: "Erro ao criar backup do sistema" });
+    }
+  });
+
+  // Settings Routes
+  app.get("/api/settings/:key", async (req, res) => {
+    try {
+      const key = req.params.key;
+      const value = await storage.getSetting(key);
+      res.json(value);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar configuração" });
+    }
+  });
+
+  app.post("/api/settings/:key", async (req, res) => {
+    try {
+      const key = req.params.key;
+      const value = req.body;
+      await storage.saveSetting(key, value);
+      res.json({ message: "Configuração salva com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao salvar configuração" });
     }
   });
 

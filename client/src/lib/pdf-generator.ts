@@ -7,6 +7,8 @@ export interface PDFOptions {
   subtitle?: string;
   company?: string;
   date?: string;
+  obsGroups?: { key: string; label: string }[];
+  obsItems?: { key: string; label: string; group: string }[];
 }
 
 export const BLOMAQ_LOGO_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAyAAAAByCAYAAADbV0QYAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nO3dS3bjuJYV8H7YVYLf2Nq3C0L1zBRtFvpgrJpGQweO37VwS40cCbrs7tYbWwJwYI3e9aK8JYxPZxH6kCkRr1tCeeO9w1W1JxkzH2oZBf5g0jqGWwBfA+8fC3jvzeS/9y8ueJb2f7yH3yB4nT0ZlQkqHf1h3e/4Efrgs9AFyGqMZr1BRERERERkTKcEhIiIiIiIiLSekpwSEiIiIiIiIrafEh4iIiIiIiIi0nhIcIiIiIiIiItJ6SnCIiIiIiIiISOsowSEiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLSeEhwiIiIiIiIi0npKcIiIiIiIiIhI6ynBISIiIiIiIiKtpwSHiIiIiIiIiLTe/wcLpXztq8GO7gAAAABJRU5ErkJggg==';
@@ -14,6 +16,8 @@ export const BLOMAQ_LOGO_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAy
 export class PDFGenerator {
   private doc: jsPDF;
   private currentY: number = 20;
+  private obsGroupsConfig?: { key: string; label: string }[];
+  private obsItemsConfig?: { key: string; label: string; group: string }[];
 
   constructor(orientation: 'portrait' | 'landscape' = 'portrait') {
     this.doc = new jsPDF({
@@ -765,6 +769,8 @@ export class PDFGenerator {
       format: 'a4'
     });
     this.currentY = 20;
+    this.obsGroupsConfig = options.obsGroups;
+    this.obsItemsConfig = options.obsItems;
 
     const plate = vehicle?.plate || String(checklist.vehicleId);
     const startDate = checklist.startDate ? new Date(checklist.startDate).toLocaleString('pt-BR') : 'N/A';
@@ -900,6 +906,24 @@ export class PDFGenerator {
     this.currentY += 8;
     const end = checklist.inspectionEnd ? safeParseJSON(checklist.inspectionEnd) : {};
     this.renderInspectionBlock(end);
+    if (end?.approvedByName || end?.approvedAt) {
+      this.currentY += 6;
+      this.doc.setFontSize(11);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('CONFERÊNCIA', 20, this.currentY);
+      this.currentY += 8;
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(10);
+      if (end?.approvedByName) {
+        this.doc.text(`Conferido por: ${String(end.approvedByName)}`, 20, this.currentY);
+        this.currentY += 6;
+      }
+      if (end?.approvedAt) {
+        const dt = new Date(end.approvedAt).toLocaleString('pt-BR');
+        this.doc.text(`Data da Conferência: ${dt}`, 20, this.currentY);
+        this.currentY += 6;
+      }
+    }
 
     // Assinaturas Retorno
     this.currentY = 250;
@@ -915,21 +939,42 @@ export class PDFGenerator {
   }
 
   private renderInspectionBlock(vals: any) {
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
-    const lines = [
-      `- Arranhões: ${vals?.scratches ? 'Sim' : 'Não'}`,
-      `- Batidas: ${vals?.dents ? 'Sim' : 'Não'}`,
-      `- Pneus OK: ${vals?.tireOk === false ? 'Não' : 'Sim'}`,
-      `- Iluminação OK: ${vals?.lightsOk === false ? 'Não' : 'Sim'}`,
-      `- Documentos OK: ${vals?.documentsOk === false ? 'Não' : 'Sim'}`,
-      `- Limpeza interna: ${vals?.cleanInterior === false ? 'Não' : 'Sim'}`,
-      `- Limpeza externa: ${vals?.cleanExterior === false ? 'Não' : 'Sim'}`,
-      `- Observações: ${vals?.notes || '-'}`
+    const groups = this.obsGroupsConfig && this.obsGroupsConfig.length > 0 ? this.obsGroupsConfig : [
+      { key: 'inspecao_veiculo', label: 'Inspeção do Veículo' },
+      { key: 'seguranca', label: 'Sistema de Segurança' },
+      { key: 'equipamentos', label: 'Equipamentos Internos' },
+      { key: 'condutor_veiculo', label: 'Inspeção do Condutor e Veículo' },
     ];
-    const wrapped = lines.map(l => this.doc.splitTextToSize(l, 160)).flat();
-    this.doc.text(wrapped, 20, this.currentY);
-    this.currentY += wrapped.length * 5;
+    const items = this.obsItemsConfig && this.obsItemsConfig.length > 0 ? this.obsItemsConfig : [
+      { key: 'scratches', label: 'Arranhões', group: 'inspecao_veiculo' },
+      { key: 'dents', label: 'Batidas', group: 'inspecao_veiculo' },
+      { key: 'tireOk', label: 'Pneus OK', group: 'inspecao_veiculo' },
+      { key: 'lightsOk', label: 'Iluminação OK', group: 'seguranca' },
+      { key: 'documentsOk', label: 'Documentos OK', group: 'condutor_veiculo' },
+      { key: 'cleanInterior', label: 'Limpeza interna', group: 'equipamentos' },
+      { key: 'cleanExterior', label: 'Limpeza externa', group: 'inspecao_veiculo' },
+    ];
+    groups.forEach(g => {
+      const groupItems = items.filter(i => i.group === g.key);
+      if (groupItems.length === 0) return;
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setFontSize(10);
+      this.doc.text(g.label, 20, this.currentY);
+      this.currentY += 6;
+      this.doc.setFont('helvetica', 'normal');
+      groupItems.forEach(i => {
+        const value = vals?.[i.key];
+        const line = `- ${i.label}: ${value === false ? 'Não' : (value ? 'Sim' : 'Sim')}`;
+        const wrapped = this.doc.splitTextToSize(line, 160);
+        this.doc.text(wrapped, 20, this.currentY);
+        this.currentY += wrapped.length * 5;
+      });
+      this.currentY += 2;
+    });
+    const notesLine = `- Observações: ${vals?.notes || '-'}`;
+    const wrappedNotes = this.doc.splitTextToSize(notesLine, 160);
+    this.doc.text(wrappedNotes, 20, this.currentY);
+    this.currentY += wrappedNotes.length * 5;
   }
 }
 

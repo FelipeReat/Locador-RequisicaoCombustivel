@@ -335,3 +335,11 @@ export const vehicleChecklists = pgTable("vehicle_checklists", {
 });
 
 export type VehicleChecklist = typeof vehicleChecklists.$inferSelect;
+
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(), // JSON stringified
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export type AppSetting = typeof appSettings.$inferSelect;

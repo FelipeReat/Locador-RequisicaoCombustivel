@@ -8,6 +8,7 @@ import {
   companies,
   fuelRecords,
   vehicleChecklists,
+  appSettings,
   auditLog,
   dataBackups,
   type User, 
@@ -31,6 +32,15 @@ import {
   type DataBackup
 } from '@shared/schema';
 import { IStorage, type VehicleChecklist, type FuelLevel } from './storage';
+
+function safeParseJSON(text: any): any {
+  try {
+    if (typeof text === 'string') return JSON.parse(text);
+    return text || {};
+  } catch {
+    return {};
+  }
+}
 
 export class DatabaseStorage implements IStorage {
   // Remove the shared loggedInUserId - this was causing session conflicts
@@ -751,6 +761,25 @@ export class DatabaseStorage implements IStorage {
     return updated[0] as unknown as VehicleChecklist;
   }
 
+  async approveChecklist(id: number, approver: { userId: number; name: string; date?: string }): Promise<VehicleChecklist | undefined> {
+    const row = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.id, id)).limit(1);
+    const checklist = row[0] as any;
+    if (!checklist) return undefined;
+    if (checklist.status !== 'closed') throw new Error('Checklist ainda não possui entrada registrada');
+    const endObj = checklist.inspectionEnd ? safeParseJSON(checklist.inspectionEnd) : {};
+    endObj.approvedByUserId = approver.userId;
+    endObj.approvedByName = approver.name;
+    endObj.approvedAt = approver.date || new Date().toISOString();
+    const now = new Date().toISOString();
+    const updated = await db.update(vehicleChecklists)
+      .set({
+        inspectionEnd: JSON.stringify(endObj),
+        updatedAt: now,
+      })
+      .where(eq(vehicleChecklists.id, id))
+      .returning();
+    return updated[0] as unknown as VehicleChecklist;
+  }
   async deleteChecklist(id: number): Promise<boolean> {
     // Capture old values for audit
     const existing = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.id, id)).limit(1);
@@ -1023,6 +1052,38 @@ export class DatabaseStorage implements IStorage {
       console.log('Backup completo do sistema criado com sucesso');
     } catch (error) {
       console.error('Erro ao criar backup completo:', error);
+    }
+  }
+
+  // Settings
+  async getSetting(key: string): Promise<any> {
+    try {
+      const [setting] = await db.select().from(appSettings).where(eq(appSettings.key, key));
+      return setting ? JSON.parse(setting.value) : null;
+    } catch (error) {
+      console.error(`Error getting setting ${key}:`, error);
+      return null;
+    }
+  }
+
+  async saveSetting(key: string, value: any): Promise<void> {
+    try {
+      const stringValue = JSON.stringify(value);
+      
+      // Check if exists
+      const [existing] = await db.select().from(appSettings).where(eq(appSettings.key, key));
+      
+      if (existing) {
+        await db.update(appSettings)
+          .set({ value: stringValue, updatedAt: new Date().toISOString() })
+          .where(eq(appSettings.key, key));
+      } else {
+        await db.insert(appSettings)
+          .values({ key, value: stringValue, updatedAt: new Date().toISOString() });
+      }
+    } catch (error) {
+      console.error(`Error saving setting ${key}:`, error);
+      throw error;
     }
   }
 }
