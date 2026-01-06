@@ -14,8 +14,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
-import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle } from "lucide-react";
+import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -382,7 +383,7 @@ export default function VehicleChecklistPage() {
 
       <div className="mobile-container space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <TabsList className="w-full sm:w-auto">
               <TabsTrigger value="saida">Saída</TabsTrigger>
               <TabsTrigger value="entrada">Entrada</TabsTrigger>
@@ -625,9 +626,9 @@ export default function VehicleChecklistPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between gap-2">
+                <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <span>Veículos Ativos</span>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <div className="relative w-full sm:w-64">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder={t('search-vehicles')} className="pl-9" />
@@ -655,7 +656,7 @@ export default function VehicleChecklistPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Placa</TableHead>
-                        <TableHead>Modelo</TableHead>
+                        <TableHead className="hidden sm:table-cell">Modelo</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
@@ -664,7 +665,7 @@ export default function VehicleChecklistPage() {
                       {filteredVehicles.map(v => (
                         <TableRow key={v.id}>
                           <TableCell className="font-medium">{v.plate}</TableCell>
-                          <TableCell>{v.model}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{v.model}</TableCell>
                           <TableCell>
                             {openByVehicle.has(v.id) ? (
                               <Badge variant="outline" className="text-yellow-700">Saída Aberta</Badge>
@@ -683,8 +684,10 @@ export default function VehicleChecklistPage() {
                               }}
                               disabled={openByVehicle.has(v.id)}
                               aria-label="Iniciar checklist de saída"
+                              className="gap-2 px-2 sm:px-4"
                             >
-                              {t('new-exit-checklist')}
+                              <Plus className="h-4 w-4" />
+                              <span className="hidden sm:inline">{t('new-exit-checklist')}</span>
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -867,13 +870,13 @@ export default function VehicleChecklistPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Veículo</TableHead>
-                        <TableHead>Motorista</TableHead>
-                        <TableHead>KM Inicial</TableHead>
-                        <TableHead>Nível Comb. (início)</TableHead>
-                        <TableHead>Data Saída</TableHead>
+                        <TableHead className="hidden lg:table-cell">Motorista</TableHead>
+                        <TableHead className="hidden md:table-cell">KM Inicial</TableHead>
+                        <TableHead className="hidden xl:table-cell">Nível Comb. (início)</TableHead>
+                        <TableHead className="hidden sm:table-cell">Data Saída</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>KM Final</TableHead>
-                        <TableHead>Data Retorno</TableHead>
+                        <TableHead className="hidden md:table-cell">KM Final</TableHead>
+                        <TableHead className="hidden sm:table-cell">Data Retorno</TableHead>
                         <TableHead className="text-right">Ação</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -891,10 +894,10 @@ export default function VehicleChecklistPage() {
                             <Fragment key={`hist-${c.id}-${c.status}`}>
                               <TableRow>
                                 <TableCell className="font-medium">{v ? v.plate : c.vehicleId}</TableCell>
-                                <TableCell>{checklistUser?.fullName || checklistUser?.username || '-'}</TableCell>
-                                <TableCell className="font-mono">{c.kmInitial} km</TableCell>
-                                <TableCell className="text-center">{fuelLabel(c.fuelLevelStart)}</TableCell>
-                                <TableCell>{formatDateBR(c.startDate)}</TableCell>
+                                <TableCell className="hidden lg:table-cell">{checklistUser?.fullName || checklistUser?.username || '-'}</TableCell>
+                                <TableCell className="hidden md:table-cell font-mono">{c.kmInitial} km</TableCell>
+                                <TableCell className="hidden xl:table-cell text-center">{fuelLabel(c.fuelLevelStart)}</TableCell>
+                                <TableCell className="hidden sm:table-cell">{formatDateBR(c.startDate)}</TableCell>
                                 <TableCell>
                                   {c.status === 'open' ? (
                                     <Badge variant="outline" className="text-yellow-700">Aberta</Badge>
@@ -914,28 +917,34 @@ export default function VehicleChecklistPage() {
                                     </div>
                                   )}
                                 </TableCell>
-                                <TableCell className="font-mono">{c.kmFinal ? `${c.kmFinal} km` : '-'}</TableCell>
-                                <TableCell>
+                                <TableCell className="hidden md:table-cell font-mono">{c.kmFinal ? `${c.kmFinal} km` : '-'}</TableCell>
+                                <TableCell className="hidden sm:table-cell">
                                   <div className="flex items-center gap-2">
                                     {formatDateBR(c.endDate)}
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-right">
                                   {isClosed ? (
-                                    <div className="flex items-center justify-end gap-2">
-                                      {(user?.role !== 'driver') && !end?.approvedByUserId && (
-                                        <Button size="sm" variant="default" onClick={() => approveChecklist.mutate(c.id)}>
-                                          <Check className="h-4 w-4 mr-1" />
-                                          Aprovar
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                          <span className="sr-only">Abrir menu</span>
+                                          <MoreHorizontal className="h-4 w-4" />
                                         </Button>
-                                      )}
-                                      <Button size="sm" variant={isExpanded ? 'secondary' : 'outline'} onClick={() => setExpandedClosedId(isExpanded ? null : c.id)}>
-                                        {isExpanded ? 'Fechar' : 'Ver detalhes'}
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                        {(user?.role !== 'driver') && !end?.approvedByUserId && (
+                                          <DropdownMenuItem onClick={() => approveChecklist.mutate(c.id)}>
+                                            <Check className="mr-2 h-4 w-4" />
+                                            <span>Aprovar</span>
+                                          </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuItem onClick={() => setExpandedClosedId(isExpanded ? null : c.id)}>
+                                          <Search className="mr-2 h-4 w-4" />
+                                          <span>{isExpanded ? 'Fechar detalhes' : 'Ver detalhes'}</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => {
                                           import('@/lib/pdf-generator')
                                             .then(({ PDFGenerator }) => {
                                               const gen = new PDFGenerator('portrait');
@@ -951,16 +960,21 @@ export default function VehicleChecklistPage() {
                                             .catch(() => {
                                               toast({ title: "Erro", description: "Falha ao gerar PDF do checklist.", variant: "destructive" });
                                             });
-                                        }}
-                                      >
-                                        Exportar PDF
-                                      </Button>
-                                      {(user?.role === 'admin' || user?.role === 'manager') && (
-                                        <Button size="sm" variant="destructive" onClick={() => setConfirmDeleteChecklistId(c.id)}>
-                                          Excluir
-                                        </Button>
-                                      )}
-                                    </div>
+                                        }}>
+                                          <FileText className="mr-2 h-4 w-4" />
+                                          <span>Exportar PDF</span>
+                                        </DropdownMenuItem>
+                                        {(user?.role === 'admin' || user?.role === 'manager') && (
+                                          <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={() => setConfirmDeleteChecklistId(c.id)} className="text-red-600">
+                                              <Trash2 className="mr-2 h-4 w-4" />
+                                              <span>Excluir</span>
+                                            </DropdownMenuItem>
+                                          </>
+                                        )}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   ) : (
                                     <div className="flex items-center justify-end gap-2">
                                       <Button size="sm" variant={isExpanded ? 'secondary' : 'default'} onClick={() => {
@@ -978,11 +992,11 @@ export default function VehicleChecklistPage() {
                                       const dynamicDefaults: Record<string, boolean | undefined> = {};
                                       returnForm.reset({ ...base, ...dynamicDefaults });
                                       }}>
-                                        {isExpanded ? 'Fechar' : t('register-return-checklist')}
+                                        {isExpanded ? 'Fechar' : <><span className="hidden sm:inline">{t('register-return-checklist')}</span><span className="sm:hidden">Retorno</span></>}
                                       </Button>
                                       {(user?.role === 'admin' || user?.role === 'manager') && (
-                                        <Button size="sm" variant="destructive" onClick={() => setConfirmDeleteChecklistId(c.id)}>
-                                          Excluir
+                                        <Button variant="destructive" className="h-8 w-8 p-0" onClick={() => setConfirmDeleteChecklistId(c.id)}>
+                                          <Trash2 className="h-4 w-4" />
                                         </Button>
                                       )}
                                     </div>
