@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSmartInvalidation, useRealTimeUpdates } from "@/hooks/useRealTimeUpdates";
+import { apiRequest } from "@/lib/queryClient";
 
 type Vehicle = {
   id: number;
@@ -213,12 +214,7 @@ export default function VehicleChecklistPage() {
 
   const createExit = useMutation({
     mutationFn: async (payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate: string; inspectionStart: string }) => {
-      const res = await fetch("/api/checklists/exit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error((await res.json()).message || "Erro ao criar saída");
+      const res = await apiRequest("POST", "/api/checklists/exit", payload);
       return res.json();
     },
     onSuccess: () => {
@@ -246,12 +242,7 @@ export default function VehicleChecklistPage() {
 
   const closeReturn = useMutation({
     mutationFn: async ({ id, kmFinal, fuelLevelEnd, endDate, inspectionEnd }: { id: number; kmFinal: number; fuelLevelEnd: FuelLevel; endDate: string; inspectionEnd: string }) => {
-      const res = await fetch(`/api/checklists/return/${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kmFinal, fuelLevelEnd, endDate, inspectionEnd }),
-      });
-      if (!res.ok) throw new Error((await res.json()).message || "Erro ao concluir retorno");
+      const res = await apiRequest("POST", `/api/checklists/return/${id}`, { kmFinal, fuelLevelEnd, endDate, inspectionEnd });
       return res.json();
     },
     onSuccess: (updated: VehicleChecklist) => {
@@ -272,27 +263,12 @@ export default function VehicleChecklistPage() {
 
   const deleteChecklist = useMutation({
     mutationFn: async (id: number) => {
-      // Tenta DELETE; se falhar por resposta inválida, usa POST fallback
-      const resDel = await fetch(`/api/checklists/${id}`, { method: "DELETE", headers: { "Accept": "application/json" } });
-      const ctDel = resDel.headers.get("content-type") || "";
-      if (resDel.ok && ctDel.includes("application/json")) {
-        return resDel.json();
+      try {
+        await apiRequest("DELETE", `/api/checklists/${id}`);
+      } catch (e) {
+        // Fallback
+        await apiRequest("POST", `/api/checklists/${id}/delete`);
       }
-      const resPost = await fetch(`/api/checklists/${id}/delete`, { method: "POST", headers: { "Accept": "application/json" } });
-      const ctPost = resPost.headers.get("content-type") || "";
-      if (!resPost.ok) {
-        if (ctPost.includes("application/json")) {
-          const payload = await resPost.json();
-          throw new Error(payload?.message || "Erro ao excluir checklist");
-        } else {
-          const text = await resPost.text();
-          throw new Error(text || "Erro ao excluir checklist");
-        }
-      }
-      if (!ctPost.includes("application/json")) {
-        throw new Error("Resposta inválida do servidor");
-      }
-      return resPost.json();
     },
     onSuccess: () => {
       // Optimistically remove from local caches
@@ -977,7 +953,7 @@ export default function VehicleChecklistPage() {
                                     </DropdownMenu>
                                   ) : (
                                     <div className="flex items-center justify-end gap-2">
-                                      <Button size="sm" variant={isExpanded ? 'secondary' : 'default'} onClick={() => {
+                                      <Button size="sm" variant={isExpanded ? 'secondary' : 'default'} disabled={user?.role === 'driver' && user?.id !== c.userId} onClick={() => {
                                       const next = isExpanded ? null : c.id;
                                       setExpandedReturnId(next);
                                       if (!next) return;

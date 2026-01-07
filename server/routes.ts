@@ -1084,8 +1084,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/checklists/exit", async (req, res) => {
     try {
-      const { vehicleId, userId, kmInitial, fuelLevelStart, startDate, inspectionStart } = req.body;
-      const created = await storage.createExitChecklist({ vehicleId: parseInt(vehicleId), userId: parseInt(userId), kmInitial: parseFloat(kmInitial), fuelLevelStart, startDate, inspectionStart });
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+      const currentUser = await getUserFromSession(sessionId);
+      if (!currentUser) {
+        return res.status(401).json({ message: "Sessão inválida" });
+      }
+      const { vehicleId, kmInitial, fuelLevelStart, startDate, inspectionStart } = req.body;
+      const created = await storage.createExitChecklist({
+        vehicleId: parseInt(vehicleId),
+        userId: currentUser.id,
+        kmInitial: parseFloat(kmInitial),
+        fuelLevelStart,
+        startDate,
+        inspectionStart
+      });
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.json(created);
     } catch (error) {
@@ -1099,8 +1114,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/checklists/return/:id", async (req, res) => {
     try {
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+      const currentUser = await getUserFromSession(sessionId);
+      if (!currentUser) {
+        return res.status(401).json({ message: "Sessão inválida" });
+      }
       const id = parseInt(req.params.id);
       const { kmFinal, fuelLevelEnd, endDate, inspectionEnd } = req.body;
+      if (currentUser.role === 'driver') {
+        const openList = await storage.getOpenChecklists();
+        const target = openList.find(c => c.id === id);
+        if (!target) {
+          return res.status(404).json({ message: "Checklist não encontrado" });
+        }
+        if (target.userId !== currentUser.id) {
+          return res.status(403).json({ message: "Acesso negado - Motorista só pode registrar retorno do próprio checklist" });
+        }
+      }
       const updated = await storage.closeReturnChecklist(id, { kmFinal: parseFloat(kmFinal), fuelLevelEnd, endDate, inspectionEnd });
       if (!updated) {
         return res.status(404).json({ message: "Checklist não encontrado" });
