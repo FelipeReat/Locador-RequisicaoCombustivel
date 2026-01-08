@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
@@ -176,6 +176,9 @@ export default function VehicleChecklistPage() {
         body: JSON.stringify(newConfig)
       });
     },
+    onSuccess: () => {
+      toast({ title: "Observações salvas", description: "Configurações persistidas com sucesso." });
+    },
     onError: () => {
       toast({ title: "Erro", description: "Falha ao salvar configurações.", variant: "destructive" });
     }
@@ -189,15 +192,6 @@ export default function VehicleChecklistPage() {
     }
     setIsConfigLoaded(true);
   }, [savedObsConfig]);
-
-  useEffect(() => {
-    if (isConfigLoaded && !isLoadingConfig) {
-      const timeout = setTimeout(() => {
-        saveConfigMutation.mutate(obsConfig);
-      }, 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [obsConfig, isConfigLoaded, isLoadingConfig]);
 
   const activeVehicles = useMemo(() => vehicles.filter(v => v.status === "active" && v.companyId !== null), [vehicles]);
   const filteredVehicles = useMemo(() => {
@@ -613,6 +607,22 @@ export default function VehicleChecklistPage() {
                     </div>
                   </div>
                 </CardContent>
+                <CardFooter className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowObsEditor(false)}
+                  >
+                    Fechar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => saveConfigMutation.mutate(obsConfig)}
+                    disabled={saveConfigMutation.isPending}
+                  >
+                    {saveConfigMutation.isPending ? 'Salvando...' : 'Salvar alterações'}
+                  </Button>
+                </CardFooter>
               </Card>
             )}
 
