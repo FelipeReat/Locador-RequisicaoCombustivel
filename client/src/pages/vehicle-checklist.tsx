@@ -64,6 +64,22 @@ type Analytics = {
   dailyTrend: { date: string; count: number }[];
 };
 
+type ExitFormValues = {
+  vehicleId: string;
+  kmInitial: string;
+  fuelLevelStart: FuelLevel;
+  startDate: string;
+  notes: string;
+} & Record<string, boolean | undefined>;
+
+type ReturnFormValues = {
+  selectedChecklistId: string;
+  kmFinal: string;
+  fuelLevelEnd: FuelLevel;
+  endDate: string;
+  notes: string;
+} & Record<string, boolean | undefined>;
+
 export default function VehicleChecklistPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -142,7 +158,7 @@ export default function VehicleChecklistPage() {
   const { data: users = [] } = useQuery<any[]>({ queryKey: ["/api/users"] });
 
   // Persistence for obsConfig
-  const { data: savedObsConfig, isLoading: isLoadingConfig } = useQuery<ObsItem[]>({ 
+  const { data: savedObsConfig, isLoading: isLoadingConfig } = useQuery<ObsItem[] | null>({ 
     queryKey: ['/api/settings/obs_config'],
     queryFn: async () => {
       const res = await fetch('/api/settings/obs_config');
@@ -202,14 +218,14 @@ export default function VehicleChecklistPage() {
   }, [openChecklists]);
 
   // Exit form
-  const exitForm = useForm<{ vehicleId: string; kmInitial: string; fuelLevelStart: FuelLevel; startDate: string; notes: string } & Record<string, boolean | undefined>>({
+  const exitForm = useForm<ExitFormValues, any, ExitFormValues>({
     defaultValues: {
       vehicleId: "",
       kmInitial: "",
       fuelLevelStart: "half",
       startDate: nowManausLocalInput(),
       notes: "",
-    },
+    } as ExitFormValues,
   });
 
   const createExit = useMutation({
@@ -230,14 +246,14 @@ export default function VehicleChecklistPage() {
   });
 
   // Return form
-  const returnForm = useForm<{ selectedChecklistId: string; kmFinal: string; fuelLevelEnd: FuelLevel; endDate: string; notes: string } & Record<string, boolean | undefined>>({
+  const returnForm = useForm<ReturnFormValues, any, ReturnFormValues>({
     defaultValues: {
       selectedChecklistId: "",
       kmFinal: "",
       fuelLevelEnd: "half",
       endDate: nowManausLocalInput(),
       notes: "",
-    },
+    } as ReturnFormValues,
   });
 
   const closeReturn = useMutation({
@@ -786,14 +802,14 @@ export default function VehicleChecklistPage() {
                           <div key={group.key} className="space-y-2">
                             <h4 className="font-semibold">{group.label}</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {items.filter(i=>i.column===1).map(i=> (
-                                <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
-                                  <FormItem className="flex items-center gap-2">
-                                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                    <FormLabel>{obsLabels[i.key]}</FormLabel>
-                                  </FormItem>
-                                )} />
-                              ))}
+                                {items.filter(i=>i.column===1).map(i=> (
+                                  <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
+                                    <FormItem className="flex items-center gap-2">
+                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
+                                      <FormLabel>{obsLabels[i.key]}</FormLabel>
+                                    </FormItem>
+                                  )} />
+                                ))}
                               {items.filter(i=>i.column===2).map(i=> (
                                 <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
                                   <FormItem className="flex items-center gap-2">
@@ -1190,7 +1206,7 @@ export default function VehicleChecklistPage() {
                                                           )} />
                                                           ))}
                                                           {items.filter(i=>i.column===2).map(i=> (
-                                                            <FormField key={i.key} control={returnForm.control} name={i.key} render={({ field }) => (
+                                                            <FormField key={i.key} control={returnForm.control} name={i.key as any} render={({ field }) => (
                                                             <FormItem className="flex items-center justify-between p-1">
                                                               <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 !mt-0">{obsLabels[i.key]}</FormLabel>
                                                               <FormControl>
@@ -1377,7 +1393,7 @@ export default function VehicleChecklistPage() {
                       <h4 className="font-semibold">{group.label}</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {items.filter(i=>i.column===1).map(i=> (
-                          <FormField key={i.key} control={exitForm.control} name={i.key} render={({ field }) => (
+                          <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
                             <FormItem className="flex items-center justify-between p-1">
                               <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 !mt-0">{obsLabels[i.key]}</FormLabel>
                               <FormControl>
@@ -1406,7 +1422,7 @@ export default function VehicleChecklistPage() {
                           )} />
                         ))}
                         {items.filter(i=>i.column===2).map(i=> (
-                          <FormField key={i.key} control={exitForm.control} name={i.key} render={({ field }) => (
+                          <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
                             <FormItem className="flex items-center justify-between p-1">
                               <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 !mt-0">{obsLabels[i.key]}</FormLabel>
                               <FormControl>

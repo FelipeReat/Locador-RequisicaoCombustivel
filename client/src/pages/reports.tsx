@@ -33,7 +33,10 @@ import {
   Fuel, 
   AlertCircle
 } from "lucide-react";
-import type { FuelRequisition, Vehicle, User } from "@shared/schema";
+import type { FuelRequisition, Vehicle, User, Company } from "@shared/schema";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const COLORS = {
   approved: '#10B981',
@@ -51,6 +54,12 @@ export default function Reports() {
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<number[]>([]);
   const [isExporting, setIsExporting] = useState(false);
   const [showAllVehicles, setShowAllVehicles] = useState(false);
+  const [efficiencyShowKmPerLiter, setEfficiencyShowKmPerLiter] = useState(true);
+  const [efficiencyMode, setEfficiencyMode] = useState<"consumo" | "custo">("consumo");
+  const [efficiencyOrder, setEfficiencyOrder] = useState<"desc" | "asc">("desc");
+  const [efficiencySearch, setEfficiencySearch] = useState("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [hideNewVehicles, setHideNewVehicles] = useState(false);
 
   // Buscar dados com tipos corretos
   const { data: requisitions = [], isLoading: requisitionsLoading } = useQuery<FuelRequisition[]>({
@@ -64,23 +73,24 @@ export default function Reports() {
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
+  const { data: companies = [], isLoading: companiesLoading } = useQuery<Company[]>({
+    queryKey: ["/api/companies"],
+  });
 
   // Filtrar requisições pelo mês selecionado e veículos selecionados
   const filteredRequisitions = useMemo(() => {
     return requisitions.filter(req => {
       const reqDate = new Date(req.createdAt);
       const matchesDate = reqDate.getMonth() + 1 === selectedMonth && reqDate.getFullYear() === selectedYear;
-      
-      // Se nenhum veículo selecionado, mostrar todos
-      if (selectedVehicleIds.length === 0) {
-        return matchesDate;
-      }
-      
-      // Filtrar por veículos selecionados
-      const matchesVehicle = selectedVehicleIds.includes(req.vehicleId);
-      return matchesDate && matchesVehicle;
+      const vehicle = vehicles.find(v => v.id === req.vehicleId);
+      const matchesCompany = selectedCompanyId === null ? true : (vehicle?.companyId === selectedCompanyId);
+      const created = vehicle?.createdAt ? new Date(vehicle.createdAt) : null;
+      const isNewInMonth = !!created && (created.getMonth() + 1 === selectedMonth) && (created.getFullYear() === selectedYear);
+      const allowByNew = hideNewVehicles ? !isNewInMonth : true;
+      const matchesVehicleSelection = selectedVehicleIds.length === 0 ? true : selectedVehicleIds.includes(req.vehicleId);
+      return matchesDate && matchesCompany && allowByNew && matchesVehicleSelection;
     });
-  }, [requisitions, selectedMonth, selectedYear, selectedVehicleIds]);
+  }, [requisitions, vehicles, selectedMonth, selectedYear, selectedCompanyId, hideNewVehicles, selectedVehicleIds]);
 
   // Estatísticas do mês
   const monthlyStats = useMemo(() => {
@@ -142,6 +152,86 @@ export default function Reports() {
   const visibleVehicleBarData = useMemo(() => {
     return showAllVehicles ? vehicleBarData : vehicleBarData.slice(0, 12);
   }, [vehicleBarData, showAllVehicles]);
+
+  // Média de litros por km por veículo
+  const vehicleEfficiencyData = useMemo(() => {
+    const accMap = new Map<number, { vehicleId: number; plate: string; name: string; totalKm: number; totalLiters: number; totalCost: number; litersPerKm: number; kmPerLiter: number; costPerKm: number; costPerLiter: number; newInMonth: boolean }>();
+    const considered = filteredRequisitions;
+    considered.forEach((req) => {
+      const v = vehicles.find((vv) => vv.id === req.vehicleId);
+      const plate = v?.plate || `Veículo ${req.vehicleId}`;
+      const name = v ? `${v.brand || ''} ${v.model || ''}`.trim() : '';
+      const created = v?.createdAt ? new Date(v.createdAt) : null;
+      const isNewInMonth = !!created && (created.getMonth() + 1 === selectedMonth) && (created.getFullYear() === selectedYear);
+      const kmAtual = parseFloat((req as any).kmAtual || "0");
+      const kmAnterior = parseFloat((req as any).kmAnterior || "0");
+      const kmRodado = (req as any).kmRodado ? parseFloat((req as any).kmRodado) : (isFinite(kmAtual) && isFinite(kmAnterior) ? Math.max(kmAtual - kmAnterior, 0) : 0);
+      const liters = parseFloat(req.quantity || "0");
+      const pricePerLiter = parseFloat(req.pricePerLiter || "0");
+      const isValidPrice = !isNaN(pricePerLiter) && isFinite(pricePerLiter) && pricePerLiter > 0;
+      const validKm = isFinite(kmRodado) && kmRodado > 0 ? kmRodado : 0;
+      const validLiters = isFinite(liters) && liters > 0 ? liters : 0;
+      const cost = (isNaN(liters) || !isValidPrice) ? 0 : liters * pricePerLiter;
+      if (!accMap.has(req.vehicleId)) {
+        accMap.set(req.vehicleId, { vehicleId: req.vehicleId, plate, name, totalKm: 0, totalLiters: 0, totalCost: 0, litersPerKm: 0, kmPerLiter: 0, costPerKm: 0, costPerLiter: 0, newInMonth: isNewInMonth });
+      }
+      const acc = accMap.get(req.vehicleId)!;
+      acc.newInMonth = acc.newInMonth || isNewInMonth;
+      acc.totalKm += acc.newInMonth ? 0 : validKm;
+      acc.totalLiters += validLiters;
+      acc.totalCost += isNaN(cost) ? 0 : cost;
+    });
+    accMap.forEach((val) => {
+      val.litersPerKm = val.totalKm > 0 ? (val.totalLiters / val.totalKm) : 0;
+      val.kmPerLiter = val.totalLiters > 0 ? (val.totalKm / val.totalLiters) : 0;
+      val.costPerKm = val.totalKm > 0 ? (val.totalCost / val.totalKm) : 0;
+      val.costPerLiter = val.totalLiters > 0 ? (val.totalCost / val.totalLiters) : 0;
+    });
+    return Array.from(accMap.values());
+  }, [filteredRequisitions, vehicles, selectedMonth, selectedYear]);
+
+  const vehicleEfficiencyRows = useMemo(() => {
+    const term = efficiencySearch.trim().toLowerCase();
+    const filtered = term
+      ? vehicleEfficiencyData.filter(r => r.plate.toLowerCase().includes(term) || (r.name || '').toLowerCase().includes(term))
+      : vehicleEfficiencyData;
+    const sorted = [...filtered].sort((a, b) => {
+      const av = efficiencyMode === "consumo"
+        ? (efficiencyShowKmPerLiter ? a.kmPerLiter : a.litersPerKm)
+        : (efficiencyShowKmPerLiter ? a.costPerKm : a.costPerLiter);
+      const bv = efficiencyMode === "consumo"
+        ? (efficiencyShowKmPerLiter ? b.kmPerLiter : b.litersPerKm)
+        : (efficiencyShowKmPerLiter ? b.costPerKm : b.costPerLiter);
+      return efficiencyOrder === "desc" ? (bv - av) : (av - bv);
+    });
+    return sorted;
+  }, [vehicleEfficiencyData, efficiencySearch, efficiencyShowKmPerLiter, efficiencyOrder, efficiencyMode]);
+
+  const efficiencyValueClass = (row: { kmPerLiter: number; litersPerKm: number; costPerKm: number; costPerLiter: number }) => {
+    const v = efficiencyMode === "consumo"
+      ? (efficiencyShowKmPerLiter ? row.kmPerLiter : row.litersPerKm)
+      : (efficiencyShowKmPerLiter ? row.costPerKm : row.costPerLiter);
+    if (!isFinite(v) || v <= 0) return "text-muted-foreground";
+    if (efficiencyMode === "consumo") {
+      if (efficiencyShowKmPerLiter) {
+        if (v >= 8) return "text-green-600";
+        if (v >= 5) return "text-yellow-600";
+        return "text-red-600";
+      } else {
+        if (v <= 0.12) return "text-green-600";
+        if (v <= 0.20) return "text-yellow-600";
+        return "text-red-600";
+      }
+    }
+    if (efficiencyShowKmPerLiter) {
+      if (v <= 0.80) return "text-green-600";
+      if (v <= 1.20) return "text-yellow-600";
+      return "text-red-600";
+    }
+    if (v <= 6.00) return "text-green-600";
+    if (v <= 7.20) return "text-yellow-600";
+    return "text-red-600";
+  };
 
   // Função para exportar relatório em PDF
   const handleExportReport = async () => {
@@ -227,7 +317,7 @@ export default function Reports() {
     }
   };
 
-  const isLoading = requisitionsLoading || vehiclesLoading || usersLoading;
+  const isLoading = requisitionsLoading || vehiclesLoading || usersLoading || companiesLoading;
 
   if (isLoading) {
     return (
@@ -320,18 +410,7 @@ export default function Reports() {
           </p>
         </div>
 
-        {/* Filtro de Veículos */}
-        <div className="mb-6">
-          <VehicleFilter
-            vehicles={vehicles}
-            selectedVehicleIds={selectedVehicleIds}
-            onSelectionChange={setSelectedVehicleIds}
-            multiSelect={true}
-            title="Filtrar por Veículos"
-            placeholder="Buscar por placa, modelo ou marca..."
-            storageKey="reports-vehicle-filter"
-          />
-        </div>
+        
 
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -559,6 +638,160 @@ export default function Reports() {
               </div>
             </div>
             <p className="sr-only">Cada veículo possui duas colunas agrupadas representando o volume abastecido em litros e o valor total em reais.</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+              <CardTitle className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <span>Média de Consumo por Veículo</span>
+                <div className="flex flex-col sm:flex-row items-center gap-2">
+                  <ToggleGroup type="single" value={efficiencyMode} onValueChange={(v) => v && setEfficiencyMode(v as "consumo" | "custo")} className="gap-2">
+                    <ToggleGroupItem value="consumo">Consumo</ToggleGroupItem>
+                    <ToggleGroupItem value="custo">Custo</ToggleGroupItem>
+                  </ToggleGroup>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {efficiencyMode === "consumo" ? "Exibir em KM/L" : "Exibir em R$/km"}
+                    </span>
+                    <Switch checked={efficiencyShowKmPerLiter} onCheckedChange={(v) => setEfficiencyShowKmPerLiter(Boolean(v))} />
+                  </div>
+                  <div className="w-48">
+                    <Select value={selectedCompanyId === null ? 'all' : String(selectedCompanyId)} onValueChange={(val) => setSelectedCompanyId(val === 'all' ? null : parseInt(val))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as empresas</SelectItem>
+                        {companies.map(c => (
+                          <SelectItem key={c.id} value={String(c.id)}>{c.fullName || c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Ocultar veículos novos no mês</span>
+                    <Switch checked={hideNewVehicles} onCheckedChange={(v) => setHideNewVehicles(Boolean(v))} />
+                  </div>
+                  <Select value={efficiencyOrder} onValueChange={(v) => setEfficiencyOrder(v as "desc" | "asc")}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Ordenar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="desc">
+                        {efficiencyMode === "consumo"
+                          ? (efficiencyShowKmPerLiter ? "Mais eficientes (KM/L)" : "Menor consumo (L/KM)")
+                          : (efficiencyShowKmPerLiter ? "Menor custo (R$/km)" : "Menor custo (R$/L)")}
+                      </SelectItem>
+                      <SelectItem value="asc">
+                        {efficiencyMode === "consumo"
+                          ? (efficiencyShowKmPerLiter ? "Menos eficientes (KM/L)" : "Maior consumo (L/KM)")
+                          : (efficiencyShowKmPerLiter ? "Maior custo (R$/km)" : "Maior custo (R$/L)")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="w-48">
+                    <Input value={efficiencySearch} onChange={(e) => setEfficiencySearch(e.target.value)} placeholder="Filtrar por placa/marca" />
+                  </div>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <VehicleFilter
+                  vehicles={vehicles}
+                  selectedVehicleIds={selectedVehicleIds}
+                  onSelectionChange={setSelectedVehicleIds}
+                  multiSelect={true}
+                  title="Filtrar por Veículos"
+                  placeholder="Buscar por placa, modelo ou marca..."
+                  storageKey="reports-vehicle-filter"
+                />
+              </div>
+              {vehicleEfficiencyRows.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  Não há dados suficientes (KM &gt; 0 e litros &gt; 0) nas requisições aprovadas/realizadas para calcular L/KM.
+                </div>
+              ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Veículo</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">KM Rodado no Mês</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">Litros Total</th>
+                      <th className="text-left p-2 text-gray-900 dark:text-gray-100">
+                        {efficiencyMode === "consumo"
+                          ? (efficiencyShowKmPerLiter ? "Média (KM/L)" : "Média (L/KM)")
+                          : (efficiencyShowKmPerLiter ? "Custo (R$/km)" : "Custo (R$/L)")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {vehicleEfficiencyRows.map((row) => (
+                      <tr key={row.vehicleId} className="border-b border-gray-200 dark:border-gray-700">
+                        <td className="p-2">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{row.plate}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{row.name}</span>
+                            {row.newInMonth && (
+                              <span className="text-[11px] text-blue-600 dark:text-blue-400">Novo no mês — KM suprimido</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-2 text-gray-900 dark:text-gray-100">
+                          {Number.isFinite(row.totalKm) ? `${row.totalKm.toFixed(0)} km` : 'N/A'}
+                        </td>
+                        <td className="p-2 text-gray-900 dark:text-gray-100">
+                          {Number.isFinite(row.totalLiters) ? `${row.totalLiters.toFixed(1)} L` : 'N/A'}
+                        </td>
+                        <td className="p-2 text-gray-900 dark:text-gray-100">
+                          {row.totalKm > 0 && row.totalLiters > 0 ? (
+                            <span className={`font-semibold ${efficiencyValueClass(row)}`}>
+                              {efficiencyMode === "consumo"
+                                ? (efficiencyShowKmPerLiter
+                                  ? row.kmPerLiter.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                  : row.litersPerKm.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }))
+                                : (efficiencyShowKmPerLiter
+                                  ? row.costPerKm.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                  : row.costPerLiter.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+                                }
+                            </span>
+                          ) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
+                    <tr>
+                      <td className="p-2 font-bold text-gray-900 dark:text-gray-100">TOTAL</td>
+                      <td className="p-2 font-bold text-gray-900 dark:text-gray-100">
+                        {vehicleEfficiencyRows.reduce((s, r) => s + (Number.isFinite(r.totalKm) ? r.totalKm : 0), 0).toFixed(0)} km
+                      </td>
+                      <td className="p-2 font-bold text-gray-900 dark:text-gray-100">
+                        {vehicleEfficiencyRows.reduce((s, r) => s + (Number.isFinite(r.totalLiters) ? r.totalLiters : 0), 0).toFixed(1)} L
+                      </td>
+                      <td className="p-2 text-gray-900 dark:text-gray-100">
+                        {(() => {
+                          const totalKm = vehicleEfficiencyRows.reduce((s, r) => s + (Number.isFinite(r.totalKm) ? r.totalKm : 0), 0);
+                          const totalLiters = vehicleEfficiencyRows.reduce((s, r) => s + (Number.isFinite(r.totalLiters) ? r.totalLiters : 0), 0);
+                          const totalCost = vehicleEfficiencyRows.reduce((s, r) => s + (Number.isFinite(r.totalCost) ? r.totalCost : 0), 0);
+                          if (!(totalKm > 0 && totalLiters > 0)) return '—';
+                          if (efficiencyMode === "consumo") {
+                            return efficiencyShowKmPerLiter
+                              ? (totalKm / totalLiters).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                              : (totalLiters / totalKm).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                          }
+                          return efficiencyShowKmPerLiter
+                            ? (totalCost / totalKm).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            : (totalCost / totalLiters).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        })()}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
 

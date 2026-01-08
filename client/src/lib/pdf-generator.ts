@@ -668,6 +668,71 @@ export class PDFGenerator {
 
     this.currentY = (this.doc as any).lastAutoTable.finalY + 15;
 
+    // Média L/km por veículo
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('MÉDIA DE LITROS POR KM POR VEÍCULO', 20, this.currentY);
+    this.currentY += 10;
+    const effMap = new Map<number, { plate: string; name: string; km: number; liters: number; cost: number; lpkm: number; kmpl: number; rpkm: number; rpl: number }>();
+    const consideredReqs = requisitions;
+    consideredReqs.forEach((req) => {
+      const v = vehicles?.find((vv) => vv.id === req.vehicleId);
+      const plate = v?.plate || String(req.vehicleId);
+      const name = v ? `${v.brand || ''} ${v.model || ''}`.trim() : '';
+      const created = v?.createdAt ? new Date(v.createdAt) : null;
+      const isNewInMonth = !!created && (created.getMonth() + 1 === month) && (created.getFullYear() === year);
+      const kmAtual = req.kmAtual ? Number(req.kmAtual) : 0;
+      const kmAnterior = req.kmAnterior ? Number(req.kmAnterior) : 0;
+      const kmRodado = req.kmRodado ? Number(req.kmRodado) : (isFinite(kmAtual) && isFinite(kmAnterior) ? Math.max(kmAtual - kmAnterior, 0) : 0);
+      const liters = req.quantity ? Number(req.quantity) : 0;
+      const pricePerLiter = req.pricePerLiter ? Number(req.pricePerLiter) : 0;
+      const isValidPrice = !isNaN(pricePerLiter) && isFinite(pricePerLiter) && pricePerLiter > 0;
+      const cost = isValidPrice && liters > 0 ? liters * pricePerLiter : 0;
+      const validKm = isNewInMonth ? 0 : (isFinite(kmRodado) && kmRodado > 0 ? kmRodado : 0);
+      const validLiters = isFinite(liters) && liters > 0 ? liters : 0;
+      if (!effMap.has(req.vehicleId)) {
+        effMap.set(req.vehicleId, { plate, name, km: 0, liters: 0, cost: 0, lpkm: 0, kmpl: 0, rpkm: 0, rpl: 0 });
+      }
+      const acc = effMap.get(req.vehicleId)!;
+      acc.km += validKm;
+      acc.liters += validLiters;
+      acc.cost += isNaN(cost) ? 0 : cost;
+    });
+    const effRows = Array.from(effMap.values())
+      .map((r) => {
+        const lpkm = r.km > 0 && r.liters > 0 ? r.liters / r.km : 0;
+        const kmpl = r.liters > 0 && r.km > 0 ? r.km / r.liters : 0;
+        const rpkm = r.km > 0 && r.cost > 0 ? r.cost / r.km : 0;
+        const rpl = r.liters > 0 && r.cost > 0 ? r.cost / r.liters : 0;
+        return [
+          r.plate,
+          r.name || '-',
+          Number.isFinite(r.km) ? `${r.km.toFixed(0)} km` : 'N/A',
+          Number.isFinite(r.liters) ? `${r.liters.toFixed(1)} L` : 'N/A',
+          r.km > 0 && r.liters > 0 ? kmpl.toFixed(2) : '—',
+          r.km > 0 && r.liters > 0 ? lpkm.toFixed(3) : '—',
+          (r.km > 0 && r.cost > 0) ? `R$ ${rpkm.toFixed(2).replace('.', ',')}` : '—',
+          (r.liters > 0 && r.cost > 0) ? `R$ ${rpl.toFixed(2).replace('.', ',')}` : '—',
+        ];
+      })
+      .sort((a, b) => {
+        const av = parseFloat(String(a[4]).replace(',', '.')) || 0;
+        const bv = parseFloat(String(b[4]).replace(',', '.')) || 0;
+        return bv - av;
+      });
+    if (effRows.length > 0) {
+      autoTable(this.doc, {
+        head: [['Veículo', 'Descrição', 'KM Total (mês)', 'Litros Total', 'Média (KM/L)', 'Média (L/KM)', 'Custo (R$/km)', 'Custo (R$/L)']],
+        body: effRows,
+        startY: this.currentY,
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [52, 144, 220] },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 20, right: 20 }
+      });
+      this.currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    }
+
     // Tabela detalhada de requisições
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
