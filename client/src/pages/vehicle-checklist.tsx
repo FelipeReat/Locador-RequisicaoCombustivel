@@ -107,15 +107,7 @@ export default function VehicleChecklistPage() {
     notes: "",
   });
   const [showObsEditor, setShowObsEditor] = useState(false);
-  const [obsConfig, setObsConfig] = useState<ObsItem[]>([
-    { key: 'scratches', label: 'Arranhões', defaultChecked: false, column: 1, order: 1, group: 'inspecao_veiculo' },
-    { key: 'dents', label: 'Batidas', defaultChecked: false, column: 2, order: 2, group: 'inspecao_veiculo' },
-    { key: 'tireOk', label: 'Pneus OK', defaultChecked: true, column: 1, order: 3, group: 'inspecao_veiculo' },
-    { key: 'lightsOk', label: 'Iluminação OK', defaultChecked: true, column: 2, order: 4, group: 'seguranca' },
-    { key: 'documentsOk', label: 'Documentos OK', defaultChecked: true, column: 1, order: 5, group: 'condutor_veiculo' },
-    { key: 'cleanInterior', label: 'Limpeza interna', defaultChecked: true, column: 2, order: 6, group: 'equipamentos' },
-    { key: 'cleanExterior', label: 'Limpeza externa', defaultChecked: true, column: 1, order: 7, group: 'inspecao_veiculo' },
-  ]);
+  const [obsConfig, setObsConfig] = useState<ObsItem[]>([]);
   const obsGroups: { key: ObsGroupKey; label: string }[] = [
     { key: 'inspecao_veiculo', label: 'Inspeção do Veículo' },
     { key: 'seguranca', label: 'Sistema de Segurança' },
@@ -129,10 +121,8 @@ export default function VehicleChecklistPage() {
   const [newObsColumn, setNewObsColumn] = useState<1 | 2>(1);
   const [newObsDefault, setNewObsDefault] = useState(false);
 
-  const obsLabels: Record<ObsKey, string> = useMemo(() => {
-    const map: Record<ObsKey, string> = {
-      scratches: 'Arranhões', dents: 'Batidas', tireOk: 'Pneus OK', lightsOk: 'Iluminação OK', documentsOk: 'Documentos OK', cleanInterior: 'Limpeza interna', cleanExterior: 'Limpeza externa'
-    } as Record<ObsKey, string>;
+  const obsLabels: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {};
     obsConfig.forEach(i => { map[i.key] = i.label });
     return map;
   }, [obsConfig]);
@@ -164,7 +154,7 @@ export default function VehicleChecklistPage() {
       const res = await fetch('/api/settings/obs_config');
       if (!res.ok) throw new Error("Failed to fetch config");
       const data = await res.json();
-      return Array.isArray(data) && data.length > 0 ? data : null;
+      return Array.isArray(data) && data.length > 0 ? data : [];
     }
   });
 
@@ -178,6 +168,9 @@ export default function VehicleChecklistPage() {
     },
     onSuccess: () => {
       toast({ title: "Observações salvas", description: "Configurações persistidas com sucesso." });
+      try {
+        localStorage.setItem('obs_config', JSON.stringify(obsConfig));
+      } catch {}
     },
     onError: () => {
       toast({ title: "Erro", description: "Falha ao salvar configurações.", variant: "destructive" });
@@ -187,8 +180,18 @@ export default function VehicleChecklistPage() {
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
 
   useEffect(() => {
-    if (savedObsConfig) {
+    if (Array.isArray(savedObsConfig) && savedObsConfig.length > 0) {
       setObsConfig(savedObsConfig);
+    } else {
+      const ls = localStorage.getItem('obs_config');
+      if (ls) {
+        try {
+          const parsed = JSON.parse(ls);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setObsConfig(parsed);
+          }
+        } catch {}
+      }
     }
     setIsConfigLoaded(true);
   }, [savedObsConfig]);
@@ -563,7 +566,7 @@ export default function VehicleChecklistPage() {
                             onClick={() => {
                               const label = newObsLabel.trim() || 'Observação';
                               const newItem: ObsItem = {
-                                key: `obs_${Date.now()}` as ObsKey,
+                                key: `obs_${Date.now()}`,
                                 label,
                                 defaultChecked: newObsDefault,
                                 column: newObsColumn,
@@ -1511,6 +1514,5 @@ export default function VehicleChecklistPage() {
     </div>
   );
 }
-type ObsKey = 'scratches' | 'dents' | 'tireOk' | 'lightsOk' | 'documentsOk' | 'cleanInterior' | 'cleanExterior';
 type ObsGroupKey = 'inspecao_veiculo' | 'seguranca' | 'equipamentos' | 'condutor_veiculo';
-type ObsItem = { key: ObsKey; label: string; defaultChecked: boolean; column: 1 | 2; order: number; group: ObsGroupKey };
+type ObsItem = { key: string; label: string; defaultChecked: boolean; column: 1 | 2; order: number; group: ObsGroupKey };
