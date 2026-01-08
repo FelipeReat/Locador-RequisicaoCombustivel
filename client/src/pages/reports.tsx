@@ -410,7 +410,17 @@ export default function Reports() {
           </p>
         </div>
 
-        
+        <div className="mb-6">
+          <VehicleFilter
+            vehicles={vehicles}
+            selectedVehicleIds={selectedVehicleIds}
+            onSelectionChange={setSelectedVehicleIds}
+            multiSelect={true}
+            title="Filtrar por Veículos"
+            placeholder="Buscar por placa, modelo ou marca..."
+            storageKey="reports-vehicle-filter"
+          />
+        </div>
 
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -697,17 +707,6 @@ export default function Reports() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mb-4">
-                <VehicleFilter
-                  vehicles={vehicles}
-                  selectedVehicleIds={selectedVehicleIds}
-                  onSelectionChange={setSelectedVehicleIds}
-                  multiSelect={true}
-                  title="Filtrar por Veículos"
-                  placeholder="Buscar por placa, modelo ou marca..."
-                  storageKey="reports-vehicle-filter"
-                />
-              </div>
               {vehicleEfficiencyRows.length === 0 ? (
                 <div className="text-sm text-muted-foreground">
                   Não há dados suficientes (KM &gt; 0 e litros &gt; 0) nas requisições aprovadas/realizadas para calcular L/KM.
