@@ -18,8 +18,15 @@ if (databaseUrl.includes('DATABASE_URL=')) {
   }
 }
 
+const url = new URL(databaseUrl);
 const isNeon = /neon\.tech/.test(databaseUrl) || /neondb_owner/.test(databaseUrl);
-const needsSSL = isNeon || /sslmode=require/.test(databaseUrl) || /ssl=true/.test(databaseUrl);
+const isRDS = /rds\.amazonaws\.com/.test(databaseUrl);
+const needsSSL = isNeon || isRDS || url.searchParams.get('ssl') === 'true' || url.searchParams.get('sslmode') === 'require';
+
+// Remove SSL params from the connection string to avoid conflicts with the config object
+url.searchParams.delete('ssl');
+url.searchParams.delete('sslmode');
+const connectionString = url.toString();
 
 let db: any;
 if (isNeon) {
@@ -36,7 +43,11 @@ if (isNeon) {
     },
   });
 } else {
-  const client = new pg.Client({ connectionString: databaseUrl, ssl: needsSSL ? { rejectUnauthorized: false } : false });
+  console.log(`Initializing Postgres client with SSL: ${needsSSL ? 'Enabled (Accept Self-Signed)' : 'Disabled'}`);
+  const client = new pg.Client({ 
+    connectionString, 
+    ssl: needsSSL ? { rejectUnauthorized: false } : false 
+  });
   void client.connect();
   db = drizzlePg(client, {
     schema: {
