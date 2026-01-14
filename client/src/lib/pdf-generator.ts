@@ -844,6 +844,7 @@ export class PDFGenerator {
     const kmFinalNum = Number(checklist.kmFinal || 0);
     const kmRodado = kmFinalNum > kmInitialNum ? kmFinalNum - kmInitialNum : Math.max(kmFinalNum - kmInitialNum, 0);
 
+    // --- PÁGINA 1: SAÍDA ---
     this.addHeader({
       title: 'Checklist de Saída do Veículo',
       subtitle: `Veículo ${plate} • Saída #${String(checklist.id).padStart(4, '0')}`,
@@ -851,10 +852,10 @@ export class PDFGenerator {
       date: checklist.startDate ? new Date(checklist.startDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')
     });
 
-    this.doc.setFontSize(12);
+    this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('DADOS DO VEÍCULO', 20, this.currentY);
-    this.currentY += 10;
+    this.currentY += 8;
 
     const vehicleInfo = [
       ['Placa:', plate],
@@ -862,20 +863,20 @@ export class PDFGenerator {
       ['Marca:', vehicle?.brand || 'N/A'],
     ];
     this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(9);
     vehicleInfo.forEach(([label, value]) => {
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(label, 20, this.currentY);
       this.doc.setFont('helvetica', 'normal');
       this.doc.text(String(value), 60, this.currentY);
-      this.currentY += 6;
+      this.currentY += 5;
     });
 
-    this.currentY += 4;
-    this.doc.setFontSize(12);
+    this.currentY += 2;
+    this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('DADOS DA SAÍDA', 20, this.currentY);
-    this.currentY += 10;
+    this.currentY += 8;
 
     const exitInfo = [
       ['Motorista/Responsável:', user?.fullName || user?.username || 'N/A'],
@@ -885,34 +886,35 @@ export class PDFGenerator {
       ['Status:', (checklist.status || '').toString().toLowerCase() === 'closed' ? 'Concluída' : (checklist.status || 'Aberta')]
     ];
     this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(9);
     exitInfo.forEach(([label, value]) => {
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(label, 20, this.currentY);
       this.doc.setFont('helvetica', 'normal');
       this.doc.text(String(value || 'N/A'), 80, this.currentY);
-      this.currentY += 6;
+      this.currentY += 5;
     });
 
-    this.currentY += 8;
-    this.doc.setFontSize(12);
+    this.currentY += 5;
+    this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('INSPEÇÃO NA SAÍDA', 20, this.currentY);
     this.currentY += 8;
     const start = checklist.inspectionStart ? safeParseJSON(checklist.inspectionStart) : {};
     this.renderInspectionBlock(start);
 
-    // Assinaturas Saída
-    this.currentY = 250;
+    // Assinaturas Saída (Fixo no rodapé)
+    this.currentY = 260;
     this.doc.setLineWidth(0.5);
     this.doc.line(20, this.currentY, 90, this.currentY);
     this.doc.line(110, this.currentY, 180, this.currentY);
     this.doc.setFontSize(8);
     
-    // Nome do motorista abaixo da linha de assinatura
     const driverName = user?.fullName || user?.username || 'Motorista / Responsável';
     this.doc.text(driverName, 35, this.currentY + 5);
     this.doc.text('Visto do Conferente', 125, this.currentY + 5);
+    
+    this.addFooter();
 
 
     // --- PÁGINA 2: RETORNO ---
@@ -926,26 +928,25 @@ export class PDFGenerator {
       date: checklist.endDate ? new Date(checklist.endDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')
     });
 
-    // Repete dados do veículo para contexto
-    this.doc.setFontSize(12);
+    this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('DADOS DO VEÍCULO', 20, this.currentY);
-    this.currentY += 10;
+    this.currentY += 8;
     this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(9);
     vehicleInfo.forEach(([label, value]) => {
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(label, 20, this.currentY);
       this.doc.setFont('helvetica', 'normal');
       this.doc.text(String(value), 60, this.currentY);
-      this.currentY += 6;
+      this.currentY += 5;
     });
 
-    this.currentY += 4;
-    this.doc.setFontSize(12);
+    this.currentY += 2;
+    this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('DADOS DO RETORNO', 20, this.currentY);
-    this.currentY += 10;
+    this.currentY += 8;
 
     const returnInfo = [
       ['Motorista/Responsável:', user?.fullName || user?.username || 'N/A'],
@@ -955,43 +956,45 @@ export class PDFGenerator {
       ['KM Rodado:', `${kmRodado} km`],
     ];
     this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(9);
     returnInfo.forEach(([label, value]) => {
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(label, 20, this.currentY);
       this.doc.setFont('helvetica', 'normal');
       this.doc.text(String(value || 'N/A'), 80, this.currentY);
-      this.currentY += 6;
+      this.currentY += 5;
     });
 
-    this.currentY += 6;
-    this.doc.setFontSize(12);
+    this.currentY += 5;
+    this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text('INSPEÇÃO NO RETORNO', 20, this.currentY);
     this.currentY += 8;
     const end = checklist.inspectionEnd ? safeParseJSON(checklist.inspectionEnd) : {};
     this.renderInspectionBlock(end);
+    
+    // Bloco de conferência
     if (end?.approvedByName || end?.approvedAt) {
-      this.currentY += 6;
-      this.doc.setFontSize(11);
+      this.currentY += 5;
+      this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('CONFERÊNCIA', 20, this.currentY);
-      this.currentY += 8;
+      this.currentY += 6;
       this.doc.setFont('helvetica', 'normal');
-      this.doc.setFontSize(10);
+      this.doc.setFontSize(9);
       if (end?.approvedByName) {
         this.doc.text(`Conferido por: ${String(end.approvedByName)}`, 20, this.currentY);
-        this.currentY += 6;
+        this.currentY += 5;
       }
       if (end?.approvedAt) {
         const dt = new Date(end.approvedAt).toLocaleString('pt-BR');
         this.doc.text(`Data da Conferência: ${dt}`, 20, this.currentY);
-        this.currentY += 6;
+        this.currentY += 5;
       }
     }
 
-    // Assinaturas Retorno
-    this.currentY = 250;
+    // Assinaturas Retorno (Fixo no rodapé)
+    this.currentY = 260;
     this.doc.setLineWidth(0.5);
     this.doc.line(20, this.currentY, 90, this.currentY);
     this.doc.line(110, this.currentY, 180, this.currentY);
@@ -999,7 +1002,6 @@ export class PDFGenerator {
     this.doc.text(driverName, 35, this.currentY + 5);
     this.doc.text('Visto do Conferente', 125, this.currentY + 5);
 
-    this.currentY += 10;
     this.addFooter();
   }
 
@@ -1019,25 +1021,50 @@ export class PDFGenerator {
       { key: 'cleanInterior', label: 'Limpeza interna', group: 'equipamentos' },
       { key: 'cleanExterior', label: 'Limpeza externa', group: 'inspecao_veiculo' },
     ];
+
+    const colWidth = 90;
+    
     groups.forEach(g => {
       const groupItems = items.filter(i => i.group === g.key);
       if (groupItems.length === 0) return;
+      
       this.doc.setFont('helvetica', 'bold');
-      this.doc.setFontSize(10);
+      this.doc.setFontSize(9);
       this.doc.text(g.label, 20, this.currentY);
-      this.currentY += 6;
+      this.currentY += 5;
+      
       this.doc.setFont('helvetica', 'normal');
-      groupItems.forEach(i => {
-        const value = vals?.[i.key];
-        const line = `- ${i.label}: ${value === false ? 'Não' : (value ? 'Sim' : 'Sim')}`;
-        const wrapped = this.doc.splitTextToSize(line, 160);
-        this.doc.text(wrapped, 20, this.currentY);
-        this.currentY += wrapped.length * 5;
-      });
+      this.doc.setFontSize(8);
+
+      let col = 0;
+      for (let i = 0; i < groupItems.length; i++) {
+        const item = groupItems[i];
+        const value = vals?.[item.key];
+        // Símbolo unicode check/cross pode não funcionar bem em fontes padrão do jsPDF, usando texto Sim/Não
+        const labelText = value === false ? 'Não' : (value ? 'Sim' : 'Sim');
+        const text = `- ${item.label}: ${labelText}`;
+        
+        const xPos = 20 + (col * colWidth);
+        this.doc.text(text, xPos, this.currentY);
+
+        if (col === 1) {
+          col = 0;
+          this.currentY += 4;
+        } else {
+          col = 1;
+          // Se for o último item impar, avança linha também
+          if (i === groupItems.length - 1) {
+            this.currentY += 4;
+          }
+        }
+      }
+      // Pequeno espaço após o grupo
       this.currentY += 2;
     });
-    const notesLine = `- Observações: ${vals?.notes || '-'}`;
-    const wrappedNotes = this.doc.splitTextToSize(notesLine, 160);
+    
+    const notesLine = `Observações: ${vals?.notes || '-'}`;
+    const wrappedNotes = this.doc.splitTextToSize(notesLine, 170);
+    this.doc.setFontSize(9);
     this.doc.text(wrappedNotes, 20, this.currentY);
     this.currentY += wrappedNotes.length * 5;
   }
