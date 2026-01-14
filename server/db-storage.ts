@@ -11,6 +11,7 @@ import {
   appSettings,
   auditLog,
   dataBackups,
+  userVehicleFavorites,
   type User, 
   type InsertUser, 
   type UpdateUserProfile, 
@@ -1083,6 +1084,44 @@ export class DatabaseStorage implements IStorage {
       }
     } catch (error) {
       console.error(`Error saving setting ${key}:`, error);
+      throw error;
+    }
+  }
+
+  // Favorites
+  async getUserFavorites(userId: number): Promise<number[]> {
+    try {
+      const favorites = await db.select({ vehicleId: userVehicleFavorites.vehicleId })
+        .from(userVehicleFavorites)
+        .where(eq(userVehicleFavorites.userId, userId));
+      
+      return favorites.map(f => f.vehicleId);
+    } catch (error) {
+      console.error(`Error getting favorites for user ${userId}:`, error);
+      return [];
+    }
+  }
+
+  async toggleUserFavorite(userId: number, vehicleId: number): Promise<boolean> {
+    try {
+      const [existing] = await db.select()
+        .from(userVehicleFavorites)
+        .where(and(
+          eq(userVehicleFavorites.userId, userId),
+          eq(userVehicleFavorites.vehicleId, vehicleId)
+        ));
+
+      if (existing) {
+        await db.delete(userVehicleFavorites)
+          .where(eq(userVehicleFavorites.id, existing.id));
+        return false; // Not favorite anymore
+      } else {
+        await db.insert(userVehicleFavorites)
+          .values({ userId, vehicleId });
+        return true; // Is favorite now
+      }
+    } catch (error) {
+      console.error(`Error toggling favorite for user ${userId} vehicle ${vehicleId}:`, error);
       throw error;
     }
   }

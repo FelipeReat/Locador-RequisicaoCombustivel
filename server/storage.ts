@@ -105,6 +105,10 @@ export interface IStorage {
   // Settings
   getSetting(key: string): Promise<any>;
   saveSetting(key: string, value: any): Promise<void>;
+
+  // User Vehicle Favorites
+  getUserFavorites(userId: number): Promise<number[]>;
+  toggleUserFavorite(userId: number, vehicleId: number): Promise<boolean>;
 }
 
 function safeParseJSON(text: any): any {
@@ -1483,6 +1487,27 @@ export class MemStorage implements IStorage {
 
   async saveSetting(key: string, value: any): Promise<void> {
     this.settings.set(key, value);
+  }
+
+  // Favorites (In-memory implementation)
+  private favorites: Map<string, boolean> = new Map(); // key: userId-vehicleId
+
+  async getUserFavorites(userId: number): Promise<number[]> {
+    const result: number[] = [];
+    this.favorites.forEach((isFav, key) => {
+      if (isFav && key.startsWith(`${userId}-`)) {
+        const [, vehicleId] = key.split('-');
+        result.push(parseInt(vehicleId));
+      }
+    });
+    return result;
+  }
+
+  async toggleUserFavorite(userId: number, vehicleId: number): Promise<boolean> {
+    const key = `${userId}-${vehicleId}`;
+    const current = this.favorites.get(key) || false;
+    this.favorites.set(key, !current);
+    return !current;
   }
 }
 

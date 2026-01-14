@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
-import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText } from "lucide-react";
+import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText, Star } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -146,6 +146,20 @@ export default function VehicleChecklistPage() {
   const { data: analytics } = useQuery<Analytics>({ queryKey: ["/api/checklists/stats/analytics"] });
   const { data: companies = [] } = useQuery<Company[]>({ queryKey: ["/api/companies"] });
   const { data: users = [] } = useQuery<any[]>({ queryKey: ["/api/users"] });
+  const { data: favorites = [] } = useQuery<number[]>({ queryKey: ["/api/user/favorites"] });
+
+  const toggleFavorite = useMutation({
+    mutationFn: async (vehicleId: number) => {
+      const res = await apiRequest("POST", `/api/user/favorites/${vehicleId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/favorites"] });
+    },
+    onError: () => {
+      toast({ title: "Erro", description: "Não foi possível atualizar favoritos.", variant: "destructive" });
+    }
+  });
 
   // Persistence for obsConfig
   const { data: savedObsConfig, isLoading: isLoadingConfig } = useQuery<ObsItem[] | null>({ 
@@ -202,12 +216,21 @@ export default function VehicleChecklistPage() {
     const companyFiltered = selectedCompanyId === null
       ? activeVehicles
       : activeVehicles.filter(v => v.companyId === selectedCompanyId);
-    return companyFiltered.filter(v =>
+    
+    const filtered = companyFiltered.filter(v =>
       v.plate.toLowerCase().includes(term) ||
       v.model.toLowerCase().includes(term) ||
       v.brand.toLowerCase().includes(term)
     );
-  }, [activeVehicles, searchTerm, selectedCompanyId]);
+
+    return filtered.sort((a, b) => {
+      const isFavA = favorites.includes(a.id);
+      const isFavB = favorites.includes(b.id);
+      if (isFavA && !isFavB) return -1;
+      if (!isFavA && isFavB) return 1;
+      return 0;
+    });
+  }, [activeVehicles, searchTerm, selectedCompanyId, favorites]);
 
   const openByVehicle = useMemo(() => {
     const set = new Set(openChecklists.map(c => c.vehicleId));
@@ -669,7 +692,22 @@ export default function VehicleChecklistPage() {
                     <TableBody>
                       {filteredVehicles.map(v => (
                         <TableRow key={v.id}>
-                          <TableCell className="font-medium">{v.plate}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 -ml-2" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleFavorite.mutate(v.id);
+                                }}
+                              >
+                                <Star className={`h-4 w-4 ${favorites.includes(v.id) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                              </Button>
+                              {v.plate}
+                            </div>
+                          </TableCell>
                           <TableCell className="hidden sm:table-cell">{v.model}</TableCell>
                           <TableCell>
                             {openByVehicle.has(v.id) ? (
@@ -1011,45 +1049,47 @@ export default function VehicleChecklistPage() {
                               {isExpanded && (
                                 <TableRow>
                                   <TableCell colSpan={9}>
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                      <Card>
-                                        <CardHeader>
-                                          <CardTitle>Dados da Saída</CardTitle>
-                                          <CardDescription>Condições registradas na abertura</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                          <div className="grid grid-cols-2 gap-3 text-sm">
-                                            <div>
-                                              <Label>KM Inicial</Label>
-                                              <div className="font-mono">{c.kmInitial} km</div>
-                                            </div>
-                                            <div>
-                                              <Label>Nível Combustível</Label>
-                                              <div className="text-center">{fuelLabel(c.fuelLevelStart)}</div>
-                                            </div>
-                                            <div className="lg:col-span-2">
-                                              <Label>Inspeção</Label>
-                                              <div className="mt-2 space-y-3">
-                                                {obsGroups.map(group => {
-                                                  const items = obsConfig.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
-                                                  if (items.length === 0) return null;
-                                                  return (
-                                                    <div key={`start-${group.key}`}>
-                                                      <div className="font-medium">{group.label}</div>
-                                                      <div className="mt-1 grid grid-cols-2 gap-2">
-                                                        {items.map(i => (
-                                                          <div key={`start-item-${i.key}`}>- {obsLabels[i.key]}: {start[i.key] === true ? 'Sim' : 'Não'}</div>
-                                                        ))}
+                                    <div className={`grid grid-cols-1 ${isClosed ? 'lg:grid-cols-2' : ''} gap-6`}>
+                                      {isClosed && (
+                                        <Card>
+                                          <CardHeader>
+                                            <CardTitle>Dados da Saída</CardTitle>
+                                            <CardDescription>Condições registradas na abertura</CardDescription>
+                                          </CardHeader>
+                                          <CardContent>
+                                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                              <div>
+                                                <Label>KM Inicial</Label>
+                                                <div className="font-mono">{c.kmInitial} km</div>
+                                              </div>
+                                              <div>
+                                                <Label>Nível Combustível</Label>
+                                                <div className="text-center">{fuelLabel(c.fuelLevelStart)}</div>
+                                              </div>
+                                              <div className="lg:col-span-2">
+                                                <Label>Inspeção</Label>
+                                                <div className="mt-2 space-y-3">
+                                                  {obsGroups.map(group => {
+                                                    const items = obsConfig.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
+                                                    if (items.length === 0) return null;
+                                                    return (
+                                                      <div key={`start-${group.key}`}>
+                                                        <div className="font-medium">{group.label}</div>
+                                                        <div className="mt-1 grid grid-cols-2 gap-2">
+                                                          {items.map(i => (
+                                                            <div key={`start-item-${i.key}`}>- {obsLabels[i.key]}: {start[i.key] === true ? 'Sim' : 'Não'}</div>
+                                                          ))}
+                                                        </div>
                                                       </div>
-                                                    </div>
-                                                  );
-                                                })}
-                                                <div>- Observações: {start.notes || '-'}</div>
+                                                    );
+                                                  })}
+                                                  <div>- Observações: {start.notes || '-'}</div>
+                                                </div>
                                               </div>
                                             </div>
-                                          </div>
-                                        </CardContent>
-                                      </Card>
+                                          </CardContent>
+                                        </Card>
+                                      )}
                                       {isClosed ? (
                                         <Card>
                                           <CardHeader>

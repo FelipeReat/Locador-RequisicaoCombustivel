@@ -104,6 +104,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // User routes
+  app.get("/api/user/favorites", async (req, res) => {
+    try {
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Sessão não encontrada" });
+      }
+
+      const currentUser = await getUserFromSession(sessionId);
+      if (!currentUser) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+
+      const favorites = await storage.getUserFavorites(currentUser.id);
+      res.json(favorites);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar favoritos" });
+    }
+  });
+
+  app.post("/api/user/favorites/:vehicleId", async (req, res) => {
+    try {
+      const sessionId = req.headers['x-session-id'] as string;
+      if (!sessionId) {
+        return res.status(401).json({ message: "Sessão não encontrada" });
+      }
+
+      const currentUser = await getUserFromSession(sessionId);
+      if (!currentUser) {
+        return res.status(401).json({ message: "Não autenticado" });
+      }
+
+      const vehicleId = parseInt(req.params.vehicleId);
+      const isFavorite = await storage.toggleUserFavorite(currentUser.id, vehicleId);
+      res.json({ isFavorite });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao alterar favorito" });
+    }
+  });
+
   app.get("/api/user/profile", async (req, res) => {
     try {
       const sessionId = req.headers['x-session-id'] as string;

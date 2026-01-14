@@ -343,3 +343,21 @@ export const appSettings = pgTable("app_settings", {
 });
 
 export type AppSetting = typeof appSettings.$inferSelect;
+
+export const userVehicleFavorites = pgTable("user_vehicle_favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  vehicleId: integer("vehicle_id").notNull(),
+  createdAt: text("created_at").notNull().default("now()"),
+});
+
+export const insertUserVehicleFavoriteSchema = createInsertSchema(userVehicleFavorites, {
+  userId: z.number().min(1),
+  vehicleId: z.number().min(1),
+}).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type UserVehicleFavorite = typeof userVehicleFavorites.$inferSelect;
+export type InsertUserVehicleFavorite = z.infer<typeof insertUserVehicleFavoriteSchema>;
