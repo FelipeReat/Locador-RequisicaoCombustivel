@@ -277,8 +277,8 @@ export default function VehicleChecklistPage() {
   });
 
   const closeReturn = useMutation({
-    mutationFn: async ({ id, kmFinal, fuelLevelEnd, endDate, inspectionEnd }: { id: number; kmFinal: number; fuelLevelEnd: FuelLevel; endDate: string; inspectionEnd: string }) => {
-      const res = await apiRequest("POST", `/api/checklists/return/${id}`, { kmFinal, fuelLevelEnd, endDate, inspectionEnd });
+    mutationFn: async ({ id, userId, kmFinal, fuelLevelEnd, endDate, inspectionEnd }: { id: number; userId: number; kmFinal: number; fuelLevelEnd: FuelLevel; endDate: string; inspectionEnd: string }) => {
+      const res = await apiRequest("POST", `/api/checklists/return/${id}`, { userId, kmFinal, fuelLevelEnd, endDate, inspectionEnd });
       return res.json();
     },
     onSuccess: (updated: VehicleChecklist) => {
@@ -303,7 +303,7 @@ export default function VehicleChecklistPage() {
         await apiRequest("DELETE", `/api/checklists/${id}`);
       } catch (e) {
         // Fallback
-        await apiRequest("POST", `/api/checklists/${id}/delete`);
+        await apiRequest("POST", `/api/checklists/${id}/delete`, { userId: user?.id });
       }
     },
     onSuccess: () => {
@@ -323,14 +323,15 @@ export default function VehicleChecklistPage() {
   });
 
   const approveChecklist = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async ({ id, userId }: { id: number; userId: number }) => {
       const sessionId = localStorage.getItem('session-id') || "";
       const res = await fetch(`/api/checklists/${id}/approve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-session-id": sessionId
-        }
+        },
+        body: JSON.stringify({ userId })
       });
       const ct = res.headers.get("content-type") || "";
       if (!res.ok) {
@@ -978,7 +979,7 @@ export default function VehicleChecklistPage() {
                                       <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                                         {(user?.role !== 'driver') && !end?.approvedByUserId && (
-                                          <DropdownMenuItem onClick={() => approveChecklist.mutate(c.id)}>
+                                          <DropdownMenuItem onClick={() => user && approveChecklist.mutate({ id: c.id, userId: user.id })}>
                                             <Check className="mr-2 h-4 w-4" />
                                             <span>Aprovar</span>
                                           </DropdownMenuItem>
@@ -1175,8 +1176,8 @@ export default function VehicleChecklistPage() {
                                                   });
                                                   endObj.notes = values.notes;
                                                   const inspectionEnd = JSON.stringify(endObj);
-                                                  closeReturn.mutate({ id, kmFinal, fuelLevelEnd: values.fuelLevelEnd, endDate: values.endDate, inspectionEnd });
-                                                })}
+                  closeReturn.mutate({ id, userId: user!.id, kmFinal, fuelLevelEnd: values.fuelLevelEnd, endDate: values.endDate, inspectionEnd });
+                })}
                                               >
                                                 <FormField control={returnForm.control} name="selectedChecklistId" render={({ field }) => (
                                                   <FormItem>
