@@ -1123,14 +1123,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/checklists/exit", async (req, res) => {
     try {
-      const sessionId = req.headers['x-session-id'] as string;
-      if (!sessionId) {
-        return res.status(401).json({ message: "Não autenticado" });
+      const sessionId = req.headers['x-session-id'] as string | undefined;
+      let currentUser = sessionId ? await getUserFromSession(sessionId) : null;
+
+      if (!currentUser && req.body && req.body.userId) {
+        const userFromBody = await storage.getUser(Number(req.body.userId));
+        if (userFromBody) {
+          currentUser = userFromBody;
+        }
       }
-      const currentUser = await getUserFromSession(sessionId);
+
       if (!currentUser) {
         return res.status(401).json({ message: "Sessão inválida" });
       }
+
       const { vehicleId, kmInitial, fuelLevelStart, startDate, inspectionStart } = req.body;
       const created = await storage.createExitChecklist({
         vehicleId: parseInt(vehicleId),
