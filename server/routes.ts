@@ -28,6 +28,30 @@ const getUserFromSession = async (sessionId: string) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Middleware de autenticação global para rotas da API
+  app.use('/api', async (req, res, next) => {
+    // Lista de rotas públicas (caminhos relativos a /api)
+    const publicRoutes = ['/auth/login'];
+    
+    if (publicRoutes.includes(req.path)) {
+      return next();
+    }
+
+    const sessionId = req.headers['x-session-id'] as string;
+    
+    if (!sessionId) {
+      return res.status(401).json({ message: "Sessão não encontrada" });
+    }
+
+    const user = await getUserFromSession(sessionId);
+    if (!user) {
+      return res.status(401).json({ message: "Não autenticado" });
+    }
+
+    (req as any).user = user;
+    next();
+  });
+
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {

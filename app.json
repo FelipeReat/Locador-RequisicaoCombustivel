@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "e986fda6-818d-47cc-8106-edad21141900"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.felipereat22.fuelrequest",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

@@ -903,16 +903,20 @@ export class PDFGenerator {
     const start = checklist.inspectionStart ? safeParseJSON(checklist.inspectionStart) : {};
     this.renderInspectionBlock(start);
 
-    // Assinaturas Saída (Fixo no rodapé)
-    this.currentY = 260;
+    // Assinaturas Saída (Fixo no rodapé ou após conteúdo)
+    // Garante que não sobrescreva o conteúdo se ele for longo
+    this.currentY = Math.max(this.currentY + 5, 230);
+    
     this.doc.setLineWidth(0.5);
     this.doc.line(20, this.currentY, 90, this.currentY);
     this.doc.line(110, this.currentY, 180, this.currentY);
     this.doc.setFontSize(8);
     
     const driverName = user?.fullName || user?.username || 'Motorista / Responsável';
-    this.doc.text(driverName, 35, this.currentY + 5);
-    this.doc.text('Visto do Conferente', 125, this.currentY + 5);
+    // Centraliza o nome do motorista (centro em 55)
+    this.doc.text(driverName, 55, this.currentY + 5, { align: 'center' });
+    // Centraliza o visto do conferente (centro em 145)
+    this.doc.text('Visto do Conferente', 145, this.currentY + 5, { align: 'center' });
     
     this.addFooter();
 
@@ -993,14 +997,32 @@ export class PDFGenerator {
       }
     }
 
-    // Assinaturas Retorno (Fixo no rodapé)
-    this.currentY = 260;
+    // Assinaturas Retorno (Fixo no rodapé ou após conteúdo)
+    // Garante que não sobrescreva o conteúdo se ele for longo
+    this.currentY = Math.max(this.currentY + 5, 230);
+
     this.doc.setLineWidth(0.5);
     this.doc.line(20, this.currentY, 90, this.currentY);
     this.doc.line(110, this.currentY, 180, this.currentY);
     this.doc.setFontSize(8);
-    this.doc.text(driverName, 35, this.currentY + 5);
-    this.doc.text('Visto do Conferente', 125, this.currentY + 5);
+    // Centraliza o nome do motorista (centro em 55)
+    this.doc.text(driverName, 55, this.currentY + 5, { align: 'center' });
+
+    // Se houver conferente aprovado, usa o nome dele, caso contrário usa o texto padrão
+    const conferenteName = end?.approvedByName ? String(end.approvedByName).toUpperCase() : 'Visto do Conferente';
+    
+    // Se o nome for muito longo, reduz o tamanho da fonte
+    if (conferenteName.length > 25) {
+      this.doc.setFontSize(6);
+    } else {
+      this.doc.setFontSize(8);
+    }
+    
+    // Centraliza o texto na linha da direita (centro em 145)
+    this.doc.text(conferenteName, 145, this.currentY + 5, { align: 'center' });
+    
+    // Restaura tamanho da fonte
+    this.doc.setFontSize(8);
 
     this.addFooter();
   }
@@ -1031,7 +1053,7 @@ export class PDFGenerator {
       this.doc.setFont('helvetica', 'bold');
       this.doc.setFontSize(9);
       this.doc.text(g.label, 20, this.currentY);
-      this.currentY += 5;
+      this.currentY += 4; // Reduzido de 5
       
       this.doc.setFont('helvetica', 'normal');
       this.doc.setFontSize(8);
@@ -1049,17 +1071,17 @@ export class PDFGenerator {
 
         if (col === 1) {
           col = 0;
-          this.currentY += 4;
+          this.currentY += 3.5; // Reduzido de 4
         } else {
           col = 1;
           // Se for o último item impar, avança linha também
           if (i === groupItems.length - 1) {
-            this.currentY += 4;
+            this.currentY += 3.5; // Reduzido de 4
           }
         }
       }
       // Pequeno espaço após o grupo
-      this.currentY += 2;
+      this.currentY += 1; // Reduzido de 2
     });
     
     const notesLine = `Observações: ${vals?.notes || '-'}`;

@@ -1,5 +1,6 @@
 import { eq, desc, sql, and, gte, lte } from 'drizzle-orm';
 import { db } from './db';
+import bcrypt from 'bcryptjs';
 import { 
   users, 
   fuelRequisitions, 
@@ -160,8 +161,10 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const now = new Date().toISOString();
+    const hashedPassword = await bcrypt.hash(user.password, 10);
     const result = await db.insert(users).values({
       ...user,
+      password: hashedPassword,
       createdAt: now,
       updatedAt: now,
     }).returning();
@@ -179,9 +182,15 @@ export class DatabaseStorage implements IStorage {
     // Buscar valores antigos antes da atualização
     const oldUser = await this.getUser(id);
     
+    let passwordUpdates = {};
+    if (updates.password) {
+      passwordUpdates = { password: await bcrypt.hash(updates.password, 10) };
+    }
+
     const result = await db.update(users)
       .set({
         ...updates,
+        ...passwordUpdates,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, id))
@@ -238,13 +247,20 @@ export class DatabaseStorage implements IStorage {
 
   async changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean> {
     const user = await this.getUser(id);
-    if (!user || user.password !== currentPassword) {
+    if (!user) {
       return false;
     }
 
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return false;
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
     const result = await db.update(users)
       .set({
-        password: newPassword,
+        password: hashedNewPassword,
         updatedAt: new Date().toISOString(),
       })
       .where(eq(users.id, id));
@@ -252,8 +268,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async resetAllPasswords(newPassword: string, excludeUsernames?: string[]): Promise<number> {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     let query = db.update(users).set({
-      password: newPassword,
+      password: hashedPassword,
       updatedAt: new Date().toISOString(),
     });
 
@@ -278,7 +295,22 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Usuário não encontrado');
     }
 
-    if (user.password !== credentials.password) {
+    // Check if password is plain text (legacy migration)
+    if (!user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')) {
+      if (user.password === credentials.password) {
+        // Migration: encrypt password
+        const hashedPassword = await bcrypt.hash(credentials.password, 10);
+        await this.updateUser(user.id, { password: hashedPassword });
+        
+        if (user.active !== 'true') {
+          throw new Error('Usuário inativo');
+        }
+        return { ...user, password: '' };
+      }
+    }
+
+    const isValid = await bcrypt.compare(credentials.password, user.password);
+    if (!isValid) {
       throw new Error('Senha incorreta');
     }
 
