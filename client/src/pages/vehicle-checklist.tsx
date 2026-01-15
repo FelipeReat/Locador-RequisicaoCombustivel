@@ -146,7 +146,10 @@ export default function VehicleChecklistPage() {
   const { data: analytics } = useQuery<Analytics>({ queryKey: ["/api/checklists/stats/analytics"] });
   const { data: companies = [] } = useQuery<Company[]>({ queryKey: ["/api/companies"] });
   const { data: users = [] } = useQuery<any[]>({ queryKey: ["/api/users"] });
-  const { data: favorites = [] } = useQuery<number[]>({ queryKey: ["/api/user/favorites"] });
+  const { data: favorites = [] } = useQuery<number[]>({
+    queryKey: ["/api/user/favorites", user?.id ?? 0],
+    enabled: !!user?.id,
+  });
 
   const toggleFavorite = useMutation({
     mutationFn: async (vehicleId: number) => {
@@ -154,7 +157,11 @@ export default function VehicleChecklistPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/favorites"] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/user/favorites", user.id] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/user/favorites"] });
+      }
     },
     onError: () => {
       toast({ title: "Erro", description: "Não foi possível atualizar favoritos.", variant: "destructive" });

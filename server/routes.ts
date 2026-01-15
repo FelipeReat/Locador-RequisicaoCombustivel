@@ -1,30 +1,51 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { createHmac, timingSafeEqual } from "crypto";
 import { DatabaseStorage } from "./db-storage";
 import { MemStorage } from "./storage";
 import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema, insertFuelRecordSchema } from "@shared/schema";
 
-// Use database storage for production
 const storage = new DatabaseStorage();
 
-// Session management
-const userSessions = new Map<string, { userId: number; timestamp: number }>();
+const SESSION_SECRET = process.env.SESSION_SECRET || "development-session-secret";
 
-const generateSessionId = () => {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+const createSessionToken = (userId: number): string => {
+  const issuedAt = Date.now();
+  const payload = `${userId}:${issuedAt}`;
+  const signature = createHmac("sha256", SESSION_SECRET).update(payload).digest("hex");
+  return `${payload}:${signature}`;
+};
+
+const parseSessionToken = (token: string): { userId: number; issuedAt: number } | null => {
+  const parts = token.split(":");
+  if (parts.length !== 3) return null;
+
+  const [userIdStr, issuedAtStr, signature] = parts;
+  if (!userIdStr || !issuedAtStr || !signature) return null;
+
+  const payload = `${userIdStr}:${issuedAtStr}`;
+  const expectedSignature = createHmac("sha256", SESSION_SECRET).update(payload).digest("hex");
+
+  const expectedBuffer = Buffer.from(expectedSignature, "hex");
+  const receivedBuffer = Buffer.from(signature, "hex");
+
+  if (expectedBuffer.length !== receivedBuffer.length) return null;
+  if (!timingSafeEqual(expectedBuffer, receivedBuffer)) return null;
+
+  const userId = Number(userIdStr);
+  const issuedAt = Number(issuedAtStr);
+  if (!Number.isFinite(userId) || !Number.isFinite(issuedAt)) return null;
+
+  const maxAgeMs = 24 * 60 * 60 * 1000;
+  if (Date.now() - issuedAt > maxAgeMs) return null;
+
+  return { userId, issuedAt };
 };
 
 const getUserFromSession = async (sessionId: string) => {
-  const session = userSessions.get(sessionId);
-  if (!session) return null;
-
-  // Clean up expired sessions (24 hours)
-  if (Date.now() - session.timestamp > 24 * 60 * 60 * 1000) {
-    userSessions.delete(sessionId);
-    return null;
-  }
-
-  return await storage.getUser(session.userId);
+  const parsed = parseSessionToken(sessionId);
+  if (!parsed) return null;
+  return await storage.getUser(parsed.userId);
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -68,13 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
 
-      // Create session for authenticated user
-      const sessionId = generateSessionId();
-      userSessions.set(sessionId, {
-        userId: user.id,
-        timestamp: Date.now()
-      });
-
+      const sessionId = createSessionToken(user.id);
       res.json({ ...user, sessionId });
     } catch (error) {
       if (error instanceof Error) {
@@ -120,10 +135,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/logout", async (req, res) => {
     try {
-      const sessionId = req.headers['x-session-id'] as string;
-      if (sessionId) {
-        userSessions.delete(sessionId);
-      }
       storage.logoutCurrentUser();
       res.json({ message: "Logout realizado com sucesso" });
     } catch (error) {
