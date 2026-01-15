@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { type FuelRequisition } from "@shared/schema";
+import { type FuelRequisition, type Vehicle } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -46,14 +46,8 @@ export default function RequisitionDetailsModal({
 
 
   // Fetch vehicle details for this requisition
-  const { data: vehicleDetails } = useQuery({
+  const { data: vehicleDetails } = useQuery<Vehicle>({
     queryKey: ["/api/vehicles", requisition?.vehicleId],
-    queryFn: async () => {
-      if (!requisition?.vehicleId) return null;
-      const response = await fetch(`/api/vehicles/${requisition.vehicleId}`);
-      if (!response.ok) return null;
-      return response.json();
-    },
     enabled: !!requisition?.vehicleId,
   });
 
@@ -135,20 +129,7 @@ export default function RequisitionDetailsModal({
   // Mutation para desfazer a requisição
   const undoRequisition = useMutation({
     mutationFn: async (id: number) => {
-      const sessionId = localStorage.getItem('session-id');
-      const response = await fetch(`/api/fuel-requisitions/${id}/undo`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session-id": sessionId || "",
-        }
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao desfazer requisição");
-      }
-
+      const response = await apiRequest("PATCH", `/api/fuel-requisitions/${id}/undo`);
       return response.json();
     },
     onSuccess: () => {
@@ -285,40 +266,35 @@ export default function RequisitionDetailsModal({
       // Aguarda um breve momento para o cache ser invalidado
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Buscar dados do fornecedor, veículo e usuário responsável com dados atualizados
-      const supplierResponse = await fetch(`/api/suppliers/${requisition?.supplierId}`, {
-        cache: 'no-cache', // Força busca sem cache
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-      const vehicleResponse = await fetch(`/api/vehicles/${requisition?.vehicleId}`, {
-        cache: 'no-cache',
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-      const userResponse = await fetch(`/api/users/${requisition?.requesterId}`, {
-        cache: 'no-cache',
-        headers: { 'Cache-Control': 'no-cache' }
-      });
+      // Buscar dados atualizados usando apiRequest que gerencia autenticação automaticamente
+      // Adicionamos timestamp para evitar cache do navegador
+      const ts = Date.now();
+      
+      const [supplierResponse, vehicleResponse, userResponse, companiesResponse] = await Promise.all([
+        apiRequest("GET", `/api/suppliers/${requisition?.supplierId}?_=${ts}`),
+        apiRequest("GET", `/api/vehicles/${requisition?.vehicleId}?_=${ts}`),
+        apiRequest("GET", `/api/users/${requisition?.requesterId}?_=${ts}`),
+        apiRequest("GET", `/api/companies?_=${ts}`)
+      ]);
 
-      // Buscar dados da empresa baseado no cliente da requisição
-      const companiesResponse = await fetch(`/api/companies`, {
-        cache: 'no-cache',
-        headers: { 'Cache-Control': 'no-cache' }
-      });
-
-      const supplier = supplierResponse.ok ? await supplierResponse.json() : null;
-      const vehicle = vehicleResponse.ok ? await vehicleResponse.json() : null;
-      const requesterUser = userResponse.ok ? await userResponse.json() : null;
+      const supplier = await supplierResponse.json();
+      const vehicle = await vehicleResponse.json();
+      const requesterUser = await userResponse.json();
+      // Buscar empresa baseado no cliente da requisição
+      const companiesData = await companiesResponse.json();
 
       // Buscar empresa específica baseada no nome do cliente
-      let company = null;
-      if (companiesResponse.ok) {
-        const companies = await companiesResponse.json();
-        company = companies.find((comp: any) =>
-          comp.name === requisition?.client ||
-          comp.fullName === requisition?.client ||
-          comp.name.includes(requisition?.client) ||
-          requisition?.client.includes(comp.name)
-        );
+      // Se não encontrar pelo nome exato, tenta encontrar por correspondência parcial
+      let company = companiesData.find((c: any) => 
+        c.name === requisition?.client ||
+        c.fullName === requisition?.client ||
+        (requisition?.client && c.name.includes(requisition?.client)) ||
+        (requisition?.client && requisition.client.includes(c.name))
+      );
+      
+      if (!company && companiesData.length > 0) {
+        // Tenta achar uma empresa padrão ou usa a primeira
+        company = companiesData[0];
       }
 
       console.log('Dados para o PDF:', { requisition, supplier, vehicle, requesterUser, company });
@@ -406,32 +382,17 @@ export default function RequisitionDetailsModal({
 
   // Fetch suppliers
   const { data: suppliers } = useQuery<any[]>({
-    queryKey: ["suppliers"],
-    queryFn: async () => {
-      const response = await fetch("/api/suppliers");
-      if (!response.ok) throw new Error("Failed to fetch suppliers");
-      return response.json();
-    },
+    queryKey: ["/api/suppliers"],
   });
 
   // Fetch vehicles
   const { data: vehicles } = useQuery<any[]>({
-    queryKey: ["vehicles"],
-    queryFn: async () => {
-      const response = await fetch("/api/vehicles");
-      if (!response.ok) throw new Error("Failed to fetch vehicles");
-      return response.json();
-    },
+    queryKey: ["/api/vehicles"],
   });
 
   // Fetch users
   const { data: users } = useQuery<any[]>({
-    queryKey: ["users"],
-    queryFn: async () => {
-      const response = await fetch("/api/users");
-      if (!response.ok) throw new Error("Failed to fetch users");
-      return response.json();
-    },
+    queryKey: ["/api/users"],
   });
 
   // Impedir que funcionários vejam detalhes de requisições que não são suas

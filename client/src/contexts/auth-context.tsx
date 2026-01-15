@@ -118,16 +118,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('Logout function called', reason ? `(${reason})` : '');
     try {
       // Call the logout endpoint to clear server-side session
-      const sessionId = localStorage.getItem('session-id');
-      if (sessionId) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-session-id': sessionId,
-          },
-        });
-      }
+      // apiRequest will automatically attach the session-id from localStorage
+      await apiRequest('POST', '/api/auth/logout');
     } catch (error) {
       console.error('Logout API error:', error);
     }

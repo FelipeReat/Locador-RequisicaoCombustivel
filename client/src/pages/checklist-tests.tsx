@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/language-context";
+import { apiRequest } from "@/lib/queryClient";
 
 type TestResult = { name: string; status: 'passed' | 'failed'; details?: string };
 
@@ -27,23 +28,28 @@ export default function ChecklistTests() {
       r.push({ name: 'Unit: fuel level mapping', status: mapFuel['three_quarters'] === '3/4' ? 'passed' : 'failed' });
 
       // Integration test: create exit and return on first active vehicle
-      const vehicles = await (await fetch('/api/vehicles')).json();
+      const vehiclesRes = await apiRequest("GET", "/api/vehicles");
+      const vehicles = await vehiclesRes.json();
       const active = vehicles.find((v: any) => v.status === 'active');
       if (active) {
-        const exit = await fetch('/api/checklists/exit', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vehicleId: active.id, userId: 1, kmInitial: 10000, fuelLevelStart: 'half', startDate: new Date().toISOString() })
+        const exitRes = await apiRequest("POST", "/api/checklists/exit", {
+          vehicleId: active.id,
+          userId: 1,
+          kmInitial: 10000,
+          fuelLevelStart: 'half',
+          startDate: new Date().toISOString(),
         });
-        const exitOk = exit.ok;
+        const exitOk = exitRes.ok;
         r.push({ name: 'Integration: create exit', status: exitOk ? 'passed' : 'failed' });
 
-        const created = exitOk ? await exit.json() : null;
+        const created = exitOk ? await exitRes.json() : null;
         if (created) {
-          const ret = await fetch(`/api/checklists/return/${created.id}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ kmFinal: 10050, fuelLevelEnd: 'quarter', endDate: new Date().toISOString() })
+          const retRes = await apiRequest("POST", `/api/checklists/return/${created.id}`, {
+            kmFinal: 10050,
+            fuelLevelEnd: 'quarter',
+            endDate: new Date().toISOString(),
           });
-          r.push({ name: 'Integration: close return', status: ret.ok ? 'passed' : 'failed' });
+          r.push({ name: 'Integration: close return', status: retRes.ok ? 'passed' : 'failed' });
         }
       } else {
         r.push({ name: 'Integration: active vehicle available', status: 'failed', details: 'No active vehicle found' });
@@ -54,7 +60,8 @@ export default function ChecklistTests() {
 
       // Performance: analytics fetch duration
       const start = performance.now();
-      await fetch('/api/checklists/stats/analytics').then(res => res.json());
+      const analyticsRes = await apiRequest("GET", "/api/checklists/stats/analytics");
+      await analyticsRes.json();
       const duration = performance.now() - start;
       r.push({ name: `Performance: analytics in ${Math.round(duration)}ms`, status: 'passed' });
     } catch (e: any) {

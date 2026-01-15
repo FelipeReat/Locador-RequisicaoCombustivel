@@ -28,11 +28,6 @@ export default function NewRequisition() {
   // Fetch requisition data if editing
   const { data: editingRequisition, isLoading: isLoadingRequisition } = useQuery<FuelRequisition>({
     queryKey: ["/api/fuel-requisitions", editingRequisitionId],
-    queryFn: async () => {
-      const response = await fetch(`/api/fuel-requisitions/${editingRequisitionId}`);
-      if (!response.ok) throw new Error("Failed to fetch requisition");
-      return response.json();
-    },
     enabled: !!editingRequisitionId,
   });
 

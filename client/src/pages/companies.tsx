@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,8 +34,7 @@ export default function Companies() {
   const { data: companiesData = [], isLoading } = useQuery<Company[]>({
     queryKey: ["companies"],
     queryFn: async () => {
-      const response = await fetch("/api/companies");
-      if (!response.ok) throw new Error("Failed to fetch companies");
+      const response = await apiRequest("GET", "/api/companies");
       return response.json();
     },
   });
@@ -44,12 +44,7 @@ export default function Companies() {
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCompany) => {
-      const response = await fetch("/api/companies", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create company");
+      const response = await apiRequest("POST", "/api/companies", data);
       return response.json();
     },
     onSuccess: () => {
@@ -76,12 +71,7 @@ export default function Companies() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertCompany> }) => {
-      const response = await fetch(`/api/companies/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to update company");
+      const response = await apiRequest("PUT", `/api/companies/${id}`, data);
       return response.json();
     },
     onSuccess: () => {
@@ -108,10 +98,7 @@ export default function Companies() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/companies/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete company");
+      const response = await apiRequest("DELETE", `/api/companies/${id}`);
       return response.json();
     },
     onSuccess: () => {

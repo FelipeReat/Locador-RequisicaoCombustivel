@@ -1127,7 +1127,7 @@ export class DatabaseStorage implements IStorage {
         .from(userVehicleFavorites)
         .where(eq(userVehicleFavorites.userId, userId));
       
-      return favorites.map(f => f.vehicleId);
+      return favorites.map((f: { vehicleId: number }) => f.vehicleId);
     } catch (error) {
       console.error(`Error getting favorites for user ${userId}:`, error);
       return [];

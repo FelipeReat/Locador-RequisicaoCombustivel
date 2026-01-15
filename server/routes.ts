@@ -37,7 +37,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return next();
     }
 
-    const sessionId = req.headers['x-session-id'] as string;
+    let sessionId = req.headers['x-session-id'] as string;
+    
+    // Fallback para query param para facilitar testes no navegador
+    if (!sessionId && req.query.sessionId) {
+      sessionId = req.query.sessionId as string;
+      req.headers['x-session-id'] = sessionId; // Propaga para as rotas
+    }
     
     if (!sessionId) {
       return res.status(401).json({ message: "Sessão não encontrada" });
@@ -641,6 +647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Erro ao redefinir senhas" });
     }
   });
+
+
 
   // User management routes (cached)
   app.get("/api/users", async (req, res) => {

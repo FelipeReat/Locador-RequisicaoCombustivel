@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Plus, Search, Filter, Download, Clock, AlertTriangle, BarChart3, Calendar, Car, Fuel, Calculator, Trash } from 'lucide-react';
 import { insertFuelRecordSchema, type InsertFuelRecord, type FuelRecord, type Vehicle, type User, type Company } from '@shared/schema';
 import { useToast } from '../hooks/use-toast';
-
+import { apiRequest } from "@/lib/queryClient";
 interface VehicleCheckIn {
   vehicleId: number;
   kmInicial: string;
@@ -87,21 +87,17 @@ export default function FuelTracking() {
   // Fetch monthly report
   const { data: monthlyReport = [], refetch: refetchMonthlyReport } = useQuery<MonthlyReport[]>({
     queryKey: ['/api/fuel-records/reports/monthly', selectedYear, selectedMonth],
-    queryFn: () => 
-      fetch(`/api/fuel-records/reports/monthly?year=${selectedYear}&month=${selectedMonth}`)
-        .then(res => res.json()),
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/fuel-records/reports/monthly?year=${selectedYear}&month=${selectedMonth}`);
+      return response.json();
+    },
     enabled: false,
   });
 
   // Create fuel record mutation
   const createFuelRecordMutation = useMutation({
     mutationFn: async (data: InsertFuelRecord) => {
-      const response = await fetch('/api/fuel-records', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to create fuel record');
+      const response = await apiRequest('POST', '/api/fuel-records', data);
       return response.json();
     },
     onSuccess: () => {
@@ -124,8 +120,7 @@ export default function FuelTracking() {
 
   const deleteFuelRecordMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/fuel-records/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete fuel record');
+      const response = await apiRequest('DELETE', `/api/fuel-records/${id}`);
       return response.json();
     },
     onSuccess: () => {

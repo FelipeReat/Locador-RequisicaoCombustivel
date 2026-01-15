@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,23 +31,13 @@ export default function Suppliers() {
     address: "",
   });
 
-  const { data: suppliers = [], isLoading } = useQuery({
+  const { data: suppliers = [], isLoading } = useQuery<Supplier[]>({
     queryKey: ["/api/suppliers"],
-    queryFn: async () => {
-      const response = await fetch("/api/suppliers");
-      if (!response.ok) throw new Error("Erro ao buscar fornecedores");
-      return response.json() as Promise<Supplier[]>;
-    },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertSupplier) => {
-      const response = await fetch("/api/suppliers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Erro ao criar fornecedor");
+      const response = await apiRequest("POST", "/api/suppliers", data);
       return response.json();
     },
     onSuccess: () => {
@@ -73,12 +64,7 @@ export default function Suppliers() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertSupplier> }) => {
-      const response = await fetch(`/api/suppliers/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Erro ao atualizar fornecedor");
+      const response = await apiRequest("PUT", `/api/suppliers/${id}`, data);
       return response.json();
     },
     onSuccess: () => {
@@ -106,10 +92,7 @@ export default function Suppliers() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/suppliers/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Erro ao excluir fornecedor");
+      const response = await apiRequest("DELETE", `/api/suppliers/${id}`);
       return response.json();
     },
     onSuccess: () => {

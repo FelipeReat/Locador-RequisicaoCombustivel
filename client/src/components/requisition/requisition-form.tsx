@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { InsertFuelRequisition, Supplier, Vehicle, User, Company } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 interface RequisitionFormProps {
   onSuccess?: () => void;
@@ -169,29 +170,17 @@ export default function RequisitionForm({ onSuccess, initialData, isEditing = fa
     mutationFn: async (data: InsertFuelRequisition) => {
       if (isEditing && editingId) {
         // Update existing requisition
-        const response = await fetch(`/api/fuel-requisitions/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+        const response = await apiRequest("PUT", `/api/fuel-requisitions/${editingId}`, data);
         if (!response.ok) throw new Error("Failed to update requisition");
         return response.json();
       } else {
         // Create new requisition
-        const response = await fetch("/api/fuel-requisitions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+        const response = await apiRequest("POST", "/api/fuel-requisitions", data);
         if (!response.ok) throw new Error("Failed to create requisition");
 
         // Update vehicle mileage after creating requisition
         if (data.vehicleId && data.kmAtual) {
-          await fetch(`/api/vehicles/${data.vehicleId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ mileage: data.kmAtual }),
-          });
+          await apiRequest("PUT", `/api/vehicles/${data.vehicleId}`, { mileage: data.kmAtual });
         }
 
         return response.json();

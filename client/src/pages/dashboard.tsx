@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -76,15 +77,7 @@ export default function Dashboard() {
   // Mutation para deletar requisição
   const deleteRequisition = useMutation({
     mutationFn: async (requisitionId: number) => {
-      const response = await fetch(`/api/fuel-requisitions/${requisitionId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao excluir requisição");
-      }
-
+      const response = await apiRequest("DELETE", `/api/fuel-requisitions/${requisitionId}`);
       return await response.json();
     },
     onSuccess: () => {
@@ -107,20 +100,7 @@ export default function Dashboard() {
   // Mutation to undo a fulfilled requisition (admin only)
   const undoRequisition = useMutation({
     mutationFn: async (requisitionId: number) => {
-      const sessionId = localStorage.getItem('session-id');
-      const response = await fetch(`/api/fuel-requisitions/${requisitionId}/undo`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session-id": sessionId || "",
-        }
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao desfazer requisição");
-      }
-
+      const response = await apiRequest("PATCH", `/api/fuel-requisitions/${requisitionId}/undo`);
       return await response.json();
     },
     onSuccess: () => {
@@ -145,23 +125,9 @@ export default function Dashboard() {
   // Mutation to confirm requisition (change from approved to fulfilled)
   const confirmRequisition = useMutation({
     mutationFn: async (requisitionId: number) => {
-      const sessionId = localStorage.getItem('session-id');
-      const response = await fetch(`/api/fuel-requisitions/${requisitionId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session-id": sessionId || "",
-        },
-        body: JSON.stringify({
-          status: "fulfilled"
-        })
+      const response = await apiRequest("PATCH", `/api/fuel-requisitions/${requisitionId}/status`, {
+        status: "fulfilled"
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao confirmar requisição");
-      }
-
       return await response.json();
     },
     // Atualização otimista

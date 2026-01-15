@@ -165,8 +165,7 @@ export default function VehicleChecklistPage() {
   const { data: savedObsConfig, isLoading: isLoadingConfig } = useQuery<ObsItem[] | null>({ 
     queryKey: ['/api/settings/obs_config'],
     queryFn: async () => {
-      const res = await fetch('/api/settings/obs_config');
-      if (!res.ok) throw new Error("Failed to fetch config");
+      const res = await apiRequest("GET", "/api/settings/obs_config");
       const data = await res.json();
       return Array.isArray(data) && data.length > 0 ? data : [];
     }
@@ -174,11 +173,7 @@ export default function VehicleChecklistPage() {
 
   const saveConfigMutation = useMutation({
     mutationFn: async (newConfig: ObsItem[]) => {
-      await fetch('/api/settings/obs_config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newConfig)
-      });
+      await apiRequest("POST", "/api/settings/obs_config", newConfig);
     },
     onSuccess: () => {
       toast({ title: "Observações salvas", description: "Configurações persistidas com sucesso." });
@@ -324,28 +319,7 @@ export default function VehicleChecklistPage() {
 
   const approveChecklist = useMutation({
     mutationFn: async ({ id, userId }: { id: number; userId: number }) => {
-      const sessionId = localStorage.getItem('session-id') || "";
-      const res = await fetch(`/api/checklists/${id}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-session-id": sessionId
-        },
-        body: JSON.stringify({ userId })
-      });
-      const ct = res.headers.get("content-type") || "";
-      if (!res.ok) {
-        if (ct.includes("application/json")) {
-          const payload = await res.json();
-          throw new Error(payload?.message || "Erro ao aprovar checklist");
-        } else {
-          const text = await res.text();
-          throw new Error(text || "Erro ao aprovar checklist");
-        }
-      }
-      if (!ct.includes("application/json")) {
-        throw new Error("Resposta inválida do servidor");
-      }
+      const res = await apiRequest("POST", `/api/checklists/${id}/approve`, { userId });
       return res.json();
     },
     onSuccess: (updated: VehicleChecklist) => {
