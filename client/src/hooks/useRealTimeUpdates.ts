@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 /**
@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
  */
 export function useRealTimeUpdates() {
   const queryClient = useQueryClient();
+  const lastRefreshRef = useRef(0);
 
   useEffect(() => {
     // Queries críticas que precisam de atualização frequente
@@ -17,8 +18,12 @@ export function useRealTimeUpdates() {
       '/api/dashboard'
     ];
 
-    // Função para revalidar queries críticas
     const revalidateCriticalData = () => {
+      const now = Date.now();
+      if (now - lastRefreshRef.current < 5000) {
+        return;
+      }
+      lastRefreshRef.current = now;
       criticalQueries.forEach(queryKey => {
         queryClient.invalidateQueries({ queryKey: [queryKey] });
       });
@@ -84,18 +89,15 @@ export function useSmartInvalidation() {
     const invalidationMap = {
       requisition: [
         '/api/fuel-requisitions',
-        '/api/fuel-requisitions/stats',
-        '/api/dashboard'
+        '/api/fuel-requisitions/stats/overview',
       ],
       vehicle: [
         '/api/vehicles',
         '/api/fuel-requisitions',
-        '/api/dashboard'
       ],
       user: [
         '/api/users',
         '/api/fuel-requisitions',
-        '/api/dashboard'
       ],
       supplier: [
         '/api/suppliers',
