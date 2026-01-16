@@ -298,9 +298,8 @@ export class DatabaseStorage implements IStorage {
     // Check if password is plain text (legacy migration)
     if (!user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')) {
       if (user.password === credentials.password) {
-        // Migration: encrypt password
-        const hashedPassword = await bcrypt.hash(credentials.password, 10);
-        await this.updateUser(user.id, { password: hashedPassword });
+        // Migration: encrypt password using updateUser which already handles hashing
+        await this.updateUser(user.id, { password: credentials.password });
         
         if (user.active !== 'true') {
           throw new Error('Usuário inativo');
