@@ -21,7 +21,7 @@ export async function apiRequest(
 
   // Adicionar header de sessão se disponível
   const sessionId = localStorage.getItem('session-id');
-  if (sessionId) {
+  if (sessionId && sessionId !== 'undefined' && sessionId !== 'null') {
     (config.headers as Record<string, string>)['x-session-id'] = sessionId;
   }
 
@@ -30,6 +30,13 @@ export async function apiRequest(
   }
 
   const response = await fetch(endpoint, config);
+
+  if (response.status === 401) {
+    localStorage.removeItem('session-id');
+    localStorage.removeItem('auth-user');
+    window.location.href = '/';
+    throw new Error('Sessão expirada');
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
@@ -54,7 +61,7 @@ export const getQueryFn: <T>(options: {
       headers['x-auth-token'] = 'authenticated';
     }
 
-    if (sessionId) {
+    if (sessionId && sessionId !== 'undefined' && sessionId !== 'null') {
       headers['x-session-id'] = sessionId;
     }
 
@@ -65,6 +72,13 @@ export const getQueryFn: <T>(options: {
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
+    }
+
+    if (res.status === 401) {
+      localStorage.removeItem('session-id');
+      localStorage.removeItem('auth-user');
+      window.location.href = '/';
+      throw new Error('Sessão expirada');
     }
 
     await throwIfResNotOk(res);

@@ -44,8 +44,15 @@ const parseSessionToken = (token: string): { userId: number; issuedAt: number } 
 
 const getUserFromSession = async (sessionId: string) => {
   const parsed = parseSessionToken(sessionId);
-  if (!parsed) return null;
-  return await storage.getUser(parsed.userId);
+  if (!parsed) {
+    console.log(`[Auth] Token inválido ou expirado: ${sessionId.substring(0, 20)}...`);
+    return null;
+  }
+  const user = await storage.getUser(parsed.userId);
+  if (!user) {
+    console.log(`[Auth] Usuário não encontrado para ID: ${parsed.userId}`);
+  }
+  return user;
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -114,16 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", async (req, res) => {
     try {
-      // Check for authentication header or session
-      const authHeader = req.headers.authorization;
-      const authToken = req.headers['x-auth-token'];
-
-      if (!authHeader && !authToken) {
-        return res.status(401).json({ message: "Não autenticado" });
-      }
-
-      // In a real implementation, you would validate the token/session
-      const user = await storage.getCurrentUser();
+      const user = (req as any).user;
       if (!user) {
         return res.status(401).json({ message: "Não autenticado" });
       }
@@ -639,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Password reset route (admin only)
   app.post("/api/admin/reset-passwords", async (req, res) => {
     try {
-      const currentUser = await storage.getCurrentUser();
+      const currentUser = (req as any).user;
       if (!currentUser || currentUser.role !== 'admin') {
         return res.status(403).json({ message: "Acesso negado - apenas administradores" });
       }
@@ -1405,7 +1403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Criar backup completo do sistema (admin apenas)
   app.post("/api/audit/backup-system", async (req, res) => {
     try {
-      const currentUser = await storage.getCurrentUser();
+      const currentUser = (req as any).user;
       if (!currentUser || currentUser.role !== 'admin') {
         return res.status(403).json({ message: "Acesso negado - apenas administradores" });
       }
