@@ -100,7 +100,7 @@ export default function Login() {
                     type="text"
                     placeholder="Digite seu usuário"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
                     className="pl-10 py-2.5 border-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     disabled={isLoading}
                   />
