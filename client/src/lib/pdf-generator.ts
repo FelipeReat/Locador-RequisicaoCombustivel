@@ -1063,11 +1063,21 @@ export class PDFGenerator {
         const item = groupItems[i];
         const value = vals?.[item.key];
         // Símbolo unicode check/cross pode não funcionar bem em fontes padrão do jsPDF, usando texto Sim/Não
-        const labelText = value === false ? 'Não' : (value ? 'Sim' : 'Sim');
+        const isNegative = value === false;
+        const labelText = isNegative ? 'Não' : (value ? 'Sim' : 'Sim');
         const text = `- ${item.label}: ${labelText}`;
         
         const xPos = 20 + (col * colWidth);
+        
+        if (isNegative) {
+          this.doc.setTextColor(220, 0, 0); // Vermelho para destacar itens negativos
+        }
+        
         this.doc.text(text, xPos, this.currentY);
+        
+        if (isNegative) {
+          this.doc.setTextColor(0, 0, 0); // Reset para preto
+        }
 
         if (col === 1) {
           col = 0;

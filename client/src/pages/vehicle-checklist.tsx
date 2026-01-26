@@ -962,7 +962,7 @@ export default function VehicleChecklistPage() {
                                         {(user?.role !== 'driver') && !end?.approvedByUserId && (
                                           <DropdownMenuItem onClick={() => user && approveChecklist.mutate({ id: c.id, userId: user.id })}>
                                             <Check className="mr-2 h-4 w-4" />
-                                            <span>Aprovar</span>
+                                            <span>Conferido</span>
                                           </DropdownMenuItem>
                                         )}
                                         <DropdownMenuItem onClick={() => setExpandedClosedId(isExpanded ? null : c.id)}>
