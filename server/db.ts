@@ -44,13 +44,23 @@ if (isNeon) {
     },
   });
 } else {
-  console.log(`Initializing Postgres client with SSL: ${needsSSL ? 'Enabled (Accept Self-Signed)' : 'Disabled'}`);
-  const client = new pg.Client({ 
+  console.log(`Initializing Postgres pool with SSL: ${needsSSL ? 'Enabled (Accept Self-Signed)' : 'Disabled'}`);
+  const pool = new pg.Pool({ 
     connectionString, 
-    ssl: needsSSL ? { rejectUnauthorized: false } : false 
+    ssl: needsSSL ? { rejectUnauthorized: false } : false,
+    max: 20, // Set maximum number of clients in the pool
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
   });
-  void client.connect();
-  db = drizzlePg(client, {
+
+  // Add error handler to prevent crashing on unexpected connection issues
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err);
+    // Don't exit the process, just log the error. 
+    // The pool will try to create new clients when needed.
+  });
+
+  db = drizzlePg(pool, {
     schema: {
       users,
       vehicles,
