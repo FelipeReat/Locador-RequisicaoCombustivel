@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
-import { insertVehicleSchema, type Vehicle, type InsertVehicle, type Company } from "@shared/schema";
+import { insertVehicleSchema, type Vehicle, type InsertVehicle, type Company, type VehicleType } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
@@ -22,6 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Form,
   FormControl,
   FormField,
@@ -38,7 +46,9 @@ import {
   Calendar,
   Gauge,
   RotateCcw,
-  Trash2
+  Trash2,
+  List,
+  LayoutGrid
 } from "lucide-react";
 import { MileageResetDialog } from "@/components/mileage-reset-dialog";
 import { Redirect, useLocation } from "wouter";
@@ -56,6 +66,16 @@ function FleetManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { settings: systemSettings } = useSystemSettings();
+  
+  // View mode state
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    return (localStorage.getItem("fleet-view-mode") as "grid" | "list") || "grid";
+  });
+
+  // Update localStorage when viewMode changes
+  useEffect(() => {
+    localStorage.setItem("fleet-view-mode", viewMode);
+  }, [viewMode]);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -91,6 +111,11 @@ function FleetManagement() {
   // Fetch companies for vehicle association
   const { data: companies } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
+  });
+
+  // Fetch vehicle types
+  const { data: vehicleTypes } = useQuery<VehicleType[]>({
+    queryKey: ["/api/vehicle-types"],
   });
 
   const form = useForm<InsertVehicle>({
@@ -244,6 +269,7 @@ function FleetManagement() {
       fuelType: vehicle.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10" | "flex",
       mileage: vehicle.mileage || "0",
       companyId: vehicle.companyId ?? null, // Use null if companyId is undefined or null
+      vehicleTypeId: vehicle.vehicleTypeId ?? null,
     });
     setIsDialogOpen(true);
   };
@@ -259,6 +285,7 @@ function FleetManagement() {
       fuelType: "gasolina",
       mileage: "0",
       companyId: null,
+      vehicleTypeId: null,
     });
     setIsDialogOpen(true);
   };
@@ -348,15 +375,48 @@ function FleetManagement() {
                   className="pl-10 w-full sm:w-64"
                 />
               </div>
+
+              <div className="flex items-center bg-muted p-1 rounded-md border">
+                <Button
+                  variant={viewMode === "grid" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setViewMode("grid")}
+                  title="Visualização em Grade"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setViewMode("list")}
+                  title="Visualização em Lista"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={handleNew} className="w-full sm:w-auto">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t('new-vehicle')}
+            <div className="flex flex-col sm:flex-row gap-2">
+              {isAdminOrManager && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/vehicle-types")}
+                  className="w-full sm:w-auto"
+                >
+                  <Car className="mr-2 h-4 w-4" />
+                  Tipos de Veículos
                 </Button>
-              </DialogTrigger>
+              )}
+
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={handleNew} className="w-full sm:w-auto">
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('new-vehicle')}
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>
@@ -393,6 +453,37 @@ function FleetManagement() {
                             <FormControl>
                               <Input type="number" min="1900" max={new Date().getFullYear() + 1} {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                             </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="vehicleTypeId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tipo de Veículo</FormLabel>
+                            <Select 
+                              onValueChange={(value) => field.onChange(value === "null" ? null : Number(value))} 
+                              value={field.value === null || field.value === undefined ? "null" : field.value.toString()}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um tipo" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="null">Selecione um tipo</SelectItem>
+                                {vehicleTypes?.filter(t => t.active).map((type) => (
+                                  <SelectItem key={type.id} value={type.id.toString()}>
+                                    {type.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -513,6 +604,7 @@ function FleetManagement() {
                 </Form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           {/* Vehicles Statistics */}
@@ -603,113 +695,179 @@ function FleetManagement() {
             </div>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {paginatedVehicles.map((vehicle) => (
-              <Card key={vehicle.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center ring-2 ring-primary/20">
-                      <Car className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
-                      <Select
-                        value={vehicle.status}
-                        onValueChange={(status) => toggleVehicleStatus.mutate({ id: vehicle.id, status })}
-                      >
-                        <SelectTrigger className="w-full sm:w-32 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">✓ {t('active')}</SelectItem>
-                          <SelectItem value="maintenance">⚠️ {t('maintenance')}</SelectItem>
-                          <SelectItem value="inactive">✗ {t('inactive')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="flex space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(vehicle)}
-                          className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
-                          title="Editar veículo"
+          {viewMode === "grid" ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {paginatedVehicles.map((vehicle) => (
+                <Card key={vehicle.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center ring-2 ring-primary/20">
+                        <Car className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+                        <Select
+                          value={vehicle.status}
+                          onValueChange={(status) => toggleVehicleStatus.mutate({ id: vehicle.id, status })}
                         >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteVehicle.mutate(vehicle.id)}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100"
-                          title="Excluir veículo"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <SelectTrigger className="w-full sm:w-32 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">✓ {t('active')}</SelectItem>
+                            <SelectItem value="maintenance">⚠️ {t('maintenance')}</SelectItem>
+                            <SelectItem value="inactive">✗ {t('inactive')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(vehicle)}
+                            className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                            title="Editar veículo"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteVehicle.mutate(vehicle.id)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100"
+                            title="Excluir veículo"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
-                    {vehicle.plate}
-                  </CardTitle>
-                  <CardDescription className="text-sm text-gray-600 dark:text-gray-300 font-medium">
-                    {vehicle.brand} {vehicle.model} ({vehicle.year})
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
-                      <div className="flex items-center space-x-2">
-                        <Fuel className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {t('fuel')}:
-                        </span>
-                      </div>
-                      <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                        {getFuelTypeLabel(vehicle.fuelType)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
-                      <div className="flex items-center space-x-2">
-                        <Gauge className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          KM:
-                        </span>
-                      </div>
-                      <span className="text-sm text-gray-900 dark:text-gray-100 font-mono">
-                        {vehicle.mileage ? parseFloat(vehicle.mileage).toLocaleString("pt-BR") : "0"}
-                      </span>
-                    </div>
-
-                    {vehicle.lastMaintenance && (
+                    <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+                      {vehicle.plate}
+                    </CardTitle>
+                    <CardDescription className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                      {vehicle.brand} {vehicle.model} ({vehicle.year})
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
                         <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-gray-500" />
+                          <Fuel className="h-4 w-4 text-gray-500" />
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Última manutenção:
+                            {t('fuel')}:
                           </span>
                         </div>
-                        <span className="text-sm text-gray-900 dark:text-gray-100">
-                          {new Date(vehicle.lastMaintenance).toLocaleDateString("pt-BR")}
+                        <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                          {getFuelTypeLabel(vehicle.fuelType)}
                         </span>
                       </div>
-                    )}
-                  </div>
 
-                  <div className="flex items-center justify-center pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <Badge 
-                      variant={getStatusBadgeVariant(vehicle.status)}
-                      className="px-3 py-1 text-xs font-medium"
-                    >
-                      {vehicle.status === 'active' && '✓'} 
-                      {vehicle.status === 'maintenance' && '⚠️'} 
-                      {vehicle.status === 'inactive' && '✗'} 
-                      {' '}{getStatusLabel(vehicle.status)}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                        <div className="flex items-center space-x-2">
+                          <Gauge className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            KM:
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-gray-100 font-mono">
+                          {vehicle.mileage ? parseFloat(vehicle.mileage).toLocaleString("pt-BR") : "0"}
+                        </span>
+                      </div>
+
+                      {vehicle.lastMaintenance && (
+                        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Última manutenção:
+                            </span>
+                          </div>
+                          <span className="text-sm text-gray-900 dark:text-gray-100">
+                            {new Date(vehicle.lastMaintenance).toLocaleDateString("pt-BR")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-center pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <Badge 
+                        variant={getStatusBadgeVariant(vehicle.status)}
+                        className="px-3 py-1 text-xs font-medium"
+                      >
+                        {vehicle.status === 'active' && '✓'} 
+                        {vehicle.status === 'maintenance' && '⚠️'} 
+                        {vehicle.status === 'inactive' && '✗'} 
+                        {' '}{getStatusLabel(vehicle.status)}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-md border bg-white dark:bg-gray-900 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('plate')}</TableHead>
+                    <TableHead>{t('model')}</TableHead>
+                    <TableHead>{t('brand')}</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>KM</TableHead>
+                    <TableHead>{t('fuel')}</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedVehicles.map((vehicle) => (
+                    <TableRow key={vehicle.id}>
+                      <TableCell className="font-medium">{vehicle.plate}</TableCell>
+                      <TableCell>{vehicle.model}</TableCell>
+                      <TableCell>{vehicle.brand}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={vehicle.status}
+                          onValueChange={(status) => toggleVehicleStatus.mutate({ id: vehicle.id, status })}
+                        >
+                          <SelectTrigger className="w-32 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">✓ {t('active')}</SelectItem>
+                            <SelectItem value="maintenance">⚠️ {t('maintenance')}</SelectItem>
+                            <SelectItem value="inactive">✗ {t('inactive')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>{vehicle.mileage ? parseFloat(vehicle.mileage).toLocaleString("pt-BR") : "0"}</TableCell>
+                      <TableCell>{getFuelTypeLabel(vehicle.fuelType)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(vehicle)}
+                            className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                            title="Editar veículo"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteVehicle.mutate(vehicle.id)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100"
+                            title="Excluir veículo"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
           {filteredVehicles.length === 0 && (
             <Card>

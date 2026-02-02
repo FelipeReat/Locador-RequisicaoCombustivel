@@ -13,6 +13,7 @@ import {
   auditLog,
   dataBackups,
   userVehicleFavorites,
+  vehicleTypes,
   type User, 
   type InsertUser, 
   type UpdateUserProfile, 
@@ -31,7 +32,9 @@ import {
   type FuelRecord,
   type InsertFuelRecord,
   type AuditLog,
-  type DataBackup
+  type DataBackup,
+  type VehicleType,
+  type InsertVehicleType
 } from '@shared/schema';
 import { IStorage, type VehicleChecklist, type FuelLevel } from './storage';
 
@@ -524,8 +527,71 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteVehicle(id: number): Promise<boolean> {
-    const result = await db.delete(vehicles).where(eq(vehicles.id, id));
-    return result.rowCount > 0;
+    const [deleted] = await db.delete(vehicles).where(eq(vehicles.id, id)).returning();
+    
+    if (deleted) {
+      await this.logAudit('vehicles', String(id), 'DELETE', deleted);
+    }
+    
+    return !!deleted;
+  }
+
+  // Vehicle Types
+  async getVehicleTypes(): Promise<VehicleType[]> {
+    return await db.select().from(vehicleTypes).orderBy(desc(vehicleTypes.updatedAt));
+  }
+
+  async getVehicleType(id: number): Promise<VehicleType | undefined> {
+    const [vehicleType] = await db.select().from(vehicleTypes).where(eq(vehicleTypes.id, id));
+    return vehicleType;
+  }
+
+  async createVehicleType(vehicleType: InsertVehicleType): Promise<VehicleType> {
+    const [newVehicleType] = await db.insert(vehicleTypes).values(vehicleType).returning();
+    await this.logAudit('vehicle_types', String(newVehicleType.id), 'CREATE', null, newVehicleType);
+    return newVehicleType;
+  }
+
+  async updateVehicleType(id: number, updates: Partial<InsertVehicleType>): Promise<VehicleType | undefined> {
+    const [current] = await db.select().from(vehicleTypes).where(eq(vehicleTypes.id, id));
+    if (!current) return undefined;
+
+    const [updated] = await db
+      .update(vehicleTypes)
+      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .where(eq(vehicleTypes.id, id))
+      .returning();
+
+    if (updated) {
+      await this.logAudit('vehicle_types', String(id), 'UPDATE', current, updated);
+    }
+    return updated;
+  }
+
+  async deleteVehicleType(id: number): Promise<boolean> {
+    // Check constraints before deleting if needed, but for logical delete (active=false) we use toggle
+    // This method is for hard delete
+    const [deleted] = await db.delete(vehicleTypes).where(eq(vehicleTypes.id, id)).returning();
+    if (deleted) {
+      await this.logAudit('vehicle_types', String(id), 'DELETE', deleted);
+    }
+    return !!deleted;
+  }
+
+  async toggleVehicleTypeStatus(id: number, active: boolean): Promise<VehicleType | undefined> {
+    const [current] = await db.select().from(vehicleTypes).where(eq(vehicleTypes.id, id));
+    if (!current) return undefined;
+
+    const [updated] = await db
+      .update(vehicleTypes)
+      .set({ active, updatedAt: new Date().toISOString() })
+      .where(eq(vehicleTypes.id, id))
+      .returning();
+
+    if (updated) {
+      await this.logAudit('vehicle_types', String(id), 'UPDATE', { active: current.active }, { active: updated.active }, undefined, `Status alterado para ${active}`);
+    }
+    return updated;
   }
 
   // Fuel Requisitions without caching (temporarily disabled to fix display issue)

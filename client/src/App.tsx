@@ -23,6 +23,7 @@ import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import Suppliers from "@/pages/suppliers";
 import Companies from "@/pages/companies";
+import VehicleTypes from "@/pages/vehicle-types";
 import Login from "@/pages/login";
 import InactivityWrapper from "@/components/InactivityWrapper";
 import { useEffect } from "react";
@@ -110,6 +111,11 @@ function Router() {
           <Route path="/fleet-management">
             <ProtectedRoute path="/fleet-management">
               <FleetManagement />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/vehicle-types">
+            <ProtectedRoute path="/vehicle-types">
+              <VehicleTypes />
             </ProtectedRoute>
           </Route>
           <Route path="/suppliers">

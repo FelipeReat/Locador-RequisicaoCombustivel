@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, decimal, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -18,6 +18,28 @@ export const users = pgTable("users", {
   updatedAt: text("updated_at").notNull().default("now()"),
 });
 
+export const vehicleTypes = pgTable("vehicle_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  active: boolean("active").notNull().default(true),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export const insertVehicleTypeSchema = createInsertSchema(vehicleTypes, {
+  name: z.string().min(1, "Nome do tipo é obrigatório"),
+  description: z.string().optional(),
+}).omit({
+  id: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type VehicleType = typeof vehicleTypes.$inferSelect;
+export type InsertVehicleType = z.infer<typeof insertVehicleTypeSchema>;
+
 export const vehicles = pgTable("vehicles", {
   id: serial("id").primaryKey(),
   plate: text("plate").notNull().unique(),
@@ -28,6 +50,7 @@ export const vehicles = pgTable("vehicles", {
   mileage: text("mileage").default("0"),
   status: text("status").notNull().default("active"),
   companyId: integer("company_id"),
+  vehicleTypeId: integer("vehicle_type_id"),
   lastMaintenance: text("last_maintenance"),
   nextMaintenance: text("next_maintenance"),
   createdAt: text("created_at").notNull().default("now()"),
@@ -151,6 +174,7 @@ export const insertVehicleSchema = createInsertSchema(vehicles, {
   }),
   mileage: z.string().optional(),
   companyId: z.number().nullable(),
+  vehicleTypeId: z.number().nullable().optional(),
 }).omit({
   id: true,
   status: true,

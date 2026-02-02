@@ -62,6 +62,12 @@ export const PERMISSIONS: Permission[] = [
     allowedRoles: ['manager', 'admin'], // Gerentes consultam frota, admins gerenciam
   },
   {
+    path: '/vehicle-types',
+    label: 'Tipos de Veículos',
+    icon: 'Car',
+    allowedRoles: ['manager', 'admin'], // Gerentes e admins podem gerenciar tipos de veículos
+  },
+  {
     path: '/suppliers',
     label: 'suppliers',
     icon: 'Building2',

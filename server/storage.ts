@@ -1,4 +1,4 @@
-import { users, fuelRequisitions, vehicles, suppliers, companies, fuelRecords, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany, type LoginUser, type FuelRecord, type InsertFuelRecord } from "@shared/schema";
+import { users, fuelRequisitions, vehicles, suppliers, companies, fuelRecords, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany, type LoginUser, type FuelRecord, type InsertFuelRecord, type VehicleType, type InsertVehicleType } from "@shared/schema";
 
 // Checklist de veículos - modelo in-memory
 export type FuelLevel = 'empty' | 'quarter' | 'half' | 'three_quarters' | 'full';
@@ -52,6 +52,14 @@ export interface IStorage {
   updateVehicle(id: number, updates: Partial<InsertVehicle>): Promise<Vehicle | undefined>;
   updateVehicleStatus(id: number, status: string): Promise<Vehicle | undefined>;
   deleteVehicle(id: number): Promise<boolean>;
+
+  // Vehicle Types
+  getVehicleTypes(): Promise<VehicleType[]>;
+  getVehicleType(id: number): Promise<VehicleType | undefined>;
+  createVehicleType(vehicleType: InsertVehicleType): Promise<VehicleType>;
+  updateVehicleType(id: number, updates: Partial<InsertVehicleType>): Promise<VehicleType | undefined>;
+  toggleVehicleTypeStatus(id: number, active: boolean): Promise<VehicleType | undefined>;
+  deleteVehicleType(id: number): Promise<boolean>;
 
   // Fuel Requisitions
   getFuelRequisitions(): Promise<FuelRequisition[]>;
@@ -126,6 +134,7 @@ export class MemStorage implements IStorage {
   private suppliers: Map<number, Supplier>;
   private companies: Map<number, Company>;
   private vehicles: Map<number, Vehicle>;
+  private vehicleTypes: Map<number, VehicleType>;
   private fuelRecords: Map<number, FuelRecord>;
   private vehicleChecklists: Map<number, VehicleChecklist>;
   private currentUserId: number;
@@ -133,6 +142,7 @@ export class MemStorage implements IStorage {
   private currentSupplierId: number;
   private currentCompanyId: number;
   private currentVehicleId: number;
+  private currentVehicleTypeId: number;
   private currentFuelRecordId: number;
   private currentChecklistId: number;
   private loggedInUserId: number | null = null;
@@ -148,6 +158,7 @@ export class MemStorage implements IStorage {
     this.suppliers = new Map();
     this.companies = new Map();
     this.vehicles = new Map();
+    this.vehicleTypes = new Map();
     this.fuelRecords = new Map();
     this.vehicleChecklists = new Map();
     this.currentUserId = 1;
@@ -155,6 +166,7 @@ export class MemStorage implements IStorage {
     this.currentSupplierId = 1;
     this.currentCompanyId = 1;
     this.currentVehicleId = 1;
+    this.currentVehicleTypeId = 1;
     this.currentFuelRecordId = 1;
     this.currentChecklistId = 1;
 
@@ -463,7 +475,8 @@ export class MemStorage implements IStorage {
       lastMaintenance: null,
       nextMaintenance: null,
       mileage: vehicle.mileage || "0",
-      companyId: null
+      companyId: null,
+      vehicleTypeId: null
     }));
     this.currentVehicleId = 43;
 
@@ -968,6 +981,7 @@ export class MemStorage implements IStorage {
       mileage: "0",
       status: "active",
       companyId: vehicleData.companyId || null,
+      vehicleTypeId: vehicleData.vehicleTypeId || null,
       lastMaintenance: null,
       nextMaintenance: null,
       createdAt: new Date().toISOString(),
@@ -1006,6 +1020,59 @@ export class MemStorage implements IStorage {
 
   async deleteVehicle(id: number): Promise<boolean> {
     return this.vehicles.delete(id);
+  }
+
+  // Vehicle Types
+  async getVehicleTypes(): Promise<VehicleType[]> {
+    return Array.from(this.vehicleTypes.values());
+  }
+
+  async getVehicleType(id: number): Promise<VehicleType | undefined> {
+    return this.vehicleTypes.get(id);
+  }
+
+  async createVehicleType(vehicleType: InsertVehicleType): Promise<VehicleType> {
+    const id = this.currentVehicleTypeId++;
+    const newType: VehicleType = {
+      id,
+      name: vehicleType.name,
+      description: vehicleType.description || null,
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.vehicleTypes.set(id, newType);
+    return newType;
+  }
+
+  async updateVehicleType(id: number, updates: Partial<InsertVehicleType>): Promise<VehicleType | undefined> {
+    const type = this.vehicleTypes.get(id);
+    if (!type) return undefined;
+
+    const updatedType = {
+      ...type,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.vehicleTypes.set(id, updatedType);
+    return updatedType;
+  }
+
+  async toggleVehicleTypeStatus(id: number, active: boolean): Promise<VehicleType | undefined> {
+    const type = this.vehicleTypes.get(id);
+    if (!type) return undefined;
+
+    const updatedType = {
+      ...type,
+      active,
+      updatedAt: new Date().toISOString(),
+    };
+    this.vehicleTypes.set(id, updatedType);
+    return updatedType;
+  }
+
+  async deleteVehicleType(id: number): Promise<boolean> {
+    return this.vehicleTypes.delete(id);
   }
 
   async getFuelRequisitions(): Promise<FuelRequisition[]> {

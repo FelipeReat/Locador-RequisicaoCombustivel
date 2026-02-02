@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { createHmac, timingSafeEqual } from "crypto";
 import { DatabaseStorage } from "./db-storage";
 import { MemStorage } from "./storage";
-import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema, insertFuelRecordSchema } from "@shared/schema";
+import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema, insertFuelRecordSchema, insertVehicleTypeSchema } from "@shared/schema";
 
 const storage = new DatabaseStorage();
 
@@ -767,6 +767,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vehicle routes
+  // Vehicle Types routes
+  app.get("/api/vehicle-types", async (req, res) => {
+    const types = await storage.getVehicleTypes();
+    res.json(types);
+  });
+
+  app.get("/api/vehicle-types/:id", async (req, res) => {
+    const id = Number(req.params.id);
+    const type = await storage.getVehicleType(id);
+    if (!type) return res.status(404).json({ message: "Tipo de veículo não encontrado" });
+    res.json(type);
+  });
+
+  app.post("/api/vehicle-types", async (req, res) => {
+    const validatedData = insertVehicleTypeSchema.parse(req.body);
+    const type = await storage.createVehicleType(validatedData);
+    res.json(type);
+  });
+
+  app.put("/api/vehicle-types/:id", async (req, res) => {
+    const id = Number(req.params.id);
+    const validatedData = insertVehicleTypeSchema.partial().parse(req.body);
+    const type = await storage.updateVehicleType(id, validatedData);
+    if (!type) return res.status(404).json({ message: "Tipo de veículo não encontrado" });
+    res.json(type);
+  });
+
+  app.delete("/api/vehicle-types/:id", async (req, res) => {
+    const id = Number(req.params.id);
+    const success = await storage.deleteVehicleType(id);
+    if (!success) return res.status(404).json({ message: "Tipo de veículo não encontrado" });
+    res.status(204).end();
+  });
+
+  app.patch("/api/vehicle-types/:id/status", async (req, res) => {
+    const id = Number(req.params.id);
+    const { active } = req.body;
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({ message: "Status inválido" });
+    }
+    const type = await storage.toggleVehicleTypeStatus(id, active);
+    if (!type) return res.status(404).json({ message: "Tipo de veículo não encontrado" });
+    res.json(type);
+  });
+
+  // Vehicles routes
   app.get("/api/vehicles", async (req, res) => {
     try {
       const vehicles = await storage.getVehicles();
