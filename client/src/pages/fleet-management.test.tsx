@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import FleetManagement from "./fleet-management";
 import { AuthProvider } from "@/contexts/auth-context";
@@ -9,32 +10,65 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Mocks
+const localStorageMock = (function () {
+  let store: Record<string, string> = {};
+  return {
+    getItem: function (key: string) {
+      return store[key] || null;
+    },
+    setItem: function (key: string, value: string) {
+      store[key] = value.toString();
+    },
+    clear: function () {
+      store = {};
+    },
+    removeItem: function (key: string) {
+      delete store[key];
+    },
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+});
+
 vi.mock("wouter", () => ({
-  useLocation: () => ["/fleet-management", vi.fn()],
+  useLocation: () => ["/fleet-management", () => {}],
   Redirect: () => null,
 }));
 
-vi.mock("@/contexts/auth-context", async () => {
-  const actual = await vi.importActual("@/contexts/auth-context");
-  return {
-    ...actual,
-    useAuth: () => ({
-      user: { id: 1, role: "admin", name: "Admin User" },
-      isLoading: false,
-    }),
-  };
-});
+vi.mock("@/contexts/auth-context", () => ({
+  AuthProvider: ({ children }: { children: any }) => children,
+  useAuth: () => ({
+    user: { id: 1, role: "admin", name: "Admin User" },
+    isLoading: false,
+  }),
+}));
+
+vi.mock("@/contexts/theme-context", () => ({
+  useTheme: () => ({ theme: "light", setTheme: () => {} }),
+  ThemeProvider: ({ children }: { children: any }) => children,
+}));
 
 // Mock apiRequest
 vi.mock("@/lib/queryClient", () => ({
-  apiRequest: vi.fn(),
-  queryClient: new QueryClient(),
+  apiRequest: () => Promise.resolve({ json: () => Promise.resolve({}) }),
+  queryClient: {
+    invalidateQueries: () => {},
+    getQueryData: () => {},
+    setQueryData: () => {},
+  },
 }));
 
 const createTestQueryClient = () => new QueryClient({
   defaultOptions: {
     queries: {
       retry: false,
+      queryFn: async ({ queryKey }) => {
+        const url = queryKey[0] as string;
+        const res = await fetch(url);
+        return res.json();
+      },
     },
   },
 });
@@ -61,13 +95,44 @@ describe("FleetManagement View Toggle", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    
+     global.fetch = vi.fn((url) => {
+       if (url === "/api/vehicles") {
+         return Promise.resolve({
+           ok: true,
+           json: () => Promise.resolve([
+             { id: 1, plate: "ABC-1234", model: "Model A", brand: "Brand A", vehicleTypeId: 1, status: "active", fuelType: "gasolina", year: 2020 },
+             { id: 2, plate: "XYZ-5678", model: "Model B", brand: "Brand B", vehicleTypeId: 2, status: "maintenance", fuelType: "diesel", year: 2021 },
+             { id: 3, plate: "DEF-9012", model: "Model C", brand: "Brand C", vehicleTypeId: null, status: "active", fuelType: "flex", year: 2022 },
+           ]),
+         });
+       }
+       if (url === "/api/vehicle-types") {
+         return Promise.resolve({
+           ok: true,
+           json: () => Promise.resolve([
+             { id: 1, name: "Sedan", active: true },
+             { id: 2, name: "Caminhão", active: true },
+           ]),
+         });
+       }
+       if (url === "/api/companies") {
+         return Promise.resolve({
+             ok: true,
+             json: () => Promise.resolve([]),
+         })
+       }
+       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+     }) as any;
   });
 
   it("should default to grid view", async () => {
     renderWithProviders(<FleetManagement />);
     
-    // Check if grid view specific element exists (e.g., layout grid icon active or card elements)
-    // We can check for the "Visualização em Grade" button being active (variant="secondary")
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando frota/i)).not.toBeInTheDocument();
+    });
+
     const gridButton = screen.getByTitle("Visualização em Grade");
     expect(gridButton).toHaveClass("bg-secondary");
     
@@ -78,21 +143,27 @@ describe("FleetManagement View Toggle", () => {
   it("should switch to list view when list button is clicked", async () => {
     renderWithProviders(<FleetManagement />);
     
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando frota/i)).not.toBeInTheDocument();
+    });
+
     const listButton = screen.getByTitle("Visualização em Lista");
     fireEvent.click(listButton);
 
-    // Check if list view is active
     expect(listButton).toHaveClass("bg-secondary");
     const gridButton = screen.getByTitle("Visualização em Grade");
     expect(gridButton).not.toHaveClass("bg-secondary");
     
-    // Check if localStorage was updated
     expect(localStorage.getItem("fleet-view-mode")).toBe("list");
   });
 
   it("should persist view preference in localStorage", async () => {
     localStorage.setItem("fleet-view-mode", "list");
     renderWithProviders(<FleetManagement />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando frota/i)).not.toBeInTheDocument();
+    });
     
     const listButton = screen.getByTitle("Visualização em Lista");
     expect(listButton).toHaveClass("bg-secondary");
@@ -102,9 +173,133 @@ describe("FleetManagement View Toggle", () => {
     localStorage.setItem("fleet-view-mode", "list");
     renderWithProviders(<FleetManagement />);
     
-    // In list view, we expect table headers
-    expect(screen.getByText("Placa")).toBeInTheDocument(); // Assuming 'plate' translates to 'Placa' or check for translation key if mock returns key
-    // Since we mock t(), it might return the key. Let's check the mock implementation or assumption.
-    // The real useLanguage hook returns t function.
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando frota/i)).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Placa")).toBeInTheDocument();
+    expect(screen.getByText("Modelo")).toBeInTheDocument();
+    expect(screen.getByText("Marca")).toBeInTheDocument();
+    expect(screen.getByText("Status")).toBeInTheDocument();
+  });
+});
+
+describe("FleetManagement New Features", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    
+     global.fetch = vi.fn((url) => {
+       if (url === "/api/vehicles") {
+         return Promise.resolve({
+           ok: true,
+           json: () => Promise.resolve([
+             { id: 1, plate: "ABC-1234", model: "Model A", brand: "Brand A", vehicleTypeId: 1, status: "active", fuelType: "gasolina", year: 2020 },
+             { id: 2, plate: "XYZ-5678", model: "Model B", brand: "Brand B", vehicleTypeId: 2, status: "maintenance", fuelType: "diesel", year: 2021 },
+             { id: 3, plate: "DEF-9012", model: "Model C", brand: "Brand C", vehicleTypeId: null, status: "active", fuelType: "flex", year: 2022 },
+           ]),
+         });
+       }
+       if (url === "/api/vehicle-types") {
+         return Promise.resolve({
+           ok: true,
+           json: () => Promise.resolve([
+             { id: 1, name: "Sedan", active: true },
+             { id: 2, name: "Caminhão", active: true },
+           ]),
+         });
+       }
+       if (url === "/api/companies") {
+         return Promise.resolve({
+             ok: true,
+             json: () => Promise.resolve([]),
+         })
+       }
+       return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+     }) as any;
+  });
+
+  it("should display 'Tipo' column in list view", async () => {
+    localStorage.setItem("fleet-view-mode", "list");
+    renderWithProviders(<FleetManagement />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando frota/i)).not.toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
+        // Find all elements with text "Tipo" and check if one is a column header
+        const tipoElements = screen.getAllByText("Tipo");
+        const columnHeader = tipoElements.find(el => el.closest("th"));
+        expect(columnHeader).toBeInTheDocument();
+    });
+    
+    await waitFor(() => {
+        expect(screen.getByText("Sedan")).toBeInTheDocument();
+        expect(screen.getByText("Caminhão")).toBeInTheDocument();
+        expect(screen.getByText("Sem Tipo")).toBeInTheDocument();
+    });
+  });
+
+  it("should allow filtering by vehicle type", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<FleetManagement />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando frota/i)).not.toBeInTheDocument();
+    });
+    
+    // Find the filter button (not in table header)
+    const buttons = await screen.findAllByRole("button");
+    const filterButton = buttons.find(b => b.textContent?.includes("Tipo") && !b.closest("th"));
+    
+    if (!filterButton) throw new Error("Filter button not found");
+    
+    await user.click(filterButton);
+    
+    await waitFor(() => {
+        expect(screen.getByText("Sedan")).toBeInTheDocument();
+        expect(screen.getByText("Caminhão")).toBeInTheDocument();
+    });
+    
+    const sedanOption = screen.getByText("Sedan");
+    await user.click(sedanOption);
+    
+    await waitFor(() => {
+        expect(screen.queryByText(/Model A/)).toBeInTheDocument(); 
+        expect(screen.queryByText(/Model B/)).not.toBeInTheDocument();
+    });
+  });
+
+  it("should allow grouping by vehicle type", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("fleet-view-mode", "list"); 
+    renderWithProviders(<FleetManagement />);
+    
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando frota/i)).not.toBeInTheDocument();
+    });
+    
+    const groupButton = screen.getByTitle("Agrupar por Tipo");
+    await user.click(groupButton);
+    
+    await waitFor(() => {
+        expect(screen.getByText(/Sedan \(1\)/)).toBeInTheDocument();
+        expect(screen.getByText(/Caminhão \(1\)/)).toBeInTheDocument();
+    });
+    
+    const sedanHeader = screen.getByText(/Sedan \(1\)/);
+    
+    await user.click(sedanHeader); 
+    
+    await waitFor(() => {
+        expect(screen.queryByText(/Model A/)).not.toBeInTheDocument();
+    });
+    
+    await user.click(sedanHeader); 
+    
+    await waitFor(() => {
+        expect(screen.queryByText(/Model A/)).toBeInTheDocument();
+    });
   });
 });

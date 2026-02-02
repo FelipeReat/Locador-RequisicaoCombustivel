@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,8 +48,21 @@ import {
   RotateCcw,
   Trash2,
   List,
-  LayoutGrid
+  LayoutGrid,
+  Filter,
+  ChevronDown,
+  ChevronRight,
+  Layers
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { MileageResetDialog } from "@/components/mileage-reset-dialog";
 import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
@@ -67,6 +80,18 @@ function FleetManagement() {
   const [statusFilter, setStatusFilter] = useState("all");
   const { settings: systemSettings } = useSystemSettings();
   
+  // Vehicle Type Filter state
+  const [selectedVehicleTypes, setSelectedVehicleTypes] = useState<number[]>([]);
+  const [isGroupedByType, setIsGroupedByType] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
+
+  const toggleGroup = (typeId: number) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [typeId]: !prev[typeId]
+    }));
+  };
+
   // View mode state
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     return (localStorage.getItem("fleet-view-mode") as "grid" | "list") || "grid";
@@ -117,6 +142,18 @@ function FleetManagement() {
   const { data: vehicleTypes } = useQuery<VehicleType[]>({
     queryKey: ["/api/vehicle-types"],
   });
+
+  // Initialize all groups as expanded when grouping is enabled
+  useEffect(() => {
+    if (isGroupedByType && vehicleTypes) {
+      const allGroups: Record<number, boolean> = {};
+      vehicleTypes.forEach(t => {
+        allGroups[t.id] = true;
+      });
+      allGroups[0] = true; // For vehicles without type
+      setExpandedGroups(allGroups);
+    }
+  }, [isGroupedByType, vehicleTypes]);
 
   const form = useForm<InsertVehicle>({
     resolver: zodResolver(insertVehicleSchema),
@@ -333,6 +370,12 @@ function FleetManagement() {
     return acc;
   }, {} as Record<string, typeof sortedVehicles>);
 
+  const getVehicleTypeName = (id: number | null | undefined) => {
+    if (!id) return "Sem Tipo";
+    const type = vehicleTypes?.find(t => t.id === id);
+    return type ? type.name : "Desconhecido";
+  };
+
   const filteredVehicles = sortedVehicles.filter(vehicle => {
     const matchesSearch = vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -340,8 +383,22 @@ function FleetManagement() {
 
     const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesType = selectedVehicleTypes.length === 0 || 
+      (vehicle.vehicleTypeId !== null && vehicle.vehicleTypeId !== undefined && selectedVehicleTypes.includes(vehicle.vehicleTypeId)) ||
+      (selectedVehicleTypes.includes(0) && !vehicle.vehicleTypeId); // 0 for 'Sem Tipo'
+
+    return matchesSearch && matchesStatus && matchesType;
   });
+
+  // Group vehicles by type for the grouped view
+  const vehiclesGroupedByType = filteredVehicles.reduce((acc, vehicle) => {
+    const typeId = vehicle.vehicleTypeId || 0; // 0 for 'Sem Tipo'
+    if (!acc[typeId]) {
+      acc[typeId] = [];
+    }
+    acc[typeId].push(vehicle);
+    return acc;
+  }, {} as Record<number, Vehicle[]>);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
@@ -365,7 +422,7 @@ function FleetManagement() {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Actions Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 flex-wrap gap-y-2">
               <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -375,6 +432,70 @@ function FleetManagement() {
                   className="pl-10 w-full sm:w-64"
                 />
               </div>
+
+              {/* Type Filter */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-10 border-dashed">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Tipo
+                    {selectedVehicleTypes.length > 0 && (
+                      <Badge variant="secondary" className="ml-2 rounded-sm px-1 font-normal">
+                        {selectedVehicleTypes.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[200px]">
+                  <DropdownMenuLabel>Filtrar por Tipo</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
+                    checked={selectedVehicleTypes.length === 0}
+                    onCheckedChange={() => setSelectedVehicleTypes([])}
+                  >
+                    Todos
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
+                    checked={selectedVehicleTypes.includes(0)}
+                    onCheckedChange={(checked) => {
+                      if (checked) setSelectedVehicleTypes([...selectedVehicleTypes, 0]);
+                      else setSelectedVehicleTypes(selectedVehicleTypes.filter(id => id !== 0));
+                    }}
+                  >
+                    Sem Tipo
+                  </DropdownMenuCheckboxItem>
+                  {vehicleTypes?.filter(t => t.active).map((type) => (
+                    <DropdownMenuCheckboxItem
+                      key={type.id}
+                      checked={selectedVehicleTypes.includes(type.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          // Remove "Todos" implicit selection if specific type is selected? 
+                          // No, logic handles empty array as "All".
+                          setSelectedVehicleTypes([...selectedVehicleTypes, type.id]);
+                        } else {
+                          setSelectedVehicleTypes(selectedVehicleTypes.filter(id => id !== type.id));
+                        }
+                      }}
+                    >
+                      {type.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Group Toggle */}
+              <Button
+                variant={isGroupedByType ? "secondary" : "outline"}
+                size="sm"
+                className="h-10"
+                onClick={() => setIsGroupedByType(!isGroupedByType)}
+                title={isGroupedByType ? "Desagrupar" : "Agrupar por Tipo"}
+              >
+                <Layers className="mr-2 h-4 w-4" />
+                Agrupar
+              </Button>
 
               <div className="flex items-center bg-muted p-1 rounded-md border">
                 <Button
@@ -804,13 +925,14 @@ function FleetManagement() {
               ))}
             </div>
           ) : (
-            <div className="rounded-md border bg-white dark:bg-gray-900 overflow-hidden">
+            <div className="rounded-md border bg-white dark:bg-gray-900 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('plate')}</TableHead>
                     <TableHead>{t('model')}</TableHead>
                     <TableHead>{t('brand')}</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>KM</TableHead>
                     <TableHead>{t('fuel')}</TableHead>
@@ -818,11 +940,86 @@ function FleetManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedVehicles.map((vehicle) => (
+                  {isGroupedByType ? (
+                    Object.entries(vehiclesGroupedByType).map(([typeIdStr, vehicles]) => {
+                      const typeId = Number(typeIdStr);
+                      const typeName = getVehicleTypeName(typeId);
+                      const isExpanded = expandedGroups[typeId];
+                      
+                      return (
+                        <React.Fragment key={typeId}>
+                          <TableRow 
+                            className="bg-muted/50 hover:bg-muted cursor-pointer"
+                            onClick={() => toggleGroup(typeId)}
+                          >
+                            <TableCell colSpan={8} className="font-semibold py-2">
+                              <div className="flex items-center">
+                                {isExpanded ? (
+                                  <ChevronDown className="mr-2 h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="mr-2 h-4 w-4" />
+                                )}
+                                {typeName} ({vehicles.length})
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          {isExpanded && vehicles.map(vehicle => (
+                            <TableRow key={vehicle.id}>
+                              <TableCell className="font-medium">{vehicle.plate}</TableCell>
+                              <TableCell>{vehicle.model}</TableCell>
+                              <TableCell>{vehicle.brand}</TableCell>
+                              <TableCell>{getVehicleTypeName(vehicle.vehicleTypeId)}</TableCell>
+                              <TableCell>
+                                <Select
+                                  value={vehicle.status}
+                                  onValueChange={(status) => toggleVehicleStatus.mutate({ id: vehicle.id, status })}
+                                >
+                                  <SelectTrigger className="w-32 h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="active">✓ {t('active')}</SelectItem>
+                                    <SelectItem value="maintenance">⚠️ {t('maintenance')}</SelectItem>
+                                    <SelectItem value="inactive">✗ {t('inactive')}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>{vehicle.mileage ? parseFloat(vehicle.mileage).toLocaleString("pt-BR") : "0"}</TableCell>
+                              <TableCell>{getFuelTypeLabel(vehicle.fuelType)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end space-x-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEdit(vehicle)}
+                                    className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                                    title="Editar veículo"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => deleteVehicle.mutate(vehicle.id)}
+                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100"
+                                    title="Excluir veículo"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    paginatedVehicles.map((vehicle) => (
                     <TableRow key={vehicle.id}>
                       <TableCell className="font-medium">{vehicle.plate}</TableCell>
                       <TableCell>{vehicle.model}</TableCell>
                       <TableCell>{vehicle.brand}</TableCell>
+                      <TableCell>{getVehicleTypeName(vehicle.vehicleTypeId)}</TableCell>
                       <TableCell>
                         <Select
                           value={vehicle.status}
@@ -863,7 +1060,7 @@ function FleetManagement() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )))}
                 </TableBody>
               </Table>
             </div>
