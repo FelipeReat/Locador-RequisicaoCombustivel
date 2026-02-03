@@ -489,6 +489,7 @@ const translations: Record<Language, Record<string, string>> = {
     'departments': 'Departamentos',
     'fleet': 'Frota',
     'vehicle-checklist': 'Checklist de Veículos',
+    'checklist-templates': 'Modelos de Checklist',
     'new-exit-checklist': 'Nova Saída',
     'register-return-checklist': 'Registrar Retorno',
     'open-exits': 'Saídas em Aberto',

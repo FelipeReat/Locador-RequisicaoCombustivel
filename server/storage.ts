@@ -1,4 +1,4 @@
-import { users, fuelRequisitions, vehicles, suppliers, companies, fuelRecords, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany, type LoginUser, type FuelRecord, type InsertFuelRecord, type VehicleType, type InsertVehicleType } from "@shared/schema";
+import { users, fuelRequisitions, vehicles, suppliers, companies, fuelRecords, type User, type InsertUser, type UpdateUserProfile, type ChangePassword, type FuelRequisition, type InsertFuelRequisition, type UpdateFuelRequisitionStatus, type Vehicle, type InsertVehicle, type InsertUserManagement, type Supplier, type InsertSupplier, type Company, type InsertCompany, type LoginUser, type FuelRecord, type InsertFuelRecord, type VehicleType, type InsertVehicleType, type ChecklistTemplate, type InsertChecklistTemplate, type ChecklistTemplateItem, type InsertChecklistTemplateItem } from "@shared/schema";
 
 // Checklist de veículos - modelo in-memory
 export type FuelLevel = 'empty' | 'quarter' | 'half' | 'three_quarters' | 'full';
@@ -104,11 +104,25 @@ export interface IStorage {
   // Vehicle Checklists
   getOpenChecklists(): Promise<VehicleChecklist[]>;
   getClosedChecklists(): Promise<VehicleChecklist[]>;
-  createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string }): Promise<VehicleChecklist>;
+  createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string; checklistTemplateId?: number }): Promise<VehicleChecklist>;
   closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string; inspectionEnd?: string }): Promise<VehicleChecklist | undefined>;
   approveChecklist(id: number, approver: { userId: number; name: string; date?: string }): Promise<VehicleChecklist | undefined>;
   deleteChecklist(id: number): Promise<boolean>;
   getChecklistAnalytics(): Promise<{ completenessRate: number; openCount: number; closedCount: number; avgKmPerTrip: number; activeVehiclesWithOpen: number; dailyTrend: { date: string; count: number }[] }>;
+
+  // Checklist Templates
+  getChecklistTemplates(): Promise<ChecklistTemplate[]>;
+  getChecklistTemplate(id: number): Promise<ChecklistTemplate | undefined>;
+  createChecklistTemplate(template: InsertChecklistTemplate): Promise<ChecklistTemplate>;
+  updateChecklistTemplate(id: number, updates: Partial<ChecklistTemplate>): Promise<ChecklistTemplate | undefined>;
+  deleteChecklistTemplate(id: number): Promise<boolean>;
+
+  // Checklist Template Items
+  getChecklistTemplateItems(templateId: number): Promise<ChecklistTemplateItem[]>;
+  createChecklistTemplateItem(item: InsertChecklistTemplateItem): Promise<ChecklistTemplateItem>;
+  updateChecklistTemplateItem(id: number, updates: Partial<ChecklistTemplateItem>): Promise<ChecklistTemplateItem | undefined>;
+  deleteChecklistTemplateItem(id: number): Promise<boolean>;
+  reorderChecklistTemplateItems(templateId: number, itemIds: number[]): Promise<boolean>;
 
   // Settings
   getSetting(key: string): Promise<any>;
@@ -137,6 +151,8 @@ export class MemStorage implements IStorage {
   private vehicleTypes: Map<number, VehicleType>;
   private fuelRecords: Map<number, FuelRecord>;
   private vehicleChecklists: Map<number, VehicleChecklist>;
+  private checklistTemplates: Map<number, ChecklistTemplate>;
+  private checklistTemplateItems: Map<number, ChecklistTemplateItem>;
   private currentUserId: number;
   private currentRequisitionId: number;
   private currentSupplierId: number;
@@ -145,6 +161,8 @@ export class MemStorage implements IStorage {
   private currentVehicleTypeId: number;
   private currentFuelRecordId: number;
   private currentChecklistId: number;
+  private currentChecklistTemplateId: number;
+  private currentChecklistTemplateItemId: number;
   private loggedInUserId: number | null = null;
   
   // Cache para melhorar performance
@@ -161,6 +179,8 @@ export class MemStorage implements IStorage {
     this.vehicleTypes = new Map();
     this.fuelRecords = new Map();
     this.vehicleChecklists = new Map();
+    this.checklistTemplates = new Map();
+    this.checklistTemplateItems = new Map();
     this.currentUserId = 1;
     this.currentRequisitionId = 1;
     this.currentSupplierId = 1;
@@ -169,6 +189,8 @@ export class MemStorage implements IStorage {
     this.currentVehicleTypeId = 1;
     this.currentFuelRecordId = 1;
     this.currentChecklistId = 1;
+    this.currentChecklistTemplateId = 1;
+    this.currentChecklistTemplateItemId = 1;
 
     // Add sample data for demonstration
     this.addSampleData();
@@ -726,6 +748,82 @@ export class MemStorage implements IStorage {
     });
 
     this.currentRequisitionId = 10;
+
+    // Sample Checklist Templates
+    const sampleTemplates: ChecklistTemplate[] = [
+      {
+        id: 1,
+        name: "Padrão (Veículos Leves)",
+        description: "Checklist padrão para carros de passeio e utilitários leves",
+        active: true,
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 2,
+        name: "Caminhões e Pesados",
+        description: "Checklist estendido para veículos pesados",
+        active: true,
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      }
+    ];
+
+    sampleTemplates.forEach(t => this.checklistTemplates.set(t.id, t));
+    this.currentChecklistTemplateId = 3;
+
+    // Sample Checklist Items
+    const sampleItems: ChecklistTemplateItem[] = [
+      // Template 1 items
+      { id: 1, checklistTemplateId: 1, key: "oil_level", label: "Nível de Óleo", group: "Motor", defaultChecked: false, column: 1, order: 1, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 2, checklistTemplateId: 1, key: "tires", label: "Pneus/Estepe", group: "Externo", defaultChecked: false, column: 1, order: 2, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 3, checklistTemplateId: 1, key: "lights", label: "Faróis/Lanternas", group: "Elétrica", defaultChecked: false, column: 1, order: 3, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 4, checklistTemplateId: 1, key: "cleanliness", label: "Limpeza Interna", group: "Interno", defaultChecked: true, column: 2, order: 4, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      
+      // Template 2 items (includes items from 1 + extra)
+      { id: 5, checklistTemplateId: 2, key: "oil_level", label: "Nível de Óleo", group: "Motor", defaultChecked: false, column: 1, order: 1, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 6, checklistTemplateId: 2, key: "tires", label: "Pneus/Estepe", group: "Externo", defaultChecked: false, column: 1, order: 2, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 7, checklistTemplateId: 2, key: "lights", label: "Faróis/Lanternas", group: "Elétrica", defaultChecked: false, column: 1, order: 3, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 8, checklistTemplateId: 2, key: "hydraulic", label: "Sistema Hidráulico", group: "Mecânica", defaultChecked: false, column: 2, order: 4, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 9, checklistTemplateId: 2, key: "tachograph", label: "Tacógrafo", group: "Documentação", defaultChecked: false, column: 2, order: 5, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+    ];
+
+    sampleItems.forEach(i => this.checklistTemplateItems.set(i.id, i));
+    this.currentChecklistTemplateItemId = 10;
+
+    // Sample Vehicle Types
+    const sampleVehicleTypes: VehicleType[] = [
+      {
+        id: 1,
+        name: "Carro de Passeio",
+        description: "Veículos leves para transporte de passageiros",
+        active: true,
+        checklistTemplateId: 1,
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 2,
+        name: "Caminhão",
+        description: "Veículos de carga pesada",
+        active: true,
+        checklistTemplateId: 2,
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      },
+      {
+        id: 3,
+        name: "Motocicleta",
+        description: "Veículos de duas rodas",
+        active: true,
+        checklistTemplateId: null,
+        createdAt: yesterday.toISOString(),
+        updatedAt: yesterday.toISOString(),
+      }
+    ];
+
+    sampleVehicleTypes.forEach(vt => this.vehicleTypes.set(vt.id, vt));
+    this.currentVehicleTypeId = 4;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -1038,6 +1136,7 @@ export class MemStorage implements IStorage {
       name: vehicleType.name,
       description: vehicleType.description || null,
       active: true,
+      checklistTemplateId: vehicleType.checklistTemplateId || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -1575,6 +1674,101 @@ export class MemStorage implements IStorage {
     const current = this.favorites.get(key) || false;
     this.favorites.set(key, !current);
     return !current;
+  }
+
+  // Checklist Templates
+  async getChecklistTemplates(): Promise<ChecklistTemplate[]> {
+    return Array.from(this.checklistTemplates.values());
+  }
+
+  async getChecklistTemplate(id: number): Promise<ChecklistTemplate | undefined> {
+    return this.checklistTemplates.get(id);
+  }
+
+  async createChecklistTemplate(template: InsertChecklistTemplate): Promise<ChecklistTemplate> {
+    const id = this.currentChecklistTemplateId++;
+    const now = new Date().toISOString();
+    const newTemplate: ChecklistTemplate = {
+      id,
+      name: template.name,
+      description: template.description || null,
+      active: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.checklistTemplates.set(id, newTemplate);
+    return newTemplate;
+  }
+
+  async updateChecklistTemplate(id: number, updates: Partial<ChecklistTemplate>): Promise<ChecklistTemplate | undefined> {
+    const template = this.checklistTemplates.get(id);
+    if (!template) return undefined;
+
+    const updatedTemplate = {
+      ...template,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.checklistTemplates.set(id, updatedTemplate);
+    return updatedTemplate;
+  }
+
+  async deleteChecklistTemplate(id: number): Promise<boolean> {
+    return this.checklistTemplates.delete(id);
+  }
+
+  // Checklist Template Items
+  async getChecklistTemplateItems(templateId: number): Promise<ChecklistTemplateItem[]> {
+    return Array.from(this.checklistTemplateItems.values())
+      .filter(item => item.checklistTemplateId === templateId)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  async createChecklistTemplateItem(item: InsertChecklistTemplateItem): Promise<ChecklistTemplateItem> {
+    const id = this.currentChecklistTemplateItemId++;
+    const now = new Date().toISOString();
+    const newItem: ChecklistTemplateItem = {
+      id,
+      checklistTemplateId: item.checklistTemplateId,
+      key: item.key,
+      label: item.label,
+      defaultChecked: item.defaultChecked ?? false,
+      column: item.column ?? 1,
+      order: item.order ?? 0,
+      group: item.group,
+      active: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.checklistTemplateItems.set(id, newItem);
+    return newItem;
+  }
+
+  async updateChecklistTemplateItem(id: number, updates: Partial<ChecklistTemplateItem>): Promise<ChecklistTemplateItem | undefined> {
+    const item = this.checklistTemplateItems.get(id);
+    if (!item) return undefined;
+
+    const updatedItem = {
+      ...item,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.checklistTemplateItems.set(id, updatedItem);
+    return updatedItem;
+  }
+
+  async deleteChecklistTemplateItem(id: number): Promise<boolean> {
+    return this.checklistTemplateItems.delete(id);
+  }
+
+  async reorderChecklistTemplateItems(templateId: number, itemIds: number[]): Promise<boolean> {
+    itemIds.forEach((id, index) => {
+      const item = this.checklistTemplateItems.get(id);
+      if (item && item.checklistTemplateId === templateId) {
+        this.checklistTemplateItems.set(id, { ...item, order: index });
+      }
+    });
+    return true;
   }
 }
 

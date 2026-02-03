@@ -13,15 +13,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
-import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText, Star } from "lucide-react";
+import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText, Star, Settings, Filter, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSmartInvalidation, useRealTimeUpdates } from "@/hooks/useRealTimeUpdates";
 import { apiRequest } from "@/lib/queryClient";
+import type { ChecklistTemplate, ChecklistTemplateItem, VehicleChecklist, VehicleType } from "@shared/schema";
+import { obsConfig as defaultObsConfig, obsGroups, fuelLevelOptions, FuelLevel, ObsGroupKey as LegacyObsGroupKey } from "@/lib/checklist-constants";
+import { ChecklistReturnForm } from "@/components/checklist/checklist-return-form";
+import { ChecklistDetails } from "@/components/checklist/checklist-details";
 
 type Vehicle = {
   id: number;
@@ -31,6 +36,7 @@ type Vehicle = {
   status: string;
   mileage: string;
   companyId: number | null;
+  vehicleTypeId: number | null;
 };
 
 type Company = {
@@ -38,22 +44,7 @@ type Company = {
   name: string;
 };
 
-type FuelLevel = 'empty' | 'quarter' | 'half' | 'three_quarters' | 'full';
-
-type VehicleChecklist = {
-  id: number;
-  vehicleId: number;
-  userId: number;
-  kmInitial: number;
-  kmFinal?: number;
-  fuelLevelStart: FuelLevel;
-  fuelLevelEnd?: FuelLevel;
-  inspectionStart?: string;
-  inspectionEnd?: string;
-  status: 'open' | 'closed';
-  startDate: string;
-  endDate?: string;
-};
+// VehicleChecklist type removed, using imported type from @shared/schema
 
 type Analytics = {
   completenessRate: number;
@@ -66,19 +57,20 @@ type Analytics = {
 
 type ExitFormValues = {
   vehicleId: string;
+  checklistTemplateId: string;
   kmInitial: string;
   fuelLevelStart: FuelLevel;
   startDate: string;
   notes: string;
-} & Record<string, boolean | undefined>;
+} & Record<string, any>;
 
 type ReturnFormValues = {
-  selectedChecklistId: string;
+  checklistId: number;
   kmFinal: string;
   fuelLevelEnd: FuelLevel;
   endDate: string;
   notes: string;
-} & Record<string, boolean | undefined>;
+};
 
 export default function VehicleChecklistPage() {
   const { t } = useLanguage();
@@ -96,17 +88,6 @@ export default function VehicleChecklistPage() {
   const [confirmDeleteChecklistId, setConfirmDeleteChecklistId] = useState<number | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [lockedVehicleId, setLockedVehicleId] = useState<number | null>(null);
-  const [exitObsDefaults, setExitObsDefaults] = useState({
-    scratches: false,
-    dents: false,
-    tireOk: true,
-    lightsOk: true,
-    documentsOk: true,
-    cleanInterior: true,
-    cleanExterior: true,
-    notes: "",
-  });
-  const [showObsEditor, setShowObsEditor] = useState(false);
   const [obsConfig, setObsConfig] = useState<ObsItem[]>([]);
   const obsGroups: { key: ObsGroupKey; label: string }[] = [
     { key: 'inspecao_veiculo', label: 'Inspeção do Veículo' },
@@ -114,12 +95,19 @@ export default function VehicleChecklistPage() {
     { key: 'equipamentos', label: 'Equipamentos Internos' },
     { key: 'condutor_veiculo', label: 'Inspeção do Condutor e Veículo' },
   ];
-  const [extraNotes, setExtraNotes] = useState<string[]>([]);
-  const [newNoteText, setNewNoteText] = useState("");
-  const [newObsLabel, setNewObsLabel] = useState("");
-  const [newObsGroup, setNewObsGroup] = useState<ObsGroupKey>('inspecao_veiculo');
-  const [newObsColumn, setNewObsColumn] = useState<1 | 2>(1);
-  const [newObsDefault, setNewObsDefault] = useState(false);
+  
+  // Template System
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("legacy");
+
+  const { data: templates = [] } = useQuery<ChecklistTemplate[]>({ 
+    queryKey: ["/api/checklist-templates"],
+    enabled: isExitDialogOpen 
+  });
+
+  const { data: selectedTemplateItems = [] } = useQuery<ChecklistTemplateItem[]>({
+    queryKey: ["/api/checklist-templates", selectedTemplateId, "items"],
+    enabled: selectedTemplateId !== "legacy" && !!selectedTemplateId
+  });
 
   const obsLabels: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {};
@@ -128,10 +116,24 @@ export default function VehicleChecklistPage() {
   }, [obsConfig]);
 
   function applyObsDefaultsToFormFor(vehicleId: string | null) {
+    let templateId = "legacy";
+    
+    if (vehicleId) {
+       const vehicle = vehicles.find(v => String(v.id) === vehicleId);
+       if (vehicle && vehicle.vehicleTypeId) {
+          const type = vehicleTypes.find(t => t.id === vehicle.vehicleTypeId);
+          if (type && type.checklistTemplateId) {
+             templateId = String(type.checklistTemplateId);
+          }
+       }
+    }
+
+    setSelectedTemplateId(templateId);
     const defaults: Record<string, boolean | undefined> = obsConfig.reduce((acc, i) => { acc[i.key] = undefined; return acc; }, {} as Record<string, boolean | undefined>);
-    const notesText = [exitObsDefaults.notes, ...extraNotes].filter(Boolean).join('\n');
+    const notesText = [exitForm.getValues('notes')].filter(Boolean).join('\n');
     const base: any = {
       vehicleId: vehicleId ?? "",
+      checklistTemplateId: templateId,
       kmInitial: "",
       fuelLevelStart: "half",
       startDate: nowManausLocalInput(),
@@ -146,10 +148,54 @@ export default function VehicleChecklistPage() {
   const { data: analytics } = useQuery<Analytics>({ queryKey: ["/api/checklists/stats/analytics"] });
   const { data: companies = [] } = useQuery<Company[]>({ queryKey: ["/api/companies"] });
   const { data: users = [] } = useQuery<any[]>({ queryKey: ["/api/users"] });
+  const { data: vehicleTypes = [] } = useQuery<VehicleType[]>({ queryKey: ["/api/vehicle-types"] });
   const { data: favorites = [] } = useQuery<number[]>({
     queryKey: ["/api/user/favorites", user?.id ?? 0],
     enabled: !!user?.id,
   });
+
+  // Filters for Return Tab
+  const [historyFilterMode, setHistoryFilterMode] = useState<'mine' | 'all'>('mine');
+  const [historyFilterVehicleId, setHistoryFilterVehicleId] = useState<string>('all');
+
+  const filteredHistory = useMemo(() => {
+    let data = [...openChecklists, ...closedChecklists];
+    
+    // Filter by User
+    // If not admin/manager, force 'mine' effectively (or just don't show the option, but enforce here too for safety)
+    const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+    if (!isAdmin || historyFilterMode === 'mine') {
+       if (user) {
+         data = data.filter(c => c.userId === user.id);
+       }
+    }
+    
+    // Filter by Vehicle
+    if (historyFilterVehicleId !== 'all') {
+      const vid = parseInt(historyFilterVehicleId);
+      data = data.filter(c => c.vehicleId === vid);
+    }
+    
+    return data.sort((a, b) => new Date((b.endDate || b.startDate)).getTime() - new Date((a.endDate || a.startDate)).getTime());
+  }, [openChecklists, closedChecklists, historyFilterMode, historyFilterVehicleId, user]);
+
+  // Reset filters
+  const clearHistoryFilters = () => {
+    setHistoryFilterMode('mine');
+    setHistoryFilterVehicleId('all');
+  };
+
+  const availableFilterVehicles = useMemo(() => {
+     const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+     if (isAdmin && historyFilterMode === 'all') {
+       return vehicles;
+     }
+     
+     // Get vehicles from user's history
+     const userChecklists = [...openChecklists, ...closedChecklists].filter(c => c.userId === user?.id);
+     const vehicleIds = new Set(userChecklists.map(c => c.vehicleId));
+     return vehicles.filter(v => vehicleIds.has(v.id));
+  }, [vehicles, openChecklists, closedChecklists, user, historyFilterMode]);
 
   const toggleFavorite = useMutation({
     mutationFn: async (vehicleId: number) => {
@@ -175,21 +221,6 @@ export default function VehicleChecklistPage() {
       const res = await apiRequest("GET", "/api/settings/obs_config");
       const data = await res.json();
       return Array.isArray(data) && data.length > 0 ? data : [];
-    }
-  });
-
-  const saveConfigMutation = useMutation({
-    mutationFn: async (newConfig: ObsItem[]) => {
-      await apiRequest("POST", "/api/settings/obs_config", newConfig);
-    },
-    onSuccess: () => {
-      toast({ title: "Observações salvas", description: "Configurações persistidas com sucesso." });
-      try {
-        localStorage.setItem('obs_config', JSON.stringify(obsConfig));
-      } catch {}
-    },
-    onError: () => {
-      toast({ title: "Erro", description: "Falha ao salvar configurações.", variant: "destructive" });
     }
   });
 
@@ -243,6 +274,7 @@ export default function VehicleChecklistPage() {
   const exitForm = useForm<ExitFormValues, any, ExitFormValues>({
     defaultValues: {
       vehicleId: "",
+      checklistTemplateId: "legacy",
       kmInitial: "",
       fuelLevelStart: "half",
       startDate: nowManausLocalInput(),
@@ -250,8 +282,36 @@ export default function VehicleChecklistPage() {
     } as ExitFormValues,
   });
 
+  // Effect to apply template defaults when items are loaded
+  useEffect(() => {
+    if (selectedTemplateId !== 'legacy' && selectedTemplateItems.length > 0) {
+      const defaults: Record<string, boolean | undefined> = {};
+      selectedTemplateItems.forEach(i => {
+        defaults[String(i.id)] = i.defaultChecked;
+      });
+      const currentValues = exitForm.getValues();
+      // Remove old obsConfig keys from values to clean up? Not strictly necessary but good.
+      exitForm.reset({
+        ...currentValues,
+        ...defaults
+      });
+    } else if (selectedTemplateId === 'legacy' && obsConfig.length > 0) {
+       // Re-apply legacy defaults if switching back
+       const defaults: Record<string, boolean | undefined> = {};
+       obsConfig.forEach(i => {
+         defaults[i.key] = undefined; // Legacy defaults seem to be undefined or false?
+         // In applyObsDefaultsToFormFor: defaults[i.key] = undefined;
+       });
+       const currentValues = exitForm.getValues();
+       exitForm.reset({
+         ...currentValues,
+         ...defaults
+       });
+    }
+  }, [selectedTemplateItems, selectedTemplateId, obsConfig, exitForm]);
+
   const createExit = useMutation({
-    mutationFn: async (payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate: string; inspectionStart: string }) => {
+    mutationFn: async (payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate: string; inspectionStart: string; checklistTemplateId?: number }) => {
       const res = await apiRequest("POST", "/api/checklists/exit", payload);
       return res.json();
     },
@@ -270,7 +330,7 @@ export default function VehicleChecklistPage() {
   // Return form
   const returnForm = useForm<ReturnFormValues, any, ReturnFormValues>({
     defaultValues: {
-      selectedChecklistId: "",
+      checklistId: 0,
       kmFinal: "",
       fuelLevelEnd: "half",
       endDate: nowManausLocalInput(),
@@ -342,7 +402,7 @@ export default function VehicleChecklistPage() {
   });
 
   const fuelLevelOptions: { value: FuelLevel; label: string }[] = [
-    { value: "empty", label: "vazio" },
+    { value: "empty" as FuelLevel, label: "Vazio" },
     { value: "quarter", label: "1/4" },
     { value: "half", label: "1/2" },
     { value: "three_quarters", label: "3/4" },
@@ -371,6 +431,92 @@ export default function VehicleChecklistPage() {
     return `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`;
   }
 
+  // --- Dynamic Item Helpers ---
+
+  // For Exit Form
+  const currentExitItems = useMemo(() => {
+    if (selectedTemplateId === 'legacy' || !selectedTemplateId) {
+      return obsConfig;
+    }
+    return selectedTemplateItems.map(item => ({
+      key: String(item.id),
+      label: item.label,
+      defaultChecked: item.defaultChecked,
+      column: item.column as 1 | 2,
+      order: item.order,
+      group: item.group as ObsGroupKey
+    }));
+  }, [selectedTemplateId, obsConfig, selectedTemplateItems]);
+
+  const currentExitGroups = useMemo(() => {
+    const groups = Array.from(new Set(currentExitItems.map(i => i.group)));
+    return groups.map(g => {
+       const legacy = obsGroups.find(lg => lg.key === g);
+       return {
+         key: g,
+         label: legacy ? legacy.label : g
+       };
+    }).sort((a,b) => {
+       if (selectedTemplateId === 'legacy') {
+          const idxA = obsGroups.findIndex(x => x.key === a.key);
+          const idxB = obsGroups.findIndex(x => x.key === b.key);
+          return idxA - idxB;
+       }
+       return 0;
+    });
+  }, [currentExitItems, selectedTemplateId, obsGroups]);
+
+  // For Return Form / View
+  const activeChecklist = useMemo(() => {
+    if (expandedReturnId) return openChecklists.find(c => c.id === expandedReturnId);
+    if (expandedClosedId) return closedChecklists.find(c => c.id === expandedClosedId);
+    return null;
+  }, [expandedReturnId, expandedClosedId, openChecklists, closedChecklists]);
+
+  const activeTemplateId = activeChecklist?.checklistTemplateId;
+  
+  const { data: activeTemplateItems = [] } = useQuery<ChecklistTemplateItem[]>({
+    queryKey: ["/api/checklist-templates", activeTemplateId, "items"],
+    enabled: !!activeTemplateId
+  });
+
+  const currentViewItems = useMemo(() => {
+    if (activeTemplateId && activeTemplateItems.length > 0) {
+      return activeTemplateItems.map(item => ({
+        key: String(item.id),
+        label: item.label,
+        defaultChecked: item.defaultChecked,
+        column: item.column as 1 | 2,
+        order: item.order,
+        group: item.group as ObsGroupKey
+      }));
+    }
+    return obsConfig;
+  }, [activeTemplateId, activeTemplateItems, obsConfig]);
+  
+  const currentViewGroups = useMemo(() => {
+    const groups = Array.from(new Set(currentViewItems.map(i => i.group)));
+    return groups.map(g => {
+       const legacy = obsGroups.find(lg => lg.key === g);
+       return {
+         key: g,
+         label: legacy ? legacy.label : g
+       };
+    }).sort((a,b) => {
+       const idxA = obsGroups.findIndex(x => x.key === a.key);
+       const idxB = obsGroups.findIndex(x => x.key === b.key);
+       if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+       return 0;
+    });
+  }, [currentViewItems, obsGroups]);
+
+  // Also update obsLabels for View (used in labels display)
+  const currentViewLabels = useMemo(() => {
+     const map: Record<string, string> = {};
+     currentViewItems.forEach(i => { map[i.key] = i.label });
+     return map;
+  }, [currentViewItems]);
+
   return (
     <div className="flex-1">
       <Header title={t('vehicle-checklist')} subtitle={t('manage-company-vehicles')} />
@@ -382,11 +528,6 @@ export default function VehicleChecklistPage() {
               <TabsTrigger value="saida">Saída</TabsTrigger>
               <TabsTrigger value="entrada">Entrada</TabsTrigger>
             </TabsList>
-            {(user?.role === 'admin' || user?.role === 'manager') && (
-              <Button variant="outline" size="sm" onClick={() => setShowObsEditor(v => !v)}>
-                Editar observações
-              </Button>
-            )}
           </div>
 
           <TabsContent value="saida" className="space-y-6">
@@ -409,230 +550,7 @@ export default function VehicleChecklistPage() {
               </Button>
             </div>
 
-            {(user?.role === 'admin' || user?.role === 'manager') && showObsEditor && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Editar observações</CardTitle>
-                  <CardDescription>Personalize rótulos, posições, ordem e padrões</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    {obsGroups.map(group => {
-                      const items = obsConfig.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
-                      return (
-                        <div key={`editor-${group.key}`} className="space-y-2">
-                          <h4 className="font-semibold">{group.label}</h4>
-                          <div className="space-y-2">
-                            {items.map((item) => (
-                              <div key={item.key} className="grid grid-cols-1 sm:grid-cols-6 gap-2 items-center">
-                                <div className="sm:col-span-2">
-                                  <Label>Nome</Label>
-                                  <Input value={item.label} onChange={(e)=> setObsConfig(cfg=> cfg.map(x=> x.key===item.key? { ...x, label: e.target.value }: x))} />
-                                </div>
-                                <div>
-                                  <Label>Padrão</Label>
-                                  <div className="flex items-center gap-1">
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant={item.defaultChecked ? "default" : "outline"}
-                                      className={item.defaultChecked ? "bg-green-600 hover:bg-green-700 h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                                      onClick={() => setObsConfig(cfg=> cfg.map(x=> x.key===item.key? { ...x, defaultChecked: true }: x))}
-                                    >
-                                      Sim
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant={!item.defaultChecked ? "destructive" : "outline"}
-                                      className={!item.defaultChecked ? "h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                                      onClick={() => setObsConfig(cfg=> cfg.map(x=> x.key===item.key? { ...x, defaultChecked: false }: x))}
-                                    >
-                                      Não
-                                    </Button>
-                                  </div>
-                                </div>
-                                <div>
-                                  <Label>Coluna</Label>
-                                  <Select value={String(item.column)} onValueChange={(val)=> setObsConfig(cfg=> cfg.map(x=> x.key===item.key? { ...x, column: parseInt(val) as 1|2 }: x))}>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="1">Esquerda</SelectItem>
-                                      <SelectItem value="2">Direita</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <Label>Grupo</Label>
-                                  <Select value={item.group} onValueChange={(val)=> setObsConfig(cfg=> cfg.map(x=> x.key===item.key? { ...x, group: val as ObsGroupKey }: x))}>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {obsGroups.map(g => (
-                                        <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="flex items-center gap-2 justify-end">
-                                  <Button 
-                                    type="button" 
-                                    variant="outline" 
-                                    size="icon"
-                                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                    onClick={() => {
-                                      if (confirm('Tem certeza que deseja excluir esta observação?')) {
-                                        setObsConfig(cfg => cfg.filter(x => x.key !== item.key));
-                                      }
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                  <Button type="button" variant="outline" size="icon" onClick={()=> setObsConfig(cfg=> {
-                                    const arr = [...cfg];
-                                    const pos = arr.findIndex(x=>x.key===item.key);
-                                    if (pos>0) { const prevOrder = arr[pos-1].order; arr[pos-1].order = arr[pos].order; arr[pos].order = prevOrder; }
-                                    return arr;
-                                  })}><ArrowUp className="h-4 w-4" /></Button>
-                                  <Button type="button" variant="outline" size="icon" onClick={()=> setObsConfig(cfg=> {
-                                    const arr = [...cfg];
-                                    const pos = arr.findIndex(x=>x.key===item.key);
-                                    if (pos<arr.length-1) { const nextOrder = arr[pos+1].order; arr[pos+1].order = arr[pos].order; arr[pos].order = nextOrder; }
-                                    return arr;
-                                  })}><ArrowDown className="h-4 w-4" /></Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div className="border-t pt-4 space-y-2">
-                      <h4 className="font-semibold">Adicionar observação</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-6 gap-2 items-center">
-                        <div className="sm:col-span-2">
-                          <Label>Nome</Label>
-                          <Input value={newObsLabel} onChange={(e)=> setNewObsLabel(e.target.value)} placeholder="Ex: Extintor OK" />
-                        </div>
-                        <div>
-                          <Label>Padrão</Label>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={newObsDefault ? "default" : "outline"}
-                              className={newObsDefault ? "bg-green-600 hover:bg-green-700 h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                              onClick={() => setNewObsDefault(true)}
-                            >
-                              Sim
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={!newObsDefault ? "destructive" : "outline"}
-                              className={!newObsDefault ? "h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                              onClick={() => setNewObsDefault(false)}
-                            >
-                              Não
-                            </Button>
-                          </div>
-                        </div>
-                        <div>
-                          <Label>Coluna</Label>
-                          <Select value={String(newObsColumn)} onValueChange={(val)=> setNewObsColumn(parseInt(val) as 1|2)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1">Esquerda</SelectItem>
-                              <SelectItem value="2">Direita</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Grupo</Label>
-                          <Select value={newObsGroup} onValueChange={(val)=> setNewObsGroup(val as ObsGroupKey)}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {obsGroups.map(g => (
-                                <SelectItem key={g.key} value={g.key}>{g.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex items-center justify-end">
-                          <Button
-                            type="button"
-                            onClick={() => {
-                              const label = newObsLabel.trim() || 'Observação';
-                              const newItem: ObsItem = {
-                                key: `obs_${Date.now()}`,
-                                label,
-                                defaultChecked: newObsDefault,
-                                column: newObsColumn,
-                                order: obsConfig.length + 1,
-                                group: newObsGroup
-                              };
-                              setObsConfig(cfg => [...cfg, newItem]);
-                              setNewObsLabel("");
-                              setNewObsDefault(false);
-                              setNewObsColumn(1);
-                              setNewObsGroup('inspecao_veiculo');
-                              toast({ title: "Observação adicionada", description: "Você pode mover entre grupos e colunas." });
-                            }}
-                          >
-                            Adicionar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>Observações adicionais</Label>
-                    <div className="space-y-2">
-                      {extraNotes.map((n, i)=> (
-                        <div key={i} className="flex items-center gap-2">
-                          <Input value={n} onChange={(e)=> setExtraNotes(arr=> arr.map((x,idx)=> idx===i ? e.target.value : x))} />
-                          <Button type="button" variant="outline" size="icon" onClick={()=> setExtraNotes(arr=> arr.filter((_,idx)=> idx!==i))}><Trash2 className="h-4 w-4" /></Button>
-                          <Button type="button" variant="outline" size="icon" onClick={()=> setExtraNotes(arr=> { if(i===0) return arr; const b=[...arr]; [b[i-1], b[i]] = [b[i], b[i-1]]; return b; })}><ArrowUp className="h-4 w-4" /></Button>
-                          <Button type="button" variant="outline" size="icon" onClick={()=> setExtraNotes(arr=> { if(i===arr.length-1) return arr; const b=[...arr]; [b[i+1], b[i]] = [b[i], b[i+1]]; return b; })}><ArrowDown className="h-4 w-4" /></Button>
-                        </div>
-                      ))}
-                      <div className="flex items-center gap-2">
-                        <Input placeholder="Nova observação" value={newNoteText} onChange={(e)=> setNewNoteText(e.target.value)} />
-                        <Button type="button" onClick={()=> { if(newNoteText.trim()) { setExtraNotes(arr=> [...arr, newNoteText.trim()]); setNewNoteText(''); } }}><Plus className="h-4 w-4 mr-2" />Adicionar linha</Button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Observação livre padrão</Label>
-                      <Input value={exitObsDefaults.notes} onChange={(e)=> setExitObsDefaults(s=> ({...s, notes: e.target.value}))} placeholder="Texto livre padrão" />
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex items-center justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowObsEditor(false)}
-                  >
-                    Fechar
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => saveConfigMutation.mutate(obsConfig)}
-                    disabled={saveConfigMutation.isPending}
-                  >
-                    {saveConfigMutation.isPending ? 'Salvando...' : 'Salvar alterações'}
-                  </Button>
-                </CardFooter>
-              </Card>
-            )}
 
             <Card>
               <CardHeader>
@@ -725,159 +643,7 @@ export default function VehicleChecklistPage() {
 
 
 
-            {/* Formulário de Saída (Checklist) */}
-            <Card className="hidden">
-              <CardHeader>
-                <CardTitle>Checklist de Saída</CardTitle>
-                <CardDescription>Preencha as condições do veículo na saída</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...exitForm}>
-                  <form
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                    onSubmit={exitForm.handleSubmit((values) => {
-                      const vid = parseInt(values.vehicleId);
-                      if (!vid) {
-                        exitForm.setError('vehicleId', { message: 'Selecione um veículo' });
-                        return;
-                      }
-                      const kmInitial = parseFloat(values.kmInitial);
-                      if (isNaN(kmInitial) || kmInitial < 0) {
-                        exitForm.setError('kmInitial', { message: 'Informe uma quilometragem válida' });
-                        return;
-                      }
-                      const startObj: any = {};
-                      obsConfig.forEach(i => {
-                        startObj[i.key] = (values as any)[i.key] !== false;
-                      });
-                      startObj.notes = (values as any).notes;
-                      const inspectionStart = JSON.stringify(startObj);
-                      createExit.mutate({ vehicleId: vid, userId: user!.id, kmInitial, fuelLevelStart: values.fuelLevelStart, startDate: values.startDate, inspectionStart });
-                    })}
-                  >
-                    <FormField
-                      control={exitForm.control}
-                      name="vehicleId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('vehicle')}</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {activeVehicles.map(v => (
-                                <SelectItem key={v.id} value={String(v.id)} disabled={openByVehicle.has(v.id)}>
-                                  {v.plate} - {v.model}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
-                    <FormField
-                      control={exitForm.control}
-                      name="kmInitial"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('initial-mileage')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" min={0} placeholder="Ex: 12000" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={exitForm.control}
-                      name="fuelLevelStart"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('fuel-level')}</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {fuelLevelOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={exitForm.control}
-                      name="startDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Data/Hora</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="datetime-local" lang="pt-BR" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="md:col-span-2 space-y-4">
-                      {obsGroups.map(group => {
-                        const items = obsConfig.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
-                        if (items.length === 0) return null;
-                        return (
-                          <div key={group.key} className="space-y-2">
-                            <h4 className="font-semibold">{group.label}</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {items.filter(i=>i.column===1).map(i=> (
-                                  <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
-                                    <FormItem className="flex items-center gap-2">
-                                      <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                      <FormLabel>{obsLabels[i.key]}</FormLabel>
-                                    </FormItem>
-                                  )} />
-                                ))}
-                              {items.filter(i=>i.column===2).map(i=> (
-                                <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
-                                  <FormItem className="flex items-center gap-2">
-                                    <Checkbox checked={field.value} onCheckedChange={field.onChange as any} />
-                                    <FormLabel>{obsLabels[i.key]}</FormLabel>
-                                  </FormItem>
-                                )} />
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <FormField
-                      control={exitForm.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Observações</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Detalhes adicionais" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="md:col-span-2 mobile-button-group pt-2">
-                      <Button type="submit" className="w-full sm:w-auto" disabled={createExit.isPending}>{t('confirm-exit')}</Button>
-                    </div>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
 
           </TabsContent>
           
@@ -886,8 +652,55 @@ export default function VehicleChecklistPage() {
             {/* Histórico resumido */}
             <Card>
               <CardHeader>
-                <CardTitle>Histórico de Saídas</CardTitle>
-                <CardDescription>Registros de saídas e retornos por veículo</CardDescription>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Histórico de Saídas</CardTitle>
+                    <CardDescription>Registros de saídas e retornos por veículo</CardDescription>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center bg-muted/30 p-2 rounded-lg">
+                     {(user?.role === 'admin' || user?.role === 'manager') && (
+                        <div className="flex items-center bg-background p-1 rounded-md border">
+                          <RadioGroup 
+                            value={historyFilterMode} 
+                            onValueChange={(v) => setHistoryFilterMode(v as 'mine'|'all')}
+                            className="flex items-center gap-4 px-2"
+                            orientation="horizontal"
+                          >
+                             <div className="flex items-center space-x-2">
+                               <RadioGroupItem value="mine" id="filter-mine" />
+                               <Label htmlFor="filter-mine" className="cursor-pointer font-normal">Minhas</Label>
+                             </div>
+                             <div className="flex items-center space-x-2">
+                               <RadioGroupItem value="all" id="filter-all" />
+                               <Label htmlFor="filter-all" className="cursor-pointer font-normal">Todas</Label>
+                             </div>
+                          </RadioGroup>
+                        </div>
+                     )}
+
+                     <div className="w-full sm:w-[200px]">
+                        <Select value={historyFilterVehicleId} onValueChange={setHistoryFilterVehicleId}>
+                          <SelectTrigger className="h-9 bg-background">
+                            <SelectValue placeholder="Filtrar por Veículo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os Veículos</SelectItem>
+                            {availableFilterVehicles.map(v => (
+                              <SelectItem key={v.id} value={String(v.id)}>{v.plate} - {v.model}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                     </div>
+                     
+                     {(historyFilterMode !== 'mine' || historyFilterVehicleId !== 'all') && (
+                       <Button variant="ghost" size="sm" onClick={clearHistoryFilters} className="h-9 px-2 text-muted-foreground hover:text-foreground">
+                         <X className="h-4 w-4 mr-1" />
+                         Limpar
+                       </Button>
+                     )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="mobile-table-container">
@@ -906,9 +719,14 @@ export default function VehicleChecklistPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {[...openChecklists, ...closedChecklists]
-                        .sort((a, b) => new Date((b.endDate || b.startDate)).getTime() - new Date((a.endDate || a.startDate)).getTime())
-                        .map(c => {
+                      {filteredHistory.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                            Nenhum registro encontrado com os filtros selecionados.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredHistory.map(c => {
                           const v = vehicles.find(v => v.id === c.vehicleId);
                           const checklistUser = users.find(u => u.id === c.userId);
                           const isClosed = c.status === 'closed';
@@ -921,7 +739,7 @@ export default function VehicleChecklistPage() {
                                 <TableCell className="font-medium">{v ? v.plate : c.vehicleId}</TableCell>
                                 <TableCell className="hidden lg:table-cell">{checklistUser?.fullName || checklistUser?.username || '-'}</TableCell>
                                 <TableCell className="hidden md:table-cell font-mono">{c.kmInitial} km</TableCell>
-                                <TableCell className="hidden xl:table-cell text-center">{fuelLabel(c.fuelLevelStart)}</TableCell>
+                                <TableCell className="hidden xl:table-cell text-center">{fuelLabel(c.fuelLevelStart as FuelLevel)}</TableCell>
                                 <TableCell className="hidden sm:table-cell">{formatDateBR(c.startDate)}</TableCell>
                                 <TableCell>
                                   {c.status === 'open' ? (
@@ -945,7 +763,7 @@ export default function VehicleChecklistPage() {
                                 <TableCell className="hidden md:table-cell font-mono">{c.kmFinal ? `${c.kmFinal} km` : '-'}</TableCell>
                                 <TableCell className="hidden sm:table-cell">
                                   <div className="flex items-center gap-2">
-                                    {formatDateBR(c.endDate)}
+                                    {c.endDate ? formatDateBR(c.endDate) : '-'}
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -969,22 +787,31 @@ export default function VehicleChecklistPage() {
                                           <Search className="mr-2 h-4 w-4" />
                                           <span>{isExpanded ? 'Fechar detalhes' : 'Ver detalhes'}</span>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => {
-                                          import('@/lib/pdf-generator')
-                                            .then(({ PDFGenerator }) => {
-                                              const gen = new PDFGenerator('portrait');
-                                              const pdfUser = users.find(u => u.id === c.userId) || user;
-                                              const groupsToPass = obsGroups.map(g => ({ key: g.key, label: g.label }));
-                                              const itemsToPass = obsConfig.map(i => ({ key: i.key, label: obsLabels[i.key], group: i.group }));
-                                              gen.generateReturnedChecklistPDF(c, v, pdfUser, { company: 'Sistema de Controle de Abastecimento', obsGroups: groupsToPass, obsItems: itemsToPass });
-                                              const dateStr = (c.endDate || c.startDate || '').toString().slice(0, 10);
-                                              const plate = v?.plate || String(c.vehicleId);
-                                              gen.save(`checklist-retorno-${plate}-${dateStr || new Date().toISOString().slice(0,10)}.pdf`);
-                                              toast({ title: "PDF Gerado", description: "Documento exportado com sucesso." });
-                                            })
-                                            .catch(() => {
-                                              toast({ title: "Erro", description: "Falha ao gerar PDF do checklist.", variant: "destructive" });
-                                            });
+                                        <DropdownMenuItem onClick={async () => {
+                                          try {
+                                            const { PDFGenerator } = await import('@/lib/pdf-generator');
+                                            const gen = new PDFGenerator('portrait');
+                                            const pdfUser = users.find(u => u.id === c.userId) || user;
+                                            const groupsToPass = obsGroups.map(g => ({ key: g.key, label: g.label }));
+                                            
+                                            let itemsToPass = [];
+                                            if (c.checklistTemplateId) {
+                                                const res = await apiRequest("GET", `/api/checklist-templates/${c.checklistTemplateId}/items`);
+                                                const items = await res.json();
+                                                itemsToPass = items.map((i: any) => ({ key: String(i.id), label: i.label, group: i.group }));
+                                            } else {
+                                                itemsToPass = obsConfig.map(i => ({ key: i.key, label: obsLabels[i.key], group: i.group }));
+                                            }
+
+                                            gen.generateReturnedChecklistPDF(c, v, pdfUser, { company: 'Sistema de Controle de Abastecimento', obsGroups: groupsToPass, obsItems: itemsToPass });
+                                            const dateStr = (c.endDate || c.startDate || '').toString().slice(0, 10);
+                                            const plate = v?.plate || String(c.vehicleId);
+                                            gen.save(`checklist-retorno-${plate}-${dateStr || new Date().toISOString().slice(0,10)}.pdf`);
+                                            toast({ title: "PDF Gerado", description: "Documento exportado com sucesso." });
+                                          } catch (e) {
+                                            console.error(e);
+                                            toast({ title: "Erro", description: "Falha ao gerar PDF do checklist.", variant: "destructive" });
+                                          }
                                         }}>
                                           <FileText className="mr-2 h-4 w-4" />
                                           <span>Exportar PDF</span>
@@ -1005,17 +832,6 @@ export default function VehicleChecklistPage() {
                                       <Button size="sm" variant={isExpanded ? 'secondary' : 'default'} disabled={user?.role === 'driver' && user?.id !== c.userId} onClick={() => {
                                       const next = isExpanded ? null : c.id;
                                       setExpandedReturnId(next);
-                                      if (!next) return;
-                                      const startVals = c.inspectionStart ? JSON.parse(c.inspectionStart) : {};
-                                      const base: any = {
-                                        selectedChecklistId: String(c.id),
-                                        kmFinal: '',
-                                        fuelLevelEnd: 'half',
-                                        endDate: nowManausLocalInput(),
-                                        notes: '',
-                                      };
-                                      const dynamicDefaults: Record<string, boolean | undefined> = {};
-                                      returnForm.reset({ ...base, ...dynamicDefaults });
                                       }}>
                                         {isExpanded ? 'Fechar' : <><span className="hidden sm:inline">{t('register-return-checklist')}</span><span className="sm:hidden">Retorno</span></>}
                                       </Button>
@@ -1031,96 +847,10 @@ export default function VehicleChecklistPage() {
                               {isExpanded && (
                                 <TableRow>
                                   <TableCell colSpan={9}>
-                                    <div className={`grid grid-cols-1 ${isClosed ? 'lg:grid-cols-2' : ''} gap-6`}>
-                                      {isClosed && (
-                                        <Card>
-                                          <CardHeader>
-                                            <CardTitle>Dados da Saída</CardTitle>
-                                            <CardDescription>Condições registradas na abertura</CardDescription>
-                                          </CardHeader>
-                                          <CardContent>
-                                            <div className="grid grid-cols-2 gap-3 text-sm">
-                                              <div>
-                                                <Label>KM Inicial</Label>
-                                                <div className="font-mono">{c.kmInitial} km</div>
-                                              </div>
-                                              <div>
-                                                <Label>Nível Combustível</Label>
-                                                <div className="text-center">{fuelLabel(c.fuelLevelStart)}</div>
-                                              </div>
-                                              <div className="lg:col-span-2">
-                                                <Label>Inspeção</Label>
-                                                <div className="mt-2 space-y-3">
-                                                  {obsGroups.map(group => {
-                                                    const items = obsConfig.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
-                                                    if (items.length === 0) return null;
-                                                    return (
-                                                      <div key={`start-${group.key}`}>
-                                                        <div className="font-medium">{group.label}</div>
-                                                        <div className="mt-1 grid grid-cols-2 gap-2">
-                                                          {items.map(i => (
-                                                            <div key={`start-item-${i.key}`}>- {obsLabels[i.key]}: {start[i.key] === true ? 'Sim' : 'Não'}</div>
-                                                          ))}
-                                                        </div>
-                                                      </div>
-                                                    );
-                                                  })}
-                                                  <div>- Observações: {start.notes || '-'}</div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </CardContent>
-                                        </Card>
-                                      )}
+                                    <div className={`grid grid-cols-1 ${!isClosed ? 'lg:grid-cols-2' : ''} gap-6`}>
+                                      <ChecklistDetails checklist={c} />
                                       {isClosed ? (
-                                        <Card>
-                                          <CardHeader>
-                                            <CardTitle>Dados do Retorno</CardTitle>
-                                            <CardDescription>Condições registradas na entrada</CardDescription>
-                                          </CardHeader>
-                                          <CardContent>
-                                            <div className="grid grid-cols-2 gap-3 text-sm">
-                                              <div>
-                                                <Label>KM Final</Label>
-                                                <div className="font-mono">{c.kmFinal} km</div>
-                                              </div>
-                                              <div>
-                                                <Label>Nível Combustível</Label>
-                                              <div className="text-center">{fuelLabel(c.fuelLevelEnd)}</div>
-                                              </div>
-                                              <div>
-                                                <Label>Retorno</Label>
-                                              <div>{formatDateBR(c.endDate)}</div>
-                                              </div>
-                                              <div className="lg:col-span-2">
-                                              <Label>Inspeção</Label>
-                                              <div className="mt-2 space-y-3">
-                                                {obsGroups.map(group => {
-                                                  const items = obsConfig.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
-                                                  if (items.length === 0) return null;
-                                                  return (
-                                                    <div key={`end-${group.key}`}>
-                                                      <div className="font-medium">{group.label}</div>
-                                                      <div className="mt-1 grid grid-cols-2 gap-2">
-                                                        {items.map(i => (
-                                                          <div key={`end-item-${i.key}`}>- {obsLabels[i.key]}: {(end[i.key] === false) ? 'Não' : (end[i.key] ? 'Sim' : 'Sim')}</div>
-                                                        ))}
-                                                      </div>
-                                                    </div>
-                                                  );
-                                                })}
-                                                <div>- Observações: {end.notes || '-'}</div>
-                                                {end?.approvedByName && (
-                                                  <div>- Conferido por: {end.approvedByName}</div>
-                                                )}
-                                                {end?.approvedAt && (
-                                                  <div>- Data da Conferência: {formatDateBR(end.approvedAt)}</div>
-                                                )}
-                                              </div>
-                                              </div>
-                                            </div>
-                                          </CardContent>
-                                        </Card>
+null
                                       ) : (
                                         <Card>
                                           <CardHeader>
@@ -1129,165 +859,14 @@ export default function VehicleChecklistPage() {
                                           </CardHeader>
                                           <CardContent>
                                             <ScrollArea className="h-[60vh] pr-4">
-                                            <Form {...returnForm}>
-                                              <form
-                                                className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-1"
-                                                onSubmit={returnForm.handleSubmit((values) => {
-                                                  const id = parseInt(values.selectedChecklistId);
-                                                  if (!id) {
-                                                    returnForm.setError('selectedChecklistId', { message: 'Selecione uma saída' });
-                                                    return;
-                                                  }
-                                                  
-                                                  // Validation for observations
-                                                  const missingObs = obsConfig.find(i => (values as any)[i.key] === undefined || (values as any)[i.key] === null);
-                                                  if (missingObs) {
-                                                    toast({ title: "Atenção", description: "Preencha todas as observações obrigatórias.", variant: "destructive" });
-                                                    return;
-                                                  }
-
-                                                  const kmFinal = parseFloat(values.kmFinal);
-                                                  if (isNaN(kmFinal) || kmFinal < 0) {
-                                                    returnForm.setError('kmFinal', { message: 'Informe uma quilometragem válida' });
-                                                    return;
-                                                  }
-                                                  const endObj: any = {};
-                                                  obsConfig.forEach(i => {
-                                                    endObj[i.key] = (values as any)[i.key];
-                                                  });
-                                                  endObj.notes = values.notes;
-                                                  const inspectionEnd = JSON.stringify(endObj);
-                  closeReturn.mutate({ id, userId: user!.id, kmFinal, fuelLevelEnd: values.fuelLevelEnd, endDate: values.endDate, inspectionEnd });
-                })}
-                                              >
-                                                <FormField control={returnForm.control} name="selectedChecklistId" render={({ field }) => (
-                                                  <FormItem>
-                                                    <FormLabel>Saída</FormLabel>
-                                                    <FormControl>
-                                                      <Input {...field} value={field.value} readOnly />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                  </FormItem>
-                                                )} />
-                                                <FormField control={returnForm.control} name="kmFinal" render={({ field }) => (
-                                                  <FormItem>
-                                                    <FormLabel>KM Final</FormLabel>
-                                                    <FormControl>
-                                                      <Input {...field} type="number" min={0} placeholder="Ex: 12500" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                  </FormItem>
-                                                )} />
-                                                <FormField control={returnForm.control} name="fuelLevelEnd" render={({ field }) => (
-                                                  <FormItem>
-                                                    <FormLabel>{t('fuel-level')}</FormLabel>
-                                                    <Select value={field.value} onValueChange={field.onChange}>
-                                                      <SelectTrigger>
-                                                        <SelectValue />
-                                                      </SelectTrigger>
-                                                      <SelectContent>
-                                                        {fuelLevelOptions.map(opt => (
-                                                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                                        ))}
-                                                      </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                  </FormItem>
-                                                )} />
-                                            <FormField control={returnForm.control} name="endDate" render={({ field }) => (
-                                              <FormItem>
-                                                <FormLabel>Data/Hora</FormLabel>
-                                                <FormControl>
-                                                  <Input {...field} type="datetime-local" lang="pt-BR" />
-                                                </FormControl>
-                                                <FormMessage />
-                                              </FormItem>
-                                            )} />
-                                                <div className="sm:col-span-2 space-y-4">
-                                                  {obsGroups.map(group => {
-                                                    const items = obsConfig.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
-                                                    if (items.length === 0) return null;
-                                                    return (
-                                                      <div key={group.key} className="space-y-2">
-                                                        <h4 className="font-semibold">{group.label}</h4>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                          {items.filter(i=>i.column===1).map(i=> (
-                                                            <FormField key={i.key} control={returnForm.control} name={i.key as any} render={({ field }) => (
-                                                            <FormItem className="flex items-center justify-between p-1">
-                                                              <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 !mt-0">{obsLabels[i.key]}</FormLabel>
-                                                              <FormControl>
-                                                                <div className="flex items-center gap-1">
-                                                                  <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant={field.value ? "default" : "outline"}
-                                                                    className={field.value ? "bg-green-600 hover:bg-green-700 h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                                                                    onClick={() => field.onChange(true)}
-                                                                  >
-                                                                    Sim
-                                                                  </Button>
-                                                                  <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant={field.value === false ? "destructive" : "outline"}
-                                                                    className={field.value === false ? "h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                                                                    onClick={() => field.onChange(false)}
-                                                                  >
-                                                                    Não
-                                                                  </Button>
-                                                                </div>
-                                                              </FormControl>
-                                                            </FormItem>
-                                                          )} />
-                                                          ))}
-                                                          {items.filter(i=>i.column===2).map(i=> (
-                                                            <FormField key={i.key} control={returnForm.control} name={i.key as any} render={({ field }) => (
-                                                            <FormItem className="flex items-center justify-between p-1">
-                                                              <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 !mt-0">{obsLabels[i.key]}</FormLabel>
-                                                              <FormControl>
-                                                                <div className="flex items-center gap-1">
-                                                                  <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant={field.value ? "default" : "outline"}
-                                                                    className={field.value ? "bg-green-600 hover:bg-green-700 h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                                                                    onClick={() => field.onChange(true)}
-                                                                  >
-                                                                    Sim
-                                                                  </Button>
-                                                                  <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant={field.value === false ? "destructive" : "outline"}
-                                                                    className={field.value === false ? "h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                                                                    onClick={() => field.onChange(false)}
-                                                                  >
-                                                                    Não
-                                                                  </Button>
-                                                                </div>
-                                                              </FormControl>
-                                                            </FormItem>
-                                                          )} />
-                                                          ))}
-                                                        </div>
-                                                      </div>
-                                                    );
-                                                  })}
-                                                </div>
-                                                <FormField control={returnForm.control} name="notes" render={({ field }) => (
-                                                  <FormItem className="sm:col-span-2">
-                                                    <FormLabel>Observações</FormLabel>
-                                                    <FormControl>
-                                                      <Input {...field} placeholder="Detalhes do retorno" />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                  </FormItem>
-                                                )} />
-                                                <div className="sm:col-span-2 mobile-button-group pt-2">
-                                                  <Button type="submit" className="w-full sm:w-auto" disabled={closeReturn.isPending}>{t('confirm-return')}</Button>
-                                                </div>
-                                              </form>
-                                            </Form>
+                                            <ChecklistReturnForm
+                                              checklist={c}
+                                              onSuccess={() => {
+                                                setExpandedReturnId(null);
+                                                setActiveTab('entrada');
+                                              }}
+                                              onCancel={() => setExpandedReturnId(null)}
+                                            />
                                             </ScrollArea>
                                           </CardContent>
                                         </Card>
@@ -1298,7 +877,8 @@ export default function VehicleChecklistPage() {
                               )}
                             </Fragment>
                           );
-                        })}
+                        })
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -1327,7 +907,7 @@ export default function VehicleChecklistPage() {
                 }
 
                 // Validation for observations
-                const missingObs = obsConfig.find(i => (values as any)[i.key] === undefined || (values as any)[i.key] === null);
+                const missingObs = currentExitItems.find(i => (values as any)[i.key] === undefined || (values as any)[i.key] === null);
                 if (missingObs) {
                   toast({ title: "Atenção", description: "Preencha todas as observações obrigatórias.", variant: "destructive" });
                   return;
@@ -1339,127 +919,125 @@ export default function VehicleChecklistPage() {
                   return;
                 }
                 const inspectionObj: any = {};
-                obsConfig.forEach(obs => {
+                currentExitItems.forEach(obs => {
                   inspectionObj[obs.key] = (values as any)[obs.key];
                 });
                 inspectionObj.notes = values.notes;
                 const inspectionStart = JSON.stringify(inspectionObj);
-                createExit.mutate({ vehicleId: vid, userId: user!.id, kmInitial, fuelLevelStart: values.fuelLevelStart, startDate: values.startDate, inspectionStart });
+                const templateId = values.checklistTemplateId === 'legacy' ? undefined : parseInt(values.checklistTemplateId);
+                createExit.mutate({ vehicleId: vid, userId: user!.id, kmInitial, fuelLevelStart: values.fuelLevelStart, startDate: values.startDate, inspectionStart, checklistTemplateId: templateId });
               })}
             >
-              <FormField
-                control={exitForm.control}
-                name="vehicleId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('vehicle')}</FormLabel>
-                    <Select value={field.value} onValueChange={(val) => { if (lockedVehicleId === null) field.onChange(val); }}>
-                      <SelectTrigger disabled={lockedVehicleId !== null}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {activeVehicles.map(v => (
-                          <SelectItem key={v.id} value={String(v.id)} disabled={openByVehicle.has(v.id)}>
-                            {v.plate} - {v.model}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={exitForm.control}
+                  name="vehicleId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('vehicle')}</FormLabel>
+                      <Select value={field.value} onValueChange={(val) => { 
+                        if (lockedVehicleId === null) {
+                          field.onChange(val);
+                          // Auto-select template
+                          const vehicle = activeVehicles.find(v => String(v.id) === val);
+                          let templateId = 'legacy';
+                          if (vehicle && vehicle.vehicleTypeId) {
+                            const type = vehicleTypes.find(t => t.id === vehicle.vehicleTypeId);
+                            if (type && type.checklistTemplateId) {
+                              templateId = String(type.checklistTemplateId);
+                            }
+                          }
+                          exitForm.setValue('checklistTemplateId', templateId);
+                          setSelectedTemplateId(templateId);
+                        } 
+                      }}>
+                        <SelectTrigger disabled={lockedVehicleId !== null}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeVehicles.map(v => (
+                            <SelectItem key={v.id} value={String(v.id)} disabled={openByVehicle.has(v.id)}>
+                              {v.plate} - {v.model}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={exitForm.control}
-                name="kmInitial"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('initial-mileage')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" min={0} placeholder="Ex: 12000" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormItem>
+                  <FormLabel>Modelo de Checklist (Automático)</FormLabel>
+                  <div className="h-10 px-3 py-2 rounded-md border border-input bg-muted text-sm text-muted-foreground flex items-center">
+                    {selectedTemplateId === 'legacy' ? 'Padrão (Legado)' : (templates.find(t => String(t.id) === selectedTemplateId)?.name || 'Carregando...')}
+                  </div>
+                </FormItem>
+              </div>
 
-              <FormField
-                control={exitForm.control}
-                name="fuelLevelStart"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('fuel-level')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fuelLevelOptions.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={exitForm.control}
+                  name="kmInitial"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('initial-mileage')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" min={0} placeholder="Ex: 12000" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={exitForm.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data/Hora</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="datetime-local" lang="pt-BR" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={exitForm.control}
+                  name="fuelLevelStart"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('fuel-level')}</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fuelLevelOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={exitForm.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data/Hora</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="datetime-local" lang="pt-BR" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="space-y-4">
-                {obsGroups.map(group => {
-                  const items = obsConfig.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
+                {currentExitGroups.map(group => {
+                  const items = currentExitItems.filter(i => i.group === group.key).sort((a,b)=>a.order-b.order);
                   if (items.length === 0) return null;
                   return (
                     <div key={`exit-${group.key}`} className="space-y-2">
                       <h4 className="font-semibold">{group.label}</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {items.filter(i=>i.column===1).map(i=> (
+                        {items.map(i=> (
                           <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
                             <FormItem className="flex items-center justify-between p-1">
-                              <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 !mt-0">{obsLabels[i.key]}</FormLabel>
-                              <FormControl>
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={field.value ? "default" : "outline"}
-                                    className={field.value ? "bg-green-600 hover:bg-green-700 h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                                    onClick={() => field.onChange(true)}
-                                  >
-                                    Sim
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={field.value === false ? "destructive" : "outline"}
-                                    className={field.value === false ? "h-7 px-3" : "h-7 px-3 text-muted-foreground"}
-                                    onClick={() => field.onChange(false)}
-                                  >
-                                    Não
-                                  </Button>
-                                </div>
-                              </FormControl>
-                            </FormItem>
-                          )} />
-                        ))}
-                        {items.filter(i=>i.column===2).map(i=> (
-                          <FormField key={i.key} control={exitForm.control} name={i.key as any} render={({ field }) => (
-                            <FormItem className="flex items-center justify-between p-1">
-                              <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 !mt-0">{obsLabels[i.key]}</FormLabel>
+                              <FormLabel className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 !mt-0">{i.label}</FormLabel>
                               <FormControl>
                                 <div className="flex items-center gap-1">
                                   <Button

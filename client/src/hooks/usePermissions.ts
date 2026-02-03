@@ -38,6 +38,12 @@ export const PERMISSIONS: Permission[] = [
     allowedRoles: ['employee', 'manager', 'admin', 'driver'],
   },
   {
+      path: '/checklist-templates',
+      label: 'checklist-templates',
+      icon: 'ClipboardCheck',
+      allowedRoles: ['manager', 'admin'],
+    },
+  {
     path: '/reports',
     label: 'reports',
     icon: 'BarChart3',

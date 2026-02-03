@@ -14,6 +14,8 @@ import {
   dataBackups,
   userVehicleFavorites,
   vehicleTypes,
+  checklistTemplates,
+  checklistTemplateItems,
   type User, 
   type InsertUser, 
   type UpdateUserProfile, 
@@ -34,7 +36,11 @@ import {
   type AuditLog,
   type DataBackup,
   type VehicleType,
-  type InsertVehicleType
+  type InsertVehicleType,
+  type ChecklistTemplate,
+  type InsertChecklistTemplate,
+  type ChecklistTemplateItem,
+  type InsertChecklistTemplateItem
 } from '@shared/schema';
 import { IStorage, type VehicleChecklist, type FuelLevel } from './storage';
 
@@ -51,6 +57,10 @@ export class DatabaseStorage implements IStorage {
   // Remove the shared loggedInUserId - this was causing session conflicts
   private cache: Map<string, { data: any; timestamp: number; ttl: number }> = new Map();
   private readonly DEFAULT_TTL = 1000; // 1 segundo apenas para máxima responsividade
+
+  constructor() {
+    this.initializeChecklistTemplates();
+  }
 
   // Sistema de auditoria para rastrear todas as alterações
   private async logAudit(
@@ -809,7 +819,7 @@ export class DatabaseStorage implements IStorage {
     return rows as unknown as VehicleChecklist[];
   }
 
-  async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string }): Promise<VehicleChecklist> {
+  async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string; checklistTemplateId?: number }): Promise<VehicleChecklist> {
     const vehicleRow = await db.select().from(vehicles).where(eq(vehicles.id, payload.vehicleId)).limit(1);
     const vehicle = vehicleRow[0];
     if (!vehicle) throw new Error('Veículo não encontrado');
@@ -824,6 +834,7 @@ export class DatabaseStorage implements IStorage {
     const created = await db.insert(vehicleChecklists).values({
       vehicleId: payload.vehicleId,
       userId: payload.userId,
+      checklistTemplateId: payload.checklistTemplateId,
       kmInitial: String(payload.kmInitial),
       fuelLevelStart: payload.fuelLevelStart,
       inspectionStart: payload.inspectionStart || null,
@@ -1150,6 +1161,131 @@ export class DatabaseStorage implements IStorage {
       console.log('Backup completo do sistema criado com sucesso');
     } catch (error) {
       console.error('Erro ao criar backup completo:', error);
+    }
+  }
+
+  // Checklist Templates
+  async getChecklistTemplates(): Promise<ChecklistTemplate[]> {
+    return await db.select().from(checklistTemplates).orderBy(checklistTemplates.name);
+  }
+
+  async getChecklistTemplate(id: number): Promise<ChecklistTemplate | undefined> {
+    const [template] = await db.select().from(checklistTemplates).where(eq(checklistTemplates.id, id));
+    return template;
+  }
+
+  async createChecklistTemplate(template: InsertChecklistTemplate): Promise<ChecklistTemplate> {
+    const [newTemplate] = await db.insert(checklistTemplates).values(template).returning();
+    return newTemplate;
+  }
+
+  async updateChecklistTemplate(id: number, updates: Partial<ChecklistTemplate>): Promise<ChecklistTemplate | undefined> {
+    const [updated] = await db
+      .update(checklistTemplates)
+      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .where(eq(checklistTemplates.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteChecklistTemplate(id: number): Promise<boolean> {
+    // First delete items
+    await db.delete(checklistTemplateItems).where(eq(checklistTemplateItems.checklistTemplateId, id));
+    // Then delete template
+    const [deleted] = await db.delete(checklistTemplates).where(eq(checklistTemplates.id, id)).returning();
+    return !!deleted;
+  }
+
+  // Checklist Template Items
+  async getChecklistTemplateItems(templateId: number): Promise<ChecklistTemplateItem[]> {
+    return await db
+      .select()
+      .from(checklistTemplateItems)
+      .where(eq(checklistTemplateItems.checklistTemplateId, templateId))
+      .orderBy(checklistTemplateItems.order);
+  }
+
+  async createChecklistTemplateItem(item: InsertChecklistTemplateItem): Promise<ChecklistTemplateItem> {
+    // Get max order to append
+    const [maxOrder] = await db
+      .select({ maxOrder: sql<number>`max(${checklistTemplateItems.order})` })
+      .from(checklistTemplateItems)
+      .where(eq(checklistTemplateItems.checklistTemplateId, item.checklistTemplateId));
+    
+    const nextOrder = (maxOrder?.maxOrder || 0) + 1;
+
+    const [newItem] = await db.insert(checklistTemplateItems).values({
+      ...item,
+      order: nextOrder
+    }).returning();
+    return newItem;
+  }
+
+  async updateChecklistTemplateItem(id: number, updates: Partial<ChecklistTemplateItem>): Promise<ChecklistTemplateItem | undefined> {
+    const [updated] = await db
+      .update(checklistTemplateItems)
+      .set({ ...updates, updatedAt: new Date().toISOString() })
+      .where(eq(checklistTemplateItems.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteChecklistTemplateItem(id: number): Promise<boolean> {
+    const [deleted] = await db.delete(checklistTemplateItems).where(eq(checklistTemplateItems.id, id)).returning();
+    return !!deleted;
+  }
+
+  async reorderChecklistTemplateItems(templateId: number, itemIds: number[]): Promise<boolean> {
+    try {
+      await db.transaction(async (tx: any) => {
+        for (let i = 0; i < itemIds.length; i++) {
+          await tx
+            .update(checklistTemplateItems)
+            .set({ order: i + 1, updatedAt: new Date().toISOString() })
+            .where(and(
+              eq(checklistTemplateItems.id, itemIds[i]),
+              eq(checklistTemplateItems.checklistTemplateId, templateId)
+            ));
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('Error reordering checklist items:', error);
+      return false;
+    }
+  }
+
+  async initializeChecklistTemplates(): Promise<void> {
+    try {
+      const templates = await this.getChecklistTemplates();
+      if (templates.length > 0) return;
+
+      // Check for legacy config
+      const legacyConfig = await this.getSetting('obs_config');
+      if (legacyConfig && Array.isArray(legacyConfig)) {
+        console.log('Migrating legacy checklist config to templates...');
+        
+        // Create default template
+        const template = await this.createChecklistTemplate({
+          name: 'Padrão (Migrado)',
+          description: 'Template migrado automaticamente das configurações globais',
+        });
+
+        // Add items
+        for (const item of legacyConfig) {
+           await this.createChecklistTemplateItem({
+             checklistTemplateId: template.id,
+             key: item.key || `item_${Date.now()}_${Math.random()}`,
+             label: item.label || 'Item sem nome',
+             group: 'Geral', 
+             defaultChecked: item.defaultChecked || false,
+             column: 1
+           });
+        }
+        console.log('Migration completed.');
+      }
+    } catch (error) {
+      console.error('Error initializing checklist templates:', error);
     }
   }
 

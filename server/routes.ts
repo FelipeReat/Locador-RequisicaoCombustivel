@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { createHmac, timingSafeEqual } from "crypto";
 import { DatabaseStorage } from "./db-storage";
 import { MemStorage } from "./storage";
-import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema, insertFuelRecordSchema, insertVehicleTypeSchema } from "@shared/schema";
+import { insertFuelRequisitionSchema, updateFuelRequisitionStatusSchema, updateUserProfileSchema, changePasswordSchema, insertSupplierSchema, insertVehicleSchema, insertUserSchema, insertUserManagementSchema, insertCompanySchema, loginSchema, insertFuelRecordSchema, insertVehicleTypeSchema, insertChecklistTemplateSchema, insertChecklistTemplateItemSchema } from "@shared/schema";
 
 const storage = new DatabaseStorage();
 
@@ -1224,14 +1224,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Sessão inválida" });
       }
 
-      const { vehicleId, kmInitial, fuelLevelStart, startDate, inspectionStart } = req.body;
+      const { vehicleId, kmInitial, fuelLevelStart, startDate, inspectionStart, checklistTemplateId } = req.body;
       const created = await storage.createExitChecklist({
         vehicleId: parseInt(vehicleId),
         userId: currentUser.id,
         kmInitial: parseFloat(kmInitial),
         fuelLevelStart,
         startDate,
-        inspectionStart
+        inspectionStart,
+        checklistTemplateId: checklistTemplateId ? parseInt(checklistTemplateId) : undefined
       });
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.json(created);
@@ -1464,6 +1465,189 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Erro ao criar backup completo:', error);
       res.status(500).json({ message: "Erro ao criar backup do sistema" });
+    }
+  });
+
+  // ================== Checklist Template Routes ==================
+  app.get("/api/checklist-templates", async (req, res) => {
+    try {
+      const templates = await storage.getChecklistTemplates();
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar templates de checklist" });
+    }
+  });
+
+  app.get("/api/checklist-templates/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const template = await storage.getChecklistTemplate(id);
+      if (!template) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+      res.json(template);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar template" });
+    }
+  });
+
+  app.post("/api/checklist-templates", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const validatedData = insertChecklistTemplateSchema.parse(req.body);
+      const template = await storage.createChecklistTemplate(validatedData);
+      res.status(201).json(template);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao criar template" });
+      }
+    }
+  });
+
+  app.put("/api/checklist-templates/:id", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const id = parseInt(req.params.id);
+      const validatedData = insertChecklistTemplateSchema.partial().parse(req.body);
+      const template = await storage.updateChecklistTemplate(id, validatedData);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao atualizar template" });
+      }
+    }
+  });
+
+  app.delete("/api/checklist-templates/:id", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteChecklistTemplate(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+      
+      res.json({ message: "Template excluído com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir template" });
+    }
+  });
+
+  app.post("/api/checklist-templates/:id/items", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const templateId = parseInt(req.params.id);
+      const validatedData = insertChecklistTemplateItemSchema.parse({
+        ...req.body,
+        checklistTemplateId: templateId
+      });
+      
+      const item = await storage.createChecklistTemplateItem(validatedData);
+      res.status(201).json(item);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao criar item do template" });
+      }
+    }
+  });
+
+  app.put("/api/checklist-templates/:id/items/:itemId", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const itemId = parseInt(req.params.itemId);
+      const validatedData = insertChecklistTemplateItemSchema.partial().parse(req.body);
+      
+      const item = await storage.updateChecklistTemplateItem(itemId, validatedData);
+      
+      if (!item) {
+        return res.status(404).json({ message: "Item não encontrado" });
+      }
+      
+      res.json(item);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao atualizar item do template" });
+      }
+    }
+  });
+
+  app.delete("/api/checklist-templates/:id/items/:itemId", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const itemId = parseInt(req.params.itemId);
+      const success = await storage.deleteChecklistTemplateItem(itemId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Item não encontrado" });
+      }
+      
+      res.json({ message: "Item excluído com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao excluir item do template" });
+    }
+  });
+
+  app.post("/api/checklist-templates/:id/reorder-items", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const templateId = parseInt(req.params.id);
+      const { itemIds } = req.body;
+      
+      if (!Array.isArray(itemIds)) {
+        return res.status(400).json({ message: "Lista de IDs inválida" });
+      }
+
+      const success = await storage.reorderChecklistTemplateItems(templateId, itemIds);
+      
+      if (!success) {
+        return res.status(400).json({ message: "Erro ao reordenar itens" });
+      }
+      
+      res.json({ message: "Itens reordenados com sucesso" });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao reordenar itens" });
     }
   });
 

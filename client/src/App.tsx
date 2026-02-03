@@ -24,6 +24,7 @@ import Sidebar from "@/components/layout/sidebar";
 import Suppliers from "@/pages/suppliers";
 import Companies from "@/pages/companies";
 import VehicleTypes from "@/pages/vehicle-types";
+import ChecklistTemplates from "@/pages/checklist-templates";
 import Login from "@/pages/login";
 import InactivityWrapper from "@/components/InactivityWrapper";
 import { useEffect } from "react";
@@ -96,6 +97,11 @@ function Router() {
           <Route path="/vehicle-checklist">
             <ProtectedRoute path="/vehicle-checklist">
               <VehicleChecklistPage />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/checklist-templates">
+            <ProtectedRoute path="/checklist-templates">
+              <ChecklistTemplates />
             </ProtectedRoute>
           </Route>
           <Route path="/checklist-tests">

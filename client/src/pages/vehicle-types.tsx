@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
-import { insertVehicleTypeSchema, type VehicleType, type InsertVehicleType } from "@shared/schema";
+import { insertVehicleTypeSchema, type VehicleType, type InsertVehicleType, type ChecklistTemplate } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import Header from "@/components/layout/header";
@@ -21,6 +21,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Plus, 
   Edit, 
@@ -51,11 +58,16 @@ export default function VehicleTypes() {
     queryKey: ["/api/vehicle-types"],
   });
 
+  const { data: checklistTemplates } = useQuery<ChecklistTemplate[]>({
+    queryKey: ["/api/checklist-templates"],
+  });
+
   const form = useForm<InsertVehicleType>({
     resolver: zodResolver(insertVehicleTypeSchema),
     defaultValues: {
       name: "",
       description: "",
+      checklistTemplateId: null,
     },
   });
 
@@ -64,11 +76,13 @@ export default function VehicleTypes() {
       form.reset({
         name: editingType.name,
         description: editingType.description || "",
+        checklistTemplateId: editingType.checklistTemplateId,
       });
     } else {
       form.reset({
         name: "",
         description: "",
+        checklistTemplateId: null,
       });
     }
   }, [editingType, form]);
@@ -206,6 +220,35 @@ export default function VehicleTypes() {
                   
                   <FormField
                     control={form.control}
+                    name="checklistTemplateId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Template de Checklist</FormLabel>
+                        <Select 
+                          onValueChange={(value) => field.onChange(value === "null" ? null : Number(value))} 
+                          value={field.value === null || field.value === undefined ? "null" : field.value.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um template (opcional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="null">Nenhum (Padrão)</SelectItem>
+                            {checklistTemplates?.filter(t => t.active).map((template) => (
+                              <SelectItem key={template.id} value={template.id.toString()}>
+                                {template.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
                     name="description"
                     render={({ field }) => (
                       <FormItem>
@@ -258,6 +301,12 @@ export default function VehicleTypes() {
                             <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                               {type.description || "Sem descrição"}
                             </p>
+                            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                              <span className="font-medium text-xs uppercase tracking-wider text-gray-400">Template:</span>
+                              <Badge variant="outline" className="font-normal">
+                                {checklistTemplates?.find(t => t.id === type.checklistTemplateId)?.name || "Padrão"}
+                              </Badge>
+                            </div>
                           </div>
                           <Badge variant={type.active ? "default" : "destructive"}>
                             {type.active ? "Ativo" : "Inativo"}

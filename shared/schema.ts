@@ -18,7 +18,7 @@ export const users = pgTable("users", {
   updatedAt: text("updated_at").notNull().default("now()"),
 });
 
-export const vehicleTypes = pgTable("vehicle_types", {
+export const checklistTemplates = pgTable("checklist_templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
@@ -27,8 +27,32 @@ export const vehicleTypes = pgTable("vehicle_types", {
   updatedAt: text("updated_at").notNull().default("now()"),
 });
 
-export const insertVehicleTypeSchema = createInsertSchema(vehicleTypes, {
-  name: z.string().min(1, "Nome do tipo é obrigatório"),
+export const checklistTemplateItems = pgTable("checklist_template_items", {
+  id: serial("id").primaryKey(),
+  checklistTemplateId: integer("checklist_template_id").notNull(),
+  key: text("key").notNull(),
+  label: text("label").notNull(),
+  defaultChecked: boolean("default_checked").notNull().default(false),
+  column: integer("column").notNull().default(1),
+  order: integer("order").notNull().default(0),
+  group: text("group").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export const vehicleTypes = pgTable("vehicle_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  active: boolean("active").notNull().default(true),
+  checklistTemplateId: integer("checklist_template_id"),
+  createdAt: text("created_at").notNull().default("now()"),
+  updatedAt: text("updated_at").notNull().default("now()"),
+});
+
+export const insertChecklistTemplateSchema = createInsertSchema(checklistTemplates, {
+  name: z.string().min(1, "Nome do template é obrigatório"),
   description: z.string().optional(),
 }).omit({
   id: true,
@@ -36,6 +60,33 @@ export const insertVehicleTypeSchema = createInsertSchema(vehicleTypes, {
   createdAt: true,
   updatedAt: true,
 });
+
+export const insertChecklistTemplateItemSchema = createInsertSchema(checklistTemplateItems, {
+  key: z.string().min(1, "Chave do item é obrigatória"),
+  label: z.string().min(1, "Label é obrigatório"),
+  group: z.string().min(1, "Grupo é obrigatório"),
+}).omit({
+  id: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertVehicleTypeSchema = createInsertSchema(vehicleTypes, {
+  name: z.string().min(1, "Nome do tipo é obrigatório"),
+  description: z.string().optional(),
+  checklistTemplateId: z.number().optional().nullable(),
+}).omit({
+  id: true,
+  active: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ChecklistTemplate = typeof checklistTemplates.$inferSelect;
+export type InsertChecklistTemplate = z.infer<typeof insertChecklistTemplateSchema>;
+export type ChecklistTemplateItem = typeof checklistTemplateItems.$inferSelect;
+export type InsertChecklistTemplateItem = z.infer<typeof insertChecklistTemplateItemSchema>;
 
 export type VehicleType = typeof vehicleTypes.$inferSelect;
 export type InsertVehicleType = z.infer<typeof insertVehicleTypeSchema>;
@@ -345,6 +396,7 @@ export const vehicleChecklists = pgTable("vehicle_checklists", {
   id: serial("id").primaryKey(),
   vehicleId: integer("vehicle_id").notNull(),
   userId: integer("user_id").notNull(),
+  checklistTemplateId: integer("checklist_template_id"),
   kmInitial: text("km_initial").notNull(),
   kmFinal: text("km_final"),
   fuelLevelStart: text("fuel_level_start").notNull(),
