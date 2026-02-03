@@ -17,27 +17,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
-import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText, Star, Settings, Filter, X } from "lucide-react";
+import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText, Star, Settings, Filter, X, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSmartInvalidation, useRealTimeUpdates } from "@/hooks/useRealTimeUpdates";
 import { apiRequest } from "@/lib/queryClient";
-import type { ChecklistTemplate, ChecklistTemplateItem, VehicleChecklist, VehicleType } from "@shared/schema";
+import type { ChecklistTemplate, ChecklistTemplateItem, VehicleChecklist, VehicleType, Vehicle } from "@shared/schema";
 import { obsConfig as defaultObsConfig, obsGroups, fuelLevelOptions, FuelLevel, ObsGroupKey as LegacyObsGroupKey } from "@/lib/checklist-constants";
 import { ChecklistReturnForm } from "@/components/checklist/checklist-return-form";
 import { ChecklistDetails } from "@/components/checklist/checklist-details";
-
-type Vehicle = {
-  id: number;
-  plate: string;
-  model: string;
-  brand: string;
-  status: string;
-  mileage: string;
-  companyId: number | null;
-  vehicleTypeId: number | null;
-};
+import { VehicleChecklistReport } from "@/components/checklist/vehicle-checklist-report";
+import { formatDateBR } from "@/lib/checklist-utils";
 
 type Company = {
   id: number;
@@ -157,6 +148,25 @@ export default function VehicleChecklistPage() {
   // Filters for Return Tab
   const [historyFilterMode, setHistoryFilterMode] = useState<'mine' | 'all'>('mine');
   const [historyFilterVehicleId, setHistoryFilterVehicleId] = useState<string>('all');
+  const [entradaViewMode, setEntradaViewMode] = useState<'pending' | 'history'>('pending');
+
+  const pendingReturns = useMemo(() => {
+    let data = openChecklists;
+    // Apply permissions (drivers see only theirs)
+    const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+    if (!isAdmin || historyFilterMode === 'mine') {
+       if (user) {
+         data = data.filter(c => c.userId === user.id);
+       }
+    }
+    
+    if (historyFilterVehicleId !== 'all') {
+      const vid = parseInt(historyFilterVehicleId);
+      data = data.filter(c => c.vehicleId === vid);
+    }
+    
+    return data.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+  }, [openChecklists, user, historyFilterMode, historyFilterVehicleId]);
 
   const filteredHistory = useMemo(() => {
     let data = [...openChecklists, ...closedChecklists];
@@ -419,12 +429,7 @@ export default function VehicleChecklistPage() {
     if (!d) return "-";
     return new Date(d).toLocaleString('pt-BR', { timeZone: 'America/Manaus' });
   }
-  function formatDateBR(d?: string | number | Date) {
-    if (!d) return "-";
-    const parts = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Manaus', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(d));
-    const map: Record<string, string> = Object.fromEntries(parts.map(p => [p.type, p.value]));
-    return `${map.day}/${map.month}/${map.year}`;
-  }
+
   function nowManausLocalInput() {
     const parts = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Manaus', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
     const map: Record<string, string> = Object.fromEntries(parts.map(p => [p.type, p.value]));
@@ -527,6 +532,7 @@ export default function VehicleChecklistPage() {
             <TabsList className="w-full sm:w-auto">
               <TabsTrigger value="saida">Saída</TabsTrigger>
               <TabsTrigger value="entrada">Entrada</TabsTrigger>
+              <TabsTrigger value="relatorio">Relatório</TabsTrigger>
             </TabsList>
           </div>
 
@@ -649,13 +655,40 @@ export default function VehicleChecklistPage() {
           
           <TabsContent value="entrada" className="space-y-6">
 
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">Retorno de Veículos</h2>
+                <p className="text-muted-foreground">Gerencie as entradas e conferências de veículos</p>
+              </div>
+              <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
+                 <Button 
+                   variant={entradaViewMode === 'pending' ? 'secondary' : 'ghost'} 
+                   size="sm" 
+                   onClick={() => setEntradaViewMode('pending')}
+                   className="gap-2"
+                 >
+                   <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                   Pendentes ({pendingReturns.length})
+                 </Button>
+                 <Button 
+                   variant={entradaViewMode === 'history' ? 'secondary' : 'ghost'} 
+                   size="sm" 
+                   onClick={() => setEntradaViewMode('history')}
+                   className="gap-2"
+                 >
+                   <FileText className="h-4 w-4" />
+                   Histórico Completo
+                 </Button>
+              </div>
+            </div>
+
             {/* Histórico resumido */}
-            <Card>
+            <Card className={entradaViewMode === 'pending' ? "border-l-4 border-l-yellow-500" : ""}>
               <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <CardTitle>Histórico de Saídas</CardTitle>
-                    <CardDescription>Registros de saídas e retornos por veículo</CardDescription>
+                    <CardTitle>{entradaViewMode === 'pending' ? 'Veículos Pendentes de Retorno' : 'Histórico de Saídas'}</CardTitle>
+                    <CardDescription>{entradaViewMode === 'pending' ? 'Veículos que saíram e ainda não retornaram. Necessitam de inspeção.' : 'Registros de saídas e retornos por veículo'}</CardDescription>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center bg-muted/30 p-2 rounded-lg">
@@ -719,14 +752,14 @@ export default function VehicleChecklistPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredHistory.length === 0 ? (
+                      {(entradaViewMode === 'pending' ? pendingReturns : filteredHistory).length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                            Nenhum registro encontrado com os filtros selecionados.
+                            {entradaViewMode === 'pending' ? "Nenhum veículo pendente de retorno." : "Nenhum registro encontrado com os filtros selecionados."}
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredHistory.map(c => {
+                        (entradaViewMode === 'pending' ? pendingReturns : filteredHistory).map(c => {
                           const v = vehicles.find(v => v.id === c.vehicleId);
                           const checklistUser = users.find(u => u.id === c.userId);
                           const isClosed = c.status === 'closed';
@@ -884,6 +917,10 @@ null
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="relatorio">
+            <VehicleChecklistReport checklists={[...openChecklists, ...closedChecklists]} vehicles={vehicles} users={users} />
           </TabsContent>
         </Tabs>
       </div>
