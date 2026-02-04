@@ -1279,7 +1279,8 @@ export class DatabaseStorage implements IStorage {
              label: item.label || 'Item sem nome',
              group: 'Geral', 
              defaultChecked: item.defaultChecked || false,
-             column: 1
+             column: 1,
+             criticality: 0
            });
         }
         console.log('Migration completed.');

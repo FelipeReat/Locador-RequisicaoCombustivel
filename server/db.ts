@@ -2,7 +2,7 @@ import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { neon } from '@neondatabase/serverless';
 import pg from 'pg';
-import { users, vehicles, fuelRequisitions, suppliers, companies, fuelRecords, vehicleChecklists, vehicleTypes } from '@shared/schema';
+import * as schema from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required');
@@ -31,18 +31,7 @@ const connectionString = url.toString();
 let db: any;
 if (isNeon) {
   const sql = neon(databaseUrl);
-  db = drizzleNeon(sql, {
-    schema: {
-      users,
-      vehicles,
-      fuelRequisitions,
-      suppliers,
-      companies,
-      fuelRecords,
-      vehicleChecklists,
-      vehicleTypes,
-    },
-  });
+  db = drizzleNeon(sql, { schema });
 } else {
   console.log(`Initializing Postgres pool with SSL: ${needsSSL ? 'Enabled (Accept Self-Signed)' : 'Disabled'}`);
   const pool = new pg.Pool({ 
@@ -60,18 +49,7 @@ if (isNeon) {
     // The pool will try to create new clients when needed.
   });
 
-  db = drizzlePg(pool, {
-    schema: {
-      users,
-      vehicles,
-      fuelRequisitions,
-      suppliers,
-      companies,
-      fuelRecords,
-      vehicleChecklists,
-      vehicleTypes,
-    },
-  });
+  db = drizzlePg(pool, { schema });
 }
 
 export { db };

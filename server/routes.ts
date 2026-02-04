@@ -1555,6 +1555,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/checklist-templates/:id/items", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "ID do template inválido" });
+      }
+
+      // Verifica se o template existe
+      const template = await storage.getChecklistTemplate(id);
+      if (!template) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+
+      const items = await storage.getChecklistTemplateItems(id);
+      res.json(items);
+    } catch (error) {
+      console.error(`Erro ao buscar itens do template ${req.params.id}:`, error);
+      res.status(500).json({ message: "Erro ao buscar itens do template" });
+    }
+  });
+
+  app.post("/api/checklist-templates/:id/clone", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'manager')) {
+        return res.status(403).json({ message: "Acesso negado" });
+      }
+
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+
+      const originalTemplate = await storage.getChecklistTemplate(id);
+      
+      if (!originalTemplate) {
+        return res.status(404).json({ message: "Template não encontrado" });
+      }
+
+      // Create new template
+      const newTemplateData = {
+        name: `Cópia de ${originalTemplate.name}`,
+        description: originalTemplate.description || undefined,
+        active: originalTemplate.active
+      };
+      
+      const newTemplate = await storage.createChecklistTemplate(newTemplateData);
+      
+      // Clone items
+      const originalItems = await storage.getChecklistTemplateItems(id);
+      
+      // Sort items by order to maintain sequence
+      originalItems.sort((a, b) => a.order - b.order);
+
+      for (const item of originalItems) {
+        await storage.createChecklistTemplateItem({
+          checklistTemplateId: newTemplate.id,
+          key: item.key,
+          label: item.label,
+          group: item.group,
+          defaultChecked: item.defaultChecked,
+          column: item.column,
+          order: item.order,
+          criticality: item.criticality
+        });
+      }
+
+      res.status(201).json(newTemplate);
+    } catch (error) {
+      console.error("Error cloning template:", error);
+      res.status(500).json({ message: "Erro ao clonar template" });
+    }
+  });
+
   app.post("/api/checklist-templates/:id/items", async (req, res) => {
     try {
       const currentUser = (req as any).user;

@@ -29,6 +29,7 @@ export default function ChecklistTemplates() {
   const queryClient = useQueryClient();
   const [selectedTemplate, setSelectedTemplate] = useState<ChecklistTemplate | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistTemplateItem | null>(null);
 
@@ -63,12 +64,28 @@ export default function ChecklistTemplates() {
   // Update Template Mutation
   const updateTemplateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertChecklistTemplate> }) => {
-      const res = await apiRequest("PATCH", `/api/checklist-templates/${id}`, data);
+      const res = await apiRequest("PUT", `/api/checklist-templates/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/checklist-templates"] });
       toast({ title: "Template atualizado", description: "As alterações foram salvas." });
+    },
+  });
+
+  // Clone Template Mutation
+  const cloneTemplateMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/checklist-templates/${id}/clone`, {});
+      return res.json();
+    },
+    onSuccess: (newTemplate) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/checklist-templates"] });
+      setSelectedTemplate(newTemplate);
+      toast({ title: "Template clonado", description: "Uma cópia do template foi criada." });
+    },
+    onError: (err: any) => {
+      toast({ title: "Erro ao clonar template", description: err.message, variant: "destructive" });
     },
   });
 
@@ -91,7 +108,7 @@ export default function ChecklistTemplates() {
   const updateItemMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<InsertChecklistTemplateItem> }) => {
       if (!selectedTemplate) throw new Error("Nenhum template selecionado");
-      const res = await apiRequest("PATCH", `/api/checklist-templates/${selectedTemplate.id}/items/${id}`, data);
+      const res = await apiRequest("PUT", `/api/checklist-templates/${selectedTemplate.id}/items/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
@@ -134,9 +151,18 @@ export default function ChecklistTemplates() {
     },
   });
 
+  const editTemplateForm = useForm<InsertChecklistTemplate>({
+    resolver: zodResolver(insertChecklistTemplateSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
+  });
+
   const itemForm = useForm<InsertChecklistTemplateItem>({
     resolver: zodResolver(insertChecklistTemplateItemSchema),
     defaultValues: {
+      checklistTemplateId: 0,
       key: "",
       label: "",
       group: "Geral",
@@ -148,6 +174,21 @@ export default function ChecklistTemplates() {
   // Handlers
   const handleCreateTemplate = (data: InsertChecklistTemplate) => {
     createTemplateMutation.mutate(data);
+  };
+
+  const handleUpdateTemplate = (data: InsertChecklistTemplate) => {
+    if (!selectedTemplate) return;
+    updateTemplateMutation.mutate({ id: selectedTemplate.id, data });
+    setIsEditDialogOpen(false);
+  };
+
+  const openEditDialog = () => {
+    if (!selectedTemplate) return;
+    editTemplateForm.reset({
+      name: selectedTemplate.name,
+      description: selectedTemplate.description || "",
+    });
+    setIsEditDialogOpen(true);
   };
 
   const handleSaveItem = (data: InsertChecklistTemplateItem) => {
@@ -176,6 +217,7 @@ export default function ChecklistTemplates() {
     if (item) {
       setEditingItem(item);
       itemForm.reset({
+        checklistTemplateId: item.checklistTemplateId,
         key: item.key,
         label: item.label,
         group: item.group,
@@ -185,6 +227,7 @@ export default function ChecklistTemplates() {
     } else {
       setEditingItem(null);
       itemForm.reset({
+        checklistTemplateId: selectedTemplate?.id || 0,
         key: `item_${Date.now()}`,
         label: "",
         group: "Geral",
@@ -295,7 +338,23 @@ export default function ChecklistTemplates() {
                     <CardDescription>{selectedTemplate.description}</CardDescription>
                   </div>
                   <div className="flex gap-2">
-                     {/* Actions for template could go here */}
+                     <Button 
+                       variant="outline" 
+                       size="sm" 
+                       onClick={openEditDialog}
+                     >
+                       <Edit className="h-4 w-4 mr-2" />
+                       Editar
+                     </Button>
+                     <Button 
+                       variant="outline" 
+                       size="sm" 
+                       onClick={() => cloneTemplateMutation.mutate(selectedTemplate.id)}
+                       disabled={cloneTemplateMutation.isPending}
+                     >
+                       <Copy className="h-4 w-4 mr-2" />
+                       Clonar
+                     </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -391,6 +450,49 @@ export default function ChecklistTemplates() {
           )}
         </div>
       </div>
+
+      {/* Edit Template Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Modelo</DialogTitle>
+            <DialogDescription>Alterar nome e descrição do modelo.</DialogDescription>
+          </DialogHeader>
+          <Form {...editTemplateForm}>
+            <form onSubmit={editTemplateForm.handleSubmit(handleUpdateTemplate)} className="space-y-4">
+              <FormField
+                control={editTemplateForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Checklist Padrão" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editTemplateForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Descrição opcional" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit">Salvar Alterações</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* Item Dialog */}
       <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>

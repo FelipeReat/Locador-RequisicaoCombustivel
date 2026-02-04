@@ -775,17 +775,17 @@ export class MemStorage implements IStorage {
     // Sample Checklist Items
     const sampleItems: ChecklistTemplateItem[] = [
       // Template 1 items
-      { id: 1, checklistTemplateId: 1, key: "oil_level", label: "Nível de Óleo", group: "Motor", defaultChecked: false, column: 1, order: 1, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
-      { id: 2, checklistTemplateId: 1, key: "tires", label: "Pneus/Estepe", group: "Externo", defaultChecked: false, column: 1, order: 2, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
-      { id: 3, checklistTemplateId: 1, key: "lights", label: "Faróis/Lanternas", group: "Elétrica", defaultChecked: false, column: 1, order: 3, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
-      { id: 4, checklistTemplateId: 1, key: "cleanliness", label: "Limpeza Interna", group: "Interno", defaultChecked: true, column: 2, order: 4, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 1, checklistTemplateId: 1, key: "oil_level", label: "Nível de Óleo", group: "Motor", defaultChecked: false, column: 1, order: 1, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 2, checklistTemplateId: 1, key: "tires", label: "Pneus/Estepe", group: "Externo", defaultChecked: false, column: 1, order: 2, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 3, checklistTemplateId: 1, key: "lights", label: "Faróis/Lanternas", group: "Elétrica", defaultChecked: false, column: 1, order: 3, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 4, checklistTemplateId: 1, key: "cleanliness", label: "Limpeza Interna", group: "Interno", defaultChecked: true, column: 2, order: 4, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
       
       // Template 2 items (includes items from 1 + extra)
-      { id: 5, checklistTemplateId: 2, key: "oil_level", label: "Nível de Óleo", group: "Motor", defaultChecked: false, column: 1, order: 1, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
-      { id: 6, checklistTemplateId: 2, key: "tires", label: "Pneus/Estepe", group: "Externo", defaultChecked: false, column: 1, order: 2, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
-      { id: 7, checklistTemplateId: 2, key: "lights", label: "Faróis/Lanternas", group: "Elétrica", defaultChecked: false, column: 1, order: 3, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
-      { id: 8, checklistTemplateId: 2, key: "hydraulic", label: "Sistema Hidráulico", group: "Mecânica", defaultChecked: false, column: 2, order: 4, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
-      { id: 9, checklistTemplateId: 2, key: "tachograph", label: "Tacógrafo", group: "Documentação", defaultChecked: false, column: 2, order: 5, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 5, checklistTemplateId: 2, key: "oil_level", label: "Nível de Óleo", group: "Motor", defaultChecked: false, column: 1, order: 1, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 6, checklistTemplateId: 2, key: "tires", label: "Pneus/Estepe", group: "Externo", defaultChecked: false, column: 1, order: 2, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 7, checklistTemplateId: 2, key: "lights", label: "Faróis/Lanternas", group: "Elétrica", defaultChecked: false, column: 1, order: 3, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 8, checklistTemplateId: 2, key: "hydraulic", label: "Sistema Hidráulico", group: "Mecânica", defaultChecked: false, column: 2, order: 4, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
+      { id: 9, checklistTemplateId: 2, key: "tachograph", label: "Tacógrafo", group: "Documentação", defaultChecked: false, column: 2, order: 5, criticality: 0, active: true, createdAt: yesterday.toISOString(), updatedAt: yesterday.toISOString() },
     ];
 
     sampleItems.forEach(i => this.checklistTemplateItems.set(i.id, i));
@@ -1735,6 +1735,7 @@ export class MemStorage implements IStorage {
       defaultChecked: item.defaultChecked ?? false,
       column: item.column ?? 1,
       order: item.order ?? 0,
+      criticality: item.criticality,
       group: item.group,
       active: true,
       createdAt: now,

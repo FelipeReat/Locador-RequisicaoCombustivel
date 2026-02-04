@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, decimal, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, decimal, boolean, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -35,10 +35,15 @@ export const checklistTemplateItems = pgTable("checklist_template_items", {
   defaultChecked: boolean("default_checked").notNull().default(false),
   column: integer("column").notNull().default(1),
   order: integer("order").notNull().default(0),
+  criticality: integer("criticality").notNull().default(0), // 0=Baixa, 1=Média, 2=Alta, 3=Crítica
   group: text("group").notNull(),
   active: boolean("active").notNull().default(true),
   createdAt: text("created_at").notNull().default("now()"),
   updatedAt: text("updated_at").notNull().default("now()"),
+}, (table) => {
+  return {
+    criticalityIdx: index("criticality_idx").on(table.criticality),
+  };
 });
 
 export const vehicleTypes = pgTable("vehicle_types", {
@@ -65,6 +70,7 @@ export const insertChecklistTemplateItemSchema = createInsertSchema(checklistTem
   key: z.string().min(1, "Chave do item é obrigatória"),
   label: z.string().min(1, "Label é obrigatório"),
   group: z.string().min(1, "Grupo é obrigatório"),
+  criticality: z.number().min(0).max(3).default(0),
 }).omit({
   id: true,
   active: true,
