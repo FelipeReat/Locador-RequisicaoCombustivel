@@ -297,7 +297,8 @@ export default function VehicleChecklistPage() {
     if (selectedTemplateId !== 'legacy' && selectedTemplateItems.length > 0) {
       const defaults: Record<string, boolean | undefined> = {};
       selectedTemplateItems.forEach(i => {
-        defaults[String(i.id)] = i.defaultChecked;
+        // Fix: Treat false defaultChecked as undefined (no selection) instead of "Não"
+        defaults[String(i.id)] = i.defaultChecked ? true : undefined;
       });
       const currentValues = exitForm.getValues();
       // Remove old obsConfig keys from values to clean up? Not strictly necessary but good.
