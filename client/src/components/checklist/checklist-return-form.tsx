@@ -5,6 +5,7 @@ import { z } from "zod";
 import { VehicleChecklist, ChecklistTemplateItem } from "@shared/schema";
 import { obsConfig as fallbackObsConfig, obsGroups, fuelLevelOptions, FuelLevel, ObsGroupKey } from "@/lib/checklist-constants";
 import { apiRequest } from "@/lib/queryClient";
+import { FuelLevelSlider } from "@/components/checklist/fuel-level-slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -152,55 +153,55 @@ export function ChecklistReturnForm({ checklist, onSuccess, onCancel }: Checklis
           <form onSubmit={returnForm.handleSubmit(onSubmit)} className="space-y-4 pt-4 border-t">
               <h4 className="font-semibold mb-2">Registro de Retorno</h4>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={returnForm.control}
-                    name="kmFinal"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quilometragem Final (Início: {checklist.kmInitial})</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="number" min={checklist.kmInitial} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <FormField
+                      control={returnForm.control}
+                      name="kmFinal"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Quilometragem Final (Início: {checklist.kmInitial})</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" min={checklist.kmInitial} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={returnForm.control}
-                    name="fuelLevelEnd"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nível de Combustível</FormLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {fuelLevelOptions.map(opt => (
-                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={returnForm.control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data/Hora Retorno</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="datetime-local" lang="pt-BR" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                  <FormField
-                    control={returnForm.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data/Hora Retorno</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="datetime-local" lang="pt-BR" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="flex flex-col justify-center h-full pt-2 md:pt-0">
+                    <FormField
+                      control={returnForm.control}
+                      name="fuelLevelEnd"
+                      render={({ field }) => (
+                        <FormItem className="h-full">
+                          <FormControl>
+                            <FuelLevelSlider 
+                              value={field.value} 
+                              onChange={field.onChange}
+                              className="h-full" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
               </div>
 
              <div className="space-y-4">
