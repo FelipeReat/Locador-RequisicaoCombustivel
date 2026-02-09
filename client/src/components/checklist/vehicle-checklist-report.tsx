@@ -1,12 +1,20 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { VehicleChecklist, Vehicle, User } from "@shared/schema";
-import { format } from "date-fns"; // Assuming date-fns is available as it's common with shadcn/ui calendar, if not I'll use native
-import { Calendar as CalendarIcon, Download, FileText, AlertTriangle, CheckCircle } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon, Download, FileText, AlertTriangle, CheckCircle, MoreHorizontal, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -31,16 +39,21 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { formatDateBR, groupChecklistsByVehicle, filterChecklistsByDate, isNonCompliant } from "@/lib/checklist-utils";
+import { ChecklistDetails } from "@/components/checklist/checklist-details";
 
 interface VehicleChecklistReportProps {
   checklists: VehicleChecklist[];
   vehicles: Vehicle[];
   users: User[];
+  currentUser: any;
+  onExportPDF: (c: VehicleChecklist) => void;
+  onDelete: (id: number) => void;
 }
 
-export function VehicleChecklistReport({ checklists, vehicles, users }: VehicleChecklistReportProps) {
+export function VehicleChecklistReport({ checklists, vehicles, users, currentUser, onExportPDF, onDelete }: VehicleChecklistReportProps) {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -175,41 +188,87 @@ export function VehicleChecklistReport({ checklists, vehicles, users }: VehicleC
                           <TableHead>KM Final</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Conformidade</TableHead>
+                          <TableHead className="text-right">Ação</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {group.checklists.map((checklist) => {
                           const user = users.find(u => u.id === checklist.userId);
                           const isBad = isNonCompliant(checklist);
+                          const isExpanded = expandedId === checklist.id;
+
                           return (
-                            <TableRow key={checklist.id}>
-                              <TableCell>{formatDateBR(checklist.startDate)}</TableCell>
-                              <TableCell>{user?.fullName || user?.username || "-"}</TableCell>
-                              <TableCell>{checklist.kmInitial} km</TableCell>
-                              <TableCell>{checklist.kmFinal ? `${checklist.kmFinal} km` : "-"}</TableCell>
-                              <TableCell>
-                                {checklist.status === 'open' ? (
-                                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">Aberto</Badge>
-                                ) : (
-                                  <Badge variant="outline" className="text-green-600 border-green-600">Fechado</Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {checklist.status === 'closed' && (
-                                  isBad ? (
-                                    <Badge variant="destructive" className="gap-1">
-                                      <AlertTriangle className="h-3 w-3" />
-                                      Não Conforme
-                                    </Badge>
+                            <Fragment key={checklist.id}>
+                              <TableRow>
+                                <TableCell>{formatDateBR(checklist.startDate)}</TableCell>
+                                <TableCell>{user?.fullName || user?.username || "-"}</TableCell>
+                                <TableCell>{checklist.kmInitial} km</TableCell>
+                                <TableCell>{checklist.kmFinal ? `${checklist.kmFinal} km` : "-"}</TableCell>
+                                <TableCell>
+                                  {checklist.status === 'open' ? (
+                                    <Badge variant="outline" className="text-yellow-600 border-yellow-600">Aberto</Badge>
                                   ) : (
-                                    <Badge variant="default" className="bg-green-600 hover:bg-green-700 gap-1">
-                                      <CheckCircle className="h-3 w-3" />
-                                      Conforme
-                                    </Badge>
-                                  )
-                                )}
-                              </TableCell>
-                            </TableRow>
+                                    <Badge variant="outline" className="text-green-600 border-green-600">Fechado</Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {checklist.status === 'closed' && (
+                                    isBad ? (
+                                      <Badge variant="destructive" className="gap-1">
+                                        <AlertTriangle className="h-3 w-3" />
+                                        Não Conforme
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="default" className="bg-green-600 hover:bg-green-700 gap-1">
+                                        <CheckCircle className="h-3 w-3" />
+                                        Conforme
+                                      </Badge>
+                                    )
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {checklist.status === 'closed' && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                          <span className="sr-only">Abrir menu</span>
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => setExpandedId(isExpanded ? null : checklist.id)}>
+                                          <Search className="mr-2 h-4 w-4" />
+                                          <span>{isExpanded ? 'Fechar detalhes' : 'Ver detalhes'}</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onExportPDF(checklist)}>
+                                          <FileText className="mr-2 h-4 w-4" />
+                                          <span>Exportar PDF</span>
+                                        </DropdownMenuItem>
+                                        {(currentUser?.role === 'admin' || currentUser?.role === 'manager') && (
+                                          <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={() => onDelete(checklist.id)} className="text-red-600">
+                                              <Trash2 className="mr-2 h-4 w-4" />
+                                              <span>Excluir</span>
+                                            </DropdownMenuItem>
+                                          </>
+                                        )}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                              {isExpanded && (
+                                <TableRow>
+                                  <TableCell colSpan={7}>
+                                    <div className="p-4 bg-muted/20 rounded-lg">
+                                      <ChecklistDetails checklist={checklist} />
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </Fragment>
                           );
                         })}
                       </TableBody>

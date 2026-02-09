@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { FuelRequisition } from '@shared/schema';
+import { FuelRequisition, VehicleChecklist } from '@shared/schema';
 
 export interface PDFOptions {
   title?: string;
@@ -338,6 +338,8 @@ export class PDFGenerator {
     const price = prices[fuelType as keyof typeof prices] || 5.00;
     return quantity * price;
   }
+
+
 
   generatePurchaseOrderPDF(requisition: any, supplier?: any, vehicle?: any, requesterUser?: any, company?: any) {
     this.doc = new jsPDF({
@@ -1050,6 +1052,8 @@ export class PDFGenerator {
       const groupItems = items.filter(i => i.group === g.key);
       if (groupItems.length === 0) return;
       
+      this.checkPageBreak();
+
       this.doc.setFont('helvetica', 'bold');
       this.doc.setFontSize(9);
       this.doc.text(g.label, 20, this.currentY);
@@ -1082,11 +1086,13 @@ export class PDFGenerator {
         if (col === 1) {
           col = 0;
           this.currentY += 3.5; // Reduzido de 4
+          this.checkPageBreak();
         } else {
           col = 1;
           // Se for o último item impar, avança linha também
           if (i === groupItems.length - 1) {
             this.currentY += 3.5; // Reduzido de 4
+            this.checkPageBreak();
           }
         }
       }
@@ -1094,11 +1100,19 @@ export class PDFGenerator {
       this.currentY += 1; // Reduzido de 2
     });
     
+    this.checkPageBreak();
     const notesLine = `Observações: ${vals?.notes || '-'}`;
     const wrappedNotes = this.doc.splitTextToSize(notesLine, 170);
     this.doc.setFontSize(9);
     this.doc.text(wrappedNotes, 20, this.currentY);
     this.currentY += wrappedNotes.length * 5;
+  }
+
+  private checkPageBreak() {
+    if (this.currentY > 270) {
+      this.doc.addPage();
+      this.currentY = 20;
+    }
   }
 }
 

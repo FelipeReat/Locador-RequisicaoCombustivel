@@ -24,7 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useSmartInvalidation, useRealTimeUpdates } from "@/hooks/useRealTimeUpdates";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChecklistTemplate, ChecklistTemplateItem, VehicleChecklist, VehicleType, Vehicle } from "@shared/schema";
-import { obsConfig as defaultObsConfig, obsGroups, fuelLevelOptions, FuelLevel, ObsGroupKey as LegacyObsGroupKey } from "@/lib/checklist-constants";
+import { obsConfig as defaultObsConfig, obsGroups as legacyObsGroups, fuelLevelOptions, FuelLevel, ObsGroupKey as LegacyObsGroupKey } from "@/lib/checklist-constants";
 import { ChecklistReturnForm } from "@/components/checklist/checklist-return-form";
 import { FuelLevelSlider } from "@/components/checklist/fuel-level-slider";
 import { ChecklistDetails } from "@/components/checklist/checklist-details";
@@ -247,9 +247,12 @@ export default function VehicleChecklistPage() {
           const parsed = JSON.parse(ls);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setObsConfig(parsed);
+            return;
           }
         } catch {}
       }
+      // Fallback to default if no saved config
+      setObsConfig(defaultObsConfig.map(i => ({ ...i, defaultChecked: false })) as unknown as ObsItem[]);
     }
     setIsConfigLoaded(true);
   }, [savedObsConfig]);
@@ -370,6 +373,40 @@ export default function VehicleChecklistPage() {
        });
     }
   }, [selectedTemplateItems, selectedTemplateId, obsConfig, exitForm]);
+
+  const handleExportPDF = async (c: VehicleChecklist) => {
+    try {
+      const v = vehicles.find(v => v.id === c.vehicleId);
+      const { PDFGenerator } = await import('@/lib/pdf-generator');
+      const gen = new PDFGenerator('portrait');
+      const pdfUser = users.find(u => u.id === c.userId) || user;
+      let itemsToPass: { key: string; label: string; group: string }[] = [];
+      if (c.checklistTemplateId) {
+          const res = await apiRequest("GET", `/api/checklist-templates/${c.checklistTemplateId}/items`);
+          const items = await res.json();
+          itemsToPass = items.map((i: any) => ({ key: String(i.id), label: i.label, group: i.group }));
+      } else {
+          itemsToPass = obsConfig.map(i => ({ key: i.key, label: obsLabels[i.key], group: i.group }));
+      }
+
+      // Merge local and legacy groups to support both new and old checklist styles
+      const allKnownGroups = [...obsGroups, ...legacyObsGroups];
+      const usedGroupKeys = new Set(itemsToPass.map(i => i.group));
+      
+      const groupsToPass = allKnownGroups
+        .filter(g => usedGroupKeys.has(g.key))
+        .map(g => ({ key: g.key, label: g.label }));
+
+      gen.generateReturnedChecklistPDF(c, v, pdfUser, { company: 'Sistema de Controle de Abastecimento', obsGroups: groupsToPass, obsItems: itemsToPass });
+      const dateStr = (c.endDate || c.startDate || '').toString().slice(0, 10);
+      const plate = v?.plate || String(c.vehicleId);
+      gen.save(`checklist-retorno-${plate}-${dateStr || new Date().toISOString().slice(0,10)}.pdf`);
+      toast({ title: "PDF Gerado", description: "Documento exportado com sucesso." });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Erro", description: "Falha ao gerar PDF do checklist.", variant: "destructive" });
+    }
+  };
 
   const createExit = useMutation({
     mutationFn: async (payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate: string; inspectionStart: string; checklistTemplateId?: number }) => {
@@ -913,9 +950,8 @@ export default function VehicleChecklistPage() {
                                             const { PDFGenerator } = await import('@/lib/pdf-generator');
                                             const gen = new PDFGenerator('portrait');
                                             const pdfUser = users.find(u => u.id === c.userId) || user;
-                                            const groupsToPass = obsGroups.map(g => ({ key: g.key, label: g.label }));
                                             
-                                            let itemsToPass = [];
+                                            let itemsToPass: { key: string; label: string; group: string }[] = [];
                                             if (c.checklistTemplateId) {
                                                 const res = await apiRequest("GET", `/api/checklist-templates/${c.checklistTemplateId}/items`);
                                                 const items = await res.json();
@@ -923,6 +959,14 @@ export default function VehicleChecklistPage() {
                                             } else {
                                                 itemsToPass = obsConfig.map(i => ({ key: i.key, label: obsLabels[i.key], group: i.group }));
                                             }
+
+                                            // Merge local and legacy groups
+                                            const allKnownGroups = [...obsGroups, ...legacyObsGroups];
+                                            const usedGroupKeys = new Set(itemsToPass.map(i => i.group));
+                                            
+                                            const groupsToPass = allKnownGroups
+                                                .filter(g => usedGroupKeys.has(g.key))
+                                                .map(g => ({ key: g.key, label: g.label }));
 
                                             gen.generateReturnedChecklistPDF(c, v, pdfUser, { company: 'Sistema de Controle de Abastecimento', obsGroups: groupsToPass, obsItems: itemsToPass });
                                             const dateStr = (c.endDate || c.startDate || '').toString().slice(0, 10);
@@ -1008,7 +1052,14 @@ null
           </TabsContent>
           
           <TabsContent value="relatorio">
-            <VehicleChecklistReport checklists={[...openChecklists, ...closedChecklists]} vehicles={vehicles} users={users} />
+            <VehicleChecklistReport 
+              checklists={[...openChecklists, ...closedChecklists]} 
+              vehicles={vehicles} 
+              users={users} 
+              currentUser={user}
+              onExportPDF={handleExportPDF}
+              onDelete={(id) => setConfirmDeleteChecklistId(id)}
+            />
           </TabsContent>
         </Tabs>
       </div>
