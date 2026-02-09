@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
-import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText, Star, Settings, Filter, X, AlertTriangle } from "lucide-react";
+import { ClipboardCheck, Search, CalendarCheck, ArrowUp, ArrowDown, ArrowUpDown, Plus, Trash2, Check, CheckCircle, MoreHorizontal, FileText, Star, Settings, Filter, X, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -254,6 +254,32 @@ export default function VehicleChecklistPage() {
     setIsConfigLoaded(true);
   }, [savedObsConfig]);
 
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>(() => {
+    try {
+      const saved = localStorage.getItem('vehicleListSortConfig');
+      return saved ? JSON.parse(saved) : { key: 'type', direction: 'asc' };
+    } catch {
+      return { key: 'type', direction: 'asc' };
+    }
+  });
+
+  const handleSort = (key: string) => {
+    setSortConfig(current => {
+      const newConfig = {
+        key,
+        direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+      } as const;
+      localStorage.setItem('vehicleListSortConfig', JSON.stringify(newConfig));
+      return newConfig;
+    });
+  };
+
+  const openByVehicle = useMemo(() => {
+    const set = new Set(openChecklists.map(c => c.vehicleId));
+    return set;
+  }, [openChecklists]);
+
   const activeVehicles = useMemo(() => vehicles.filter(v => v.status === "active" && v.companyId !== null), [vehicles]);
   const filteredVehicles = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -268,18 +294,41 @@ export default function VehicleChecklistPage() {
     );
 
     return filtered.sort((a, b) => {
-      const isFavA = favorites.includes(a.id);
-      const isFavB = favorites.includes(b.id);
-      if (isFavA && !isFavB) return -1;
-      if (!isFavA && isFavB) return 1;
-      return 0;
-    });
-  }, [activeVehicles, searchTerm, selectedCompanyId, favorites]);
+      // Helper to get values for sorting
+      const getValue = (v: Vehicle, key: string) => {
+        if (key === 'type') {
+          const t = vehicleTypes.find(t => t.id === v.vehicleTypeId);
+          return t ? t.name.toLowerCase() : '';
+        }
+        if (key === 'status') {
+           // Sort order: Open (1) > Available (0)
+           return openByVehicle.has(v.id) ? 1 : 0;
+        }
+        // Default property access
+        const val = (v as any)[key];
+        return typeof val === 'string' ? val.toLowerCase() : (val || '');
+      };
 
-  const openByVehicle = useMemo(() => {
-    const set = new Set(openChecklists.map(c => c.vehicleId));
-    return set;
-  }, [openChecklists]);
+      const valA = getValue(a, sortConfig.key);
+      const valB = getValue(b, sortConfig.key);
+      
+      let comparison = 0;
+      if (valA < valB) comparison = -1;
+      if (valA > valB) comparison = 1;
+
+      if (sortConfig.direction === 'desc') comparison *= -1;
+
+      // Secondary sort: Model asc (if primary is not model)
+      if (comparison === 0 && sortConfig.key !== 'model') {
+        const modelA = a.model.toLowerCase();
+        const modelB = b.model.toLowerCase();
+        if (modelA < modelB) return -1;
+        if (modelA > modelB) return 1;
+      }
+
+      return comparison;
+    });
+  }, [activeVehicles, searchTerm, selectedCompanyId, sortConfig, vehicleTypes, openByVehicle]);
 
   // Exit form
   const exitForm = useForm<ExitFormValues, any, ExitFormValues>({
@@ -585,58 +634,101 @@ export default function VehicleChecklistPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Placa</TableHead>
-                        <TableHead className="hidden sm:table-cell">Modelo</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="cursor-pointer group hover:bg-muted/50 transition-colors" onClick={() => handleSort('type')}>
+                          <div className="flex items-center gap-1">
+                            Tipo
+                            {sortConfig.key === 'type' ? (
+                              sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                            ) : (
+                              <ArrowUpDown className="h-3 w-3 text-muted-foreground opacity-30 group-hover:opacity-100" />
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer group hover:bg-muted/50 transition-colors" onClick={() => handleSort('plate')}>
+                          <div className="flex items-center gap-1">
+                            Placa
+                            {sortConfig.key === 'plate' ? (
+                              sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                            ) : (
+                              <ArrowUpDown className="h-3 w-3 text-muted-foreground opacity-30 group-hover:opacity-100" />
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="hidden sm:table-cell cursor-pointer group hover:bg-muted/50 transition-colors" onClick={() => handleSort('model')}>
+                          <div className="flex items-center gap-1">
+                            Modelo
+                            {sortConfig.key === 'model' ? (
+                              sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                            ) : (
+                              <ArrowUpDown className="h-3 w-3 text-muted-foreground opacity-30 group-hover:opacity-100" />
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer group hover:bg-muted/50 transition-colors" onClick={() => handleSort('status')}>
+                          <div className="flex items-center gap-1">
+                            Status
+                            {sortConfig.key === 'status' ? (
+                              sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                            ) : (
+                              <ArrowUpDown className="h-3 w-3 text-muted-foreground opacity-30 group-hover:opacity-100" />
+                            )}
+                          </div>
+                        </TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredVehicles.map(v => (
-                        <TableRow key={v.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 -ml-2" 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleFavorite.mutate(v.id);
+                      {filteredVehicles.map(v => {
+                        const type = vehicleTypes.find(t => t.id === v.vehicleTypeId);
+                        return (
+                          <TableRow key={v.id}>
+                            <TableCell className="font-medium">
+                              {type?.name || '-'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 -ml-2" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavorite.mutate(v.id);
+                                  }}
+                                >
+                                  <Star className={`h-4 w-4 ${favorites.includes(v.id) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                                </Button>
+                                <span className="font-mono">{v.plate}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">{v.model}</TableCell>
+                            <TableCell>
+                              {openByVehicle.has(v.id) ? (
+                                <Badge variant="outline" className="text-yellow-700 bg-yellow-50 border-yellow-200">Saída Aberta</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">Disponível</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setIsExitDialogOpen(true);
+                                  setLockedVehicleId(v.id);
+                                  applyObsDefaultsToFormFor(String(v.id));
                                 }}
+                                disabled={openByVehicle.has(v.id)}
+                                aria-label="Iniciar checklist de saída"
+                                className="gap-2 px-2 sm:px-4"
                               >
-                                <Star className={`h-4 w-4 ${favorites.includes(v.id) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                                <Plus className="h-4 w-4" />
+                                <span className="hidden sm:inline">{t('new-exit-checklist')}</span>
                               </Button>
-                              {v.plate}
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">{v.model}</TableCell>
-                          <TableCell>
-                            {openByVehicle.has(v.id) ? (
-                              <Badge variant="outline" className="text-yellow-700">Saída Aberta</Badge>
-                            ) : (
-                              <Badge variant="secondary">Disponível</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setIsExitDialogOpen(true);
-                                setLockedVehicleId(v.id);
-                                applyObsDefaultsToFormFor(String(v.id));
-                              }}
-                              disabled={openByVehicle.has(v.id)}
-                              aria-label="Iniciar checklist de saída"
-                              className="gap-2 px-2 sm:px-4"
-                            >
-                              <Plus className="h-4 w-4" />
-                              <span className="hidden sm:inline">{t('new-exit-checklist')}</span>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
