@@ -27,6 +27,7 @@ export interface IStorage {
   deleteUser(id: number): Promise<boolean>;
   updateUserProfile(id: number, profile: UpdateUserProfile): Promise<User | undefined>;
   changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean>;
+  adminSetPassword(id: number, newPassword: string, adminId: number): Promise<boolean>;
   resetAllPasswords(newPassword: string, excludeUsernames?: string[]): Promise<number>;
   getCurrentUser(): Promise<User | undefined>;
   authenticateUser(credentials: LoginUser): Promise<User | null>;
@@ -874,6 +875,19 @@ export class MemStorage implements IStorage {
   async changePassword(id: number, currentPassword: string, newPassword: string): Promise<boolean> {
     const user = this.users.get(id);
     if (!user || user.password !== currentPassword) return false;
+
+    const updatedUser = {
+      ...user,
+      password: newPassword,
+      updatedAt: new Date().toISOString(),
+    };
+    this.users.set(id, updatedUser);
+    return true;
+  }
+
+  async adminSetPassword(id: number, newPassword: string, adminId: number): Promise<boolean> {
+    const user = this.users.get(id);
+    if (!user) return false;
 
     const updatedUser = {
       ...user,

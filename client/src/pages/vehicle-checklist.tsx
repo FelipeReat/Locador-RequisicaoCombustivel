@@ -101,6 +101,23 @@ export default function VehicleChecklistPage() {
     enabled: selectedTemplateId !== "legacy" && !!selectedTemplateId
   });
 
+  // Apply defaults when template items load
+  useEffect(() => {
+    if (isExitDialogOpen && selectedTemplateId !== 'legacy' && selectedTemplateItems.length > 0) {
+       const currentValues = exitForm.getValues();
+       let hasUpdates = false;
+       
+       selectedTemplateItems.forEach(item => {
+          const key = String(item.id);
+          // Only set if currently undefined and should be checked by default
+          if (currentValues[key] === undefined && item.defaultChecked) {
+             exitForm.setValue(key, true);
+             hasUpdates = true;
+          }
+       });
+    }
+  }, [selectedTemplateItems, isExitDialogOpen, selectedTemplateId]);
+
   const obsLabels: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {};
     obsConfig.forEach(i => { map[i.key] = i.label });
@@ -121,7 +138,12 @@ export default function VehicleChecklistPage() {
     }
 
     setSelectedTemplateId(templateId);
-    const defaults: Record<string, boolean | undefined> = obsConfig.reduce((acc, i) => { acc[i.key] = undefined; return acc; }, {} as Record<string, boolean | undefined>);
+    
+    let defaults: Record<string, boolean | undefined> = {};
+    if (templateId === 'legacy') {
+      defaults = obsConfig.reduce((acc, i) => { acc[i.key] = undefined; return acc; }, {} as Record<string, boolean | undefined>);
+    }
+
     const notesText = [exitForm.getValues('notes')].filter(Boolean).join('\n');
     const base: any = {
       vehicleId: vehicleId ?? "",
@@ -241,16 +263,6 @@ export default function VehicleChecklistPage() {
     if (Array.isArray(savedObsConfig) && savedObsConfig.length > 0) {
       setObsConfig(savedObsConfig);
     } else {
-      const ls = localStorage.getItem('obs_config');
-      if (ls) {
-        try {
-          const parsed = JSON.parse(ls);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setObsConfig(parsed);
-            return;
-          }
-        } catch {}
-      }
       // Fallback to default if no saved config
       setObsConfig(defaultObsConfig.map(i => ({ ...i, defaultChecked: false })) as unknown as ObsItem[]);
     }
@@ -560,7 +572,20 @@ export default function VehicleChecklistPage() {
     return null;
   }, [expandedReturnId, expandedClosedId, openChecklists, closedChecklists]);
 
-  const activeTemplateId = activeChecklist?.checklistTemplateId;
+  const activeTemplateId = useMemo(() => {
+    if (!activeChecklist) return null;
+    if (activeChecklist.checklistTemplateId) return activeChecklist.checklistTemplateId;
+    
+    // Fallback inference for checklists with missing template ID
+    if (activeChecklist.vehicleId) {
+        const v = vehicles.find(x => x.id === activeChecklist.vehicleId);
+        if (v?.vehicleTypeId) {
+            const t = vehicleTypes.find(x => x.id === v.vehicleTypeId);
+            return t?.checklistTemplateId;
+        }
+    }
+    return null;
+  }, [activeChecklist, vehicles, vehicleTypes]);
   
   const { data: activeTemplateItems = [] } = useQuery<ChecklistTemplateItem[]>({
     queryKey: ["/api/checklist-templates", activeTemplateId, "items"],

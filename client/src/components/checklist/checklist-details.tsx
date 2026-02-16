@@ -1,19 +1,67 @@
 import { useQuery } from "@tanstack/react-query";
-import { VehicleChecklist, ChecklistTemplateItem } from "@shared/schema";
+import { VehicleChecklist, ChecklistTemplateItem, Vehicle, VehicleType } from "@shared/schema";
 import { obsConfig as fallbackObsConfig, obsGroups, ObsGroupKey } from "@/lib/checklist-constants";
 import { apiRequest } from "@/lib/queryClient";
 import { Check, X } from "lucide-react";
 import { useMemo } from "react";
+import { isChecklistChecked } from "@/lib/checklist-utils";
 
 interface ChecklistDetailsProps {
   checklist: VehicleChecklist;
 }
 
 export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
+  // Try to infer template ID if missing (fix for older records)
+  const { data: vehicle } = useQuery<Vehicle>({
+    queryKey: [`/api/vehicles/${checklist.vehicleId}`],
+    enabled: !checklist.checklistTemplateId && !!checklist.vehicleId
+  });
+
+  const { data: vehicleType } = useQuery<VehicleType>({
+    queryKey: [`/api/vehicle-types/${vehicle?.vehicleTypeId}`],
+    enabled: !!vehicle?.vehicleTypeId
+  });
+
+  const inspectionStart = useMemo(() => {
+    if (!checklist.inspectionStart) return {};
+    try { 
+      const parsed = typeof checklist.inspectionStart === 'string' 
+        ? JSON.parse(checklist.inspectionStart) 
+        : checklist.inspectionStart;
+      return parsed || {};
+    } catch { return {}; }
+  }, [checklist.inspectionStart]);
+
+  const inspectionEnd = useMemo(() => {
+    if (!checklist.inspectionEnd) return null;
+    try { 
+      const parsed = typeof checklist.inspectionEnd === 'string'
+        ? JSON.parse(checklist.inspectionEnd)
+        : checklist.inspectionEnd;
+      return parsed || {};
+    } catch { return {}; }
+  }, [checklist.inspectionEnd]);
+
+  // Check if data implies legacy format to prevent wrong template inference
+  const isLegacyData = useMemo(() => {
+     const keys = Object.keys(inspectionStart);
+     if (keys.length === 0) return false;
+     // Modern keys start with obs_
+     // If we have keys but none start with obs_, it's likely legacy
+     const hasModernKeys = keys.some(k => k.startsWith('obs_'));
+     return !hasModernKeys;
+  }, [inspectionStart]);
+
+  const effectiveTemplateId = useMemo(() => {
+    if (checklist.checklistTemplateId) return checklist.checklistTemplateId;
+    if (isLegacyData) return null; // Force legacy if data looks legacy
+    return vehicleType?.checklistTemplateId; // Infer only if data looks modern or empty
+  }, [checklist.checklistTemplateId, isLegacyData, vehicleType]);
+
   // Fetch template items if applicable
   const { data: templateItems = [] } = useQuery<ChecklistTemplateItem[]>({
-    queryKey: ["/api/checklist-templates", checklist.checklistTemplateId, "items"],
-    enabled: !!checklist.checklistTemplateId
+    queryKey: ["/api/checklist-templates", effectiveTemplateId, "items"],
+    enabled: !!effectiveTemplateId
   });
 
   // Fetch default config for legacy checklists
@@ -28,22 +76,27 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
         return fallbackObsConfig;
       }
     },
-    enabled: !checklist.checklistTemplateId
+    enabled: !effectiveTemplateId
   });
 
   const currentItems = useMemo(() => {
-    if (checklist.checklistTemplateId && templateItems.length > 0) {
-      return templateItems.map(item => ({
-        key: String(item.id),
-        label: item.label,
-        defaultChecked: item.defaultChecked,
-        column: item.column as 1 | 2,
-        order: item.order,
-        group: item.group as ObsGroupKey
-      }));
+    if (effectiveTemplateId) {
+      if (templateItems.length > 0) {
+        return templateItems.map(item => ({
+          key: String(item.id),
+          label: item.label,
+          defaultChecked: item.defaultChecked,
+          column: item.column as 1 | 2,
+          order: item.order,
+          group: item.group as ObsGroupKey
+        }));
+      }
+      // If we have a template ID but no items yet (loading/error), 
+      // do NOT fallback to legacy config, or we'll show wrong keys/items.
+      return []; 
     }
     return legacyConfig;
-  }, [checklist.checklistTemplateId, templateItems, legacyConfig]);
+  }, [effectiveTemplateId, templateItems, legacyConfig]);
 
   const currentGroups = useMemo(() => {
       const groups = Array.from(new Set(currentItems.map(i => i.group)));
@@ -60,17 +113,6 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
          return 0;
       });
   }, [currentItems]);
-
-  // Parse inspection JSONs
-  const inspectionStart = useMemo(() => {
-    if (!checklist.inspectionStart) return {};
-    try { return JSON.parse(checklist.inspectionStart as string); } catch { return {}; }
-  }, [checklist.inspectionStart]);
-
-  const inspectionEnd = useMemo(() => {
-    if (!checklist.inspectionEnd) return null;
-    try { return JSON.parse(checklist.inspectionEnd as string); } catch { return {}; }
-  }, [checklist.inspectionEnd]);
 
   return (
     <div className="space-y-6">
@@ -93,12 +135,13 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                          {items.map(i => {
                             const val = inspectionStart[i.key];
+                            console.log(`Debug item ${i.key}:`, val, 'isChecked:', isChecklistChecked(val));
                             return (
                                <div key={i.key} className="flex items-center justify-between border-b pb-1 last:border-0">
-                                  <span>{i.label}</span>
-                                  {val === true ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-red-600" />}
-                               </div>
-                            );
+                                 <span>{i.label}</span>
+                                 {isChecklistChecked(val) ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-red-600" />}
+                              </div>
+                           );
                          })}
                       </div>
                    </div>
@@ -133,11 +176,11 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
                             {items.map(i => {
                             const val = inspectionEnd[i.key];
                             return (
-                                <div key={i.key} className="flex items-center justify-between border-b pb-1 last:border-0">
-                                    <span>{i.label}</span>
-                                    {val === true ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-red-600" />}
-                                </div>
-                            );
+                               <div key={i.key} className="flex items-center justify-between border-b pb-1 last:border-0">
+                                   <span>{i.label}</span>
+                                   {isChecklistChecked(val) ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-red-600" />}
+                               </div>
+                           );
                             })}
                         </div>
                     </div>

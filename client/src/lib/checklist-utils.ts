@@ -103,10 +103,18 @@ export function groupChecklistsByVehicle(
     });
   });
 
-  // Sort alphabetically by plate
-  stats.sort((a, b) => a.plate.localeCompare(b.plate));
+  // Sort by most checklists
+  return stats.sort((a, b) => b.totalChecklists - a.totalChecklists);
+}
 
-  return stats;
+/**
+ * Helper to interpret checklist item values from DB/JSON.
+ * Handles boolean true/false, string "true"/"false", and undefined/null.
+ */
+export function isChecklistChecked(value: any): boolean {
+  if (value === true) return true;
+  if (typeof value === 'string' && value.toLowerCase() === 'true') return true;
+  return false;
 }
 
 export function isNonCompliant(checklist: VehicleChecklist): boolean {

@@ -1,6 +1,7 @@
 import { eq, desc, sql, and, gte, lte } from 'drizzle-orm';
 import { db } from './db';
 import bcrypt from 'bcryptjs';
+import { sendPasswordChangeNotification } from './email-service';
 import { 
   users, 
   fuelRequisitions, 
@@ -278,6 +279,45 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id));
     return result.rowCount > 0;
+  }
+
+  async adminSetPassword(id: number, newPassword: string, adminId: number): Promise<boolean> {
+    const user = await this.getUser(id);
+    if (!user) {
+      return false;
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    const result = await db.update(users)
+      .set({
+        password: hashedNewPassword,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+
+    if (result.length > 0) {
+      // Registrar auditoria
+      await this.logAudit(
+        'users',
+        id.toString(),
+        'UPDATE',
+        { password: '***' },
+        { password: '***' },
+        adminId,
+        `Senha do usuário ${user.username} alterada pelo administrador`
+      );
+
+      // Enviar e-mail de notificação
+      if (user.email) {
+        await sendPasswordChangeNotification(user.email, user.username);
+      }
+      
+      return true;
+    }
+
+    return false;
   }
 
   async resetAllPasswords(newPassword: string, excludeUsernames?: string[]): Promise<number> {

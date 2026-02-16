@@ -728,6 +728,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Set Password
+  app.post("/api/users/:id/reset-password", async (req, res) => {
+    try {
+      const currentUser = (req as any).user;
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Acesso negado. Apenas administradores podem realizar esta ação." });
+      }
+
+      const id = parseInt(req.params.id);
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 8) {
+        return res.status(400).json({ message: "A senha deve ter pelo menos 8 caracteres." });
+      }
+
+      const success = await storage.adminSetPassword(id, newPassword, currentUser.id);
+
+      if (!success) {
+        return res.status(404).json({ message: "Usuário não encontrado ou erro ao alterar senha." });
+      }
+
+      res.json({ message: "Senha alterada com sucesso." });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Erro ao redefinir senha do usuário" });
+      }
+    }
+  });
+
   // Update user status
   app.patch("/api/users/:id/status", async (req, res) => {
     try {

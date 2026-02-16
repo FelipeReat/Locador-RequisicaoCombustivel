@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import {
   insertUserManagementWithoutPasswordSchema,
@@ -25,10 +26,22 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -57,10 +70,25 @@ import {
   Mail,
   Phone,
   Briefcase,
+  Key,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { useSystemSettings } from "@/contexts/system-settings-context";
+
+const passwordResetSchema = z.object({
+  newPassword: z.string().min(8, "A senha deve ter no mínimo 8 caracteres")
+    .regex(/[A-Z]/, "Deve conter pelo menos uma letra maiúscula")
+    .regex(/[a-z]/, "Deve conter pelo menos uma letra minúscula")
+    .regex(/[0-9]/, "Deve conter pelo menos um número")
+    .regex(/[^A-Za-z0-9]/, "Deve conter pelo menos um caractere especial"),
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não conferem",
+  path: ["confirmPassword"],
+});
 
 function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -71,6 +99,9 @@ function UserManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isPasswordResetDialogOpen, setIsPasswordResetDialogOpen] = useState(false);
+  const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { settings: systemSettings } = useSystemSettings();
   
   // Pagination state
@@ -229,6 +260,52 @@ function UserManagement() {
       });
     },
   });
+
+  const passwordForm = useForm<z.infer<typeof passwordResetSchema>>({
+    resolver: zodResolver(passwordResetSchema),
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof passwordResetSchema>) => {
+      if (!passwordResetUser) return;
+      const response = await apiRequest(
+        "POST",
+        `/api/users/${passwordResetUser.id}/reset-password`,
+        { newPassword: data.newPassword }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao redefinir senha');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sucesso",
+        description: "Senha alterada com sucesso.",
+      });
+      setIsPasswordResetDialogOpen(false);
+      setPasswordResetUser(null);
+      passwordForm.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePasswordReset = (user: User) => {
+    setPasswordResetUser(user);
+    setIsPasswordResetDialogOpen(true);
+    passwordForm.reset();
+  };
 
   const onSubmit = (data: Omit<InsertUserManagement, 'password'>) => {
     if (editingUser) {
@@ -495,6 +572,115 @@ function UserManagement() {
             </Dialog>
           </div>
 
+          {/* Password Reset Dialog */}
+          <Dialog open={isPasswordResetDialogOpen} onOpenChange={setIsPasswordResetDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Definir Nova Senha</DialogTitle>
+                <DialogDescription>
+                  Defina uma nova senha para o usuário <strong>{passwordResetUser?.username}</strong>.
+                  A ação será registrada e o usuário será notificado.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit((data) => {
+                  // Confirmation dialog logic would go here, but for now we'll just submit
+                  // Actually requirements say: "confirmação via caixa de diálogo"
+                  // We can use window.confirm or another Alert Dialog.
+                  // Let's use a nested Alert Dialog or just a browser confirm for simplicity first, 
+                  // or better, implement a proper confirm step.
+                  // Since I can't easily nest Dialogs in some libraries without issues, 
+                  // I'll assume the Submit button triggers the confirm logic or I use a separate state.
+                  
+                  // Let's use a simple confirm for now as per "confirmação via caixa de diálogo"
+                  // If I want to be fancy I can use AlertDialog.
+                  // Given the constraint of not making too many changes, I'll use window.confirm inside the submit handler
+                  // or use the AlertDialog component I imported.
+                  resetPasswordMutation.mutate(data);
+                })} className="space-y-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nova Senha</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="Nova senha" 
+                              {...field} 
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar Senha</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Confirme a senha" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsPasswordResetDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button type="button" disabled={!passwordForm.formState.isValid}>
+                          Alterar Senha
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação irá alterar imediatamente a senha do usuário <strong>{passwordResetUser?.username}</strong>.
+                            O usuário será notificado por e-mail. Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={passwordForm.handleSubmit((data) => resetPasswordMutation.mutate(data))}>
+                            Confirmar Alteração
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+
           {/* Users List */}
           <div className="space-y-4">
             <div className="text-center text-sm text-muted-foreground mb-6">
@@ -568,6 +754,16 @@ function UserManagement() {
                           title="Editar usuário"
                         >
                           <Edit className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePasswordReset(user)}
+                          className="px-4 py-2 rounded-lg text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 transition-colors"
+                          title="Definir Nova Senha"
+                        >
+                          <Key className="h-4 w-4" />
                         </Button>
 
                         <Button

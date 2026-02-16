@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useIsFetching } from '@tanstack/react-query';
 import { Wifi, WifiOff, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
@@ -12,6 +12,7 @@ export function SyncIndicator() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('online');
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const queryClient = useQueryClient();
+  const isFetching = useIsFetching();
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -25,7 +26,9 @@ export function SyncIndicator() {
       window.addEventListener('offline', handleOffline);
 
       // Verifica status inicial
-      setSyncStatus(navigator.onLine ? 'online' : 'offline');
+      if (!navigator.onLine) {
+        setSyncStatus('offline');
+      }
 
       return () => {
         window.removeEventListener('online', handleOnline);
@@ -36,22 +39,30 @@ export function SyncIndicator() {
 
   // Monitora queries em execução
   useEffect(() => {
-    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      // Usar requestAnimationFrame para evitar setState durante render
-      requestAnimationFrame(() => {
-        if (event?.query?.state.fetchStatus === 'fetching') {
-          setSyncStatus('syncing');
-        } else if (event?.query?.state.fetchStatus === 'idle') {
-          setSyncStatus('synced');
-          setLastSync(new Date());
-          // Volta para 'online' após 2 segundos
-          setTimeout(() => setSyncStatus('online'), 2000);
-        }
-      });
-    });
+    if (!navigator.onLine) return;
 
-    return unsubscribe;
-  }, [queryClient]);
+    if (isFetching > 0) {
+      setSyncStatus('syncing');
+    } else {
+      setSyncStatus(prev => {
+        if (prev === 'syncing') {
+          return 'synced';
+        }
+        return prev;
+      });
+    }
+  }, [isFetching]);
+
+  // Transição automática de 'synced' para 'online'
+  useEffect(() => {
+    if (syncStatus === 'synced') {
+      setLastSync(new Date());
+      const timer = setTimeout(() => {
+        setSyncStatus('online');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [syncStatus]);
 
   const handleManualSync = () => {
     setSyncStatus('syncing');
