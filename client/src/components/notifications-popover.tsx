@@ -39,7 +39,6 @@ const formatTimeAgo = (date: Date): string => {
 };
 
 export function NotificationsPopover() {
-  const [isOpen, setIsOpen] = useState(false);
   const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
 
   const { data: requisitions } = useQuery<FuelRequisition[]>({
@@ -198,7 +197,7 @@ export function NotificationsPopover() {
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"

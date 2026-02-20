@@ -135,11 +135,17 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                          {items.map(i => {
                             const val = inspectionStart[i.key];
-                            console.log(`Debug item ${i.key}:`, val, 'isChecked:', isChecklistChecked(val));
+                            const checked = isChecklistChecked(val);
+                            let negative = false;
+                            if (val === false) negative = true;
+                            else if (typeof val === 'string') {
+                              const norm = val.trim().toLowerCase();
+                              if (norm === 'false' || norm === 'nao' || norm === 'não' || norm === 'n') negative = true;
+                            }
                             return (
                                <div key={i.key} className="flex items-center justify-between border-b pb-1 last:border-0">
                                  <span>{i.label}</span>
-                                 {isChecklistChecked(val) ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-red-600" />}
+                                 {checked ? <Check className="h-4 w-4 text-green-600" /> : (negative ? <X className="h-4 w-4 text-red-600" /> : null)}
                               </div>
                            );
                          })}
@@ -174,13 +180,20 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
                         <h5 className="font-medium text-xs uppercase text-muted-foreground mb-1">{group.label}</h5>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {items.map(i => {
-                            const val = inspectionEnd[i.key];
-                            return (
-                               <div key={i.key} className="flex items-center justify-between border-b pb-1 last:border-0">
-                                   <span>{i.label}</span>
-                                   {isChecklistChecked(val) ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-red-600" />}
-                               </div>
-                           );
+                              const val = inspectionEnd[i.key];
+                              const checked = isChecklistChecked(val);
+                              let negative = false;
+                              if (val === false) negative = true;
+                              else if (typeof val === 'string') {
+                                const norm = val.trim().toLowerCase();
+                                if (norm === 'false' || norm === 'nao' || norm === 'não' || norm === 'n') negative = true;
+                              }
+                              return (
+                                <div key={i.key} className="flex items-center justify-between border-b pb-1 last:border-0">
+                                  <span>{i.label}</span>
+                                  {checked ? <Check className="h-4 w-4 text-green-600" /> : (negative ? <X className="h-4 w-4 text-red-600" /> : null)}
+                                </div>
+                              );
                             })}
                         </div>
                     </div>

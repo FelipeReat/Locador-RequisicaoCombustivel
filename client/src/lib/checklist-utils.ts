@@ -107,13 +107,12 @@ export function groupChecklistsByVehicle(
   return stats.sort((a, b) => b.totalChecklists - a.totalChecklists);
 }
 
-/**
- * Helper to interpret checklist item values from DB/JSON.
- * Handles boolean true/false, string "true"/"false", and undefined/null.
- */
 export function isChecklistChecked(value: any): boolean {
   if (value === true) return true;
-  if (typeof value === 'string' && value.toLowerCase() === 'true') return true;
+  if (typeof value === 'string') {
+    const norm = value.trim().toLowerCase();
+    if (norm === 'true' || norm === 'sim' || norm === 's') return true;
+  }
   return false;
 }
 

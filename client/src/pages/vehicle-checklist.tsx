@@ -401,13 +401,13 @@ export default function VehicleChecklistPage() {
           itemsToPass = obsConfig.map(i => ({ key: i.key, label: obsLabels[i.key], group: i.group }));
       }
 
-      // Merge local and legacy groups to support both new and old checklist styles
-      const allKnownGroups = [...obsGroups, ...legacyObsGroups];
-      const usedGroupKeys = new Set(itemsToPass.map(i => i.group));
-      
-      const groupsToPass = allKnownGroups
-        .filter(g => usedGroupKeys.has(g.key))
-        .map(g => ({ key: g.key, label: g.label }));
+      // Build groups directly from items, resolving labels from known groups when available
+      const labelMap = new Map<string, string>([...obsGroups, ...legacyObsGroups].map(g => [String(g.key), g.label]));
+      const itemGroupOrder: string[] = [];
+      for (const it of itemsToPass) {
+        if (!itemGroupOrder.includes(it.group)) itemGroupOrder.push(it.group);
+      }
+      const groupsToPass = itemGroupOrder.map(key => ({ key, label: labelMap.get(key) || key }));
 
       gen.generateReturnedChecklistPDF(c, v, pdfUser, { company: 'Sistema de Controle de Abastecimento', obsGroups: groupsToPass, obsItems: itemsToPass });
       const dateStr = (c.endDate || c.startDate || '').toString().slice(0, 10);
@@ -985,13 +985,13 @@ export default function VehicleChecklistPage() {
                                                 itemsToPass = obsConfig.map(i => ({ key: i.key, label: obsLabels[i.key], group: i.group }));
                                             }
 
-                                            // Merge local and legacy groups
-                                            const allKnownGroups = [...obsGroups, ...legacyObsGroups];
-                                            const usedGroupKeys = new Set(itemsToPass.map(i => i.group));
-                                            
-                                            const groupsToPass = allKnownGroups
-                                                .filter(g => usedGroupKeys.has(g.key))
-                                                .map(g => ({ key: g.key, label: g.label }));
+                                            // Build groups directly from items, resolving labels from known groups when available
+                                            const labelMap = new Map<string, string>([...obsGroups, ...legacyObsGroups].map(g => [String(g.key), g.label]));
+                                            const itemGroupOrder: string[] = [];
+                                            for (const it of itemsToPass) {
+                                              if (!itemGroupOrder.includes(it.group)) itemGroupOrder.push(it.group);
+                                            }
+                                            const groupsToPass = itemGroupOrder.map(key => ({ key, label: labelMap.get(key) || key }));
 
                                             gen.generateReturnedChecklistPDF(c, v, pdfUser, { company: 'Sistema de Controle de Abastecimento', obsGroups: groupsToPass, obsItems: itemsToPass });
                                             const dateStr = (c.endDate || c.startDate || '').toString().slice(0, 10);

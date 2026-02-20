@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FuelRequisition, VehicleChecklist } from '@shared/schema';
+import { isChecklistChecked } from '@/lib/checklist-utils';
 
 export interface PDFOptions {
   title?: string;
@@ -1066,9 +1067,17 @@ export class PDFGenerator {
       for (let i = 0; i < groupItems.length; i++) {
         const item = groupItems[i];
         const value = vals?.[item.key];
-        // Símbolo unicode check/cross pode não funcionar bem em fontes padrão do jsPDF, usando texto Sim/Não
-        const isNegative = value === false;
-        const labelText = isNegative ? 'Não' : (value ? 'Sim' : 'Sim');
+        const isTrue = isChecklistChecked(value);
+        let isNegative = false;
+        if (value === false) {
+          isNegative = true;
+        } else if (typeof value === 'string') {
+          const norm = value.trim().toLowerCase();
+          if (norm === 'false' || norm === 'nao' || norm === 'não' || norm === 'n') {
+            isNegative = true;
+          }
+        }
+        const labelText = isTrue ? 'Sim' : (isNegative ? 'Não' : '-');
         const text = `- ${item.label}: ${labelText}`;
         
         const xPos = 20 + (col * colWidth);
