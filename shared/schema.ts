@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, decimal, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, decimal, boolean, index, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -22,6 +22,7 @@ export const checklistTemplates = pgTable("checklist_templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
+  groups: text("groups").array().notNull().default(["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"]),
   active: boolean("active").notNull().default(true),
   createdAt: text("created_at").notNull().default("now()"),
   updatedAt: text("updated_at").notNull().default("now()"),
@@ -59,6 +60,7 @@ export const vehicleTypes = pgTable("vehicle_types", {
 export const insertChecklistTemplateSchema = createInsertSchema(checklistTemplates, {
   name: z.string().min(1, "Nome do template é obrigatório"),
   description: z.string().optional(),
+  groups: z.array(z.string()).default(["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"]),
 }).omit({
   id: true,
   active: true,

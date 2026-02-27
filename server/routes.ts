@@ -1629,6 +1629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newTemplateData = {
         name: `Cópia de ${originalTemplate.name}`,
         description: originalTemplate.description || undefined,
+        groups: originalTemplate.groups,
         active: originalTemplate.active
       };
       

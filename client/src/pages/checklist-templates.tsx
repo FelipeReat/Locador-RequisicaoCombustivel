@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertChecklistTemplateSchema, insertChecklistTemplateItemSchema } from "@shared/schema";
 import type { ChecklistTemplate, ChecklistTemplateItem, InsertChecklistTemplate, InsertChecklistTemplateItem } from "@shared/schema";
@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Edit, Save, ArrowUp, ArrowDown, Move, Copy, Check } from "lucide-react";
+import { Plus, Trash2, Edit, Save, ArrowUp, ArrowDown, Move, Copy, Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -148,6 +148,7 @@ export default function ChecklistTemplates() {
     defaultValues: {
       name: "",
       description: "",
+      groups: ["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"],
     },
   });
 
@@ -156,8 +157,11 @@ export default function ChecklistTemplates() {
     defaultValues: {
       name: "",
       description: "",
+      groups: ["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"],
     },
   });
+
+  const [newGroupInput, setNewGroupInput] = useState("");
 
   const itemForm = useForm<InsertChecklistTemplateItem>({
     resolver: zodResolver(insertChecklistTemplateItemSchema),
@@ -187,6 +191,7 @@ export default function ChecklistTemplates() {
     editTemplateForm.reset({
       name: selectedTemplate.name,
       description: selectedTemplate.description || "",
+      groups: selectedTemplate.groups || ["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"],
     });
     setIsEditDialogOpen(true);
   };
@@ -230,7 +235,7 @@ export default function ChecklistTemplates() {
         checklistTemplateId: selectedTemplate?.id || 0,
         key: `item_${Date.now()}`,
         label: "",
-        group: "Geral",
+        group: selectedTemplate?.groups?.[0] || "Geral",
         defaultChecked: false,
         column: 1,
       });
@@ -486,6 +491,70 @@ export default function ChecklistTemplates() {
                   </FormItem>
                 )}
               />
+              
+              <div className="space-y-2">
+                <FormLabel>Grupos do Checklist</FormLabel>
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Novo grupo..." 
+                    value={newGroupInput}
+                    onChange={(e) => setNewGroupInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newGroupInput.trim()) {
+                          const current = editTemplateForm.getValues("groups") || [];
+                          if (!current.includes(newGroupInput.trim())) {
+                            editTemplateForm.setValue("groups", [...current, newGroupInput.trim()]);
+                            setNewGroupInput("");
+                          }
+                        }
+                      }
+                    }}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => {
+                      if (newGroupInput.trim()) {
+                        const current = editTemplateForm.getValues("groups") || [];
+                        if (!current.includes(newGroupInput.trim())) {
+                          editTemplateForm.setValue("groups", [...current, newGroupInput.trim()]);
+                          setNewGroupInput("");
+                        }
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mt-2 p-2 border rounded-md min-h-[50px]">
+                  {(editTemplateForm.watch("groups") || []).length === 0 && (
+                    <span className="text-sm text-muted-foreground">Nenhum grupo definido</span>
+                  )}
+                  {(editTemplateForm.watch("groups") || []).map((group: string, index: number) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1 pr-1">
+                      {group}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = editTemplateForm.getValues("groups") || [];
+                          const newGroups = current.filter((_, i) => i !== index);
+                          editTemplateForm.setValue("groups", newGroups);
+                        }}
+                        className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Defina os grupos que organizarão os itens deste checklist.
+                </p>
+              </div>
+
               <DialogFooter>
                 <Button type="submit">Salvar Alterações</Button>
               </DialogFooter>
@@ -530,13 +599,9 @@ export default function ChecklistTemplates() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Geral">Geral</SelectItem>
-                          <SelectItem value="Mecânica">Mecânica</SelectItem>
-                          <SelectItem value="Elétrica">Elétrica</SelectItem>
-                          <SelectItem value="Segurança">Segurança</SelectItem>
-                          <SelectItem value="Documentação">Documentação</SelectItem>
-                          <SelectItem value="Limpeza">Limpeza</SelectItem>
-                          <SelectItem value="Acessórios">Acessórios</SelectItem>
+                          {(selectedTemplate?.groups || ["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"]).map((group) => (
+                            <SelectItem key={group} value={group}>{group}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

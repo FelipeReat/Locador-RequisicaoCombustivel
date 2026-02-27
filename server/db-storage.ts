@@ -1309,6 +1309,7 @@ export class DatabaseStorage implements IStorage {
         const template = await this.createChecklistTemplate({
           name: 'Padrão (Migrado)',
           description: 'Template migrado automaticamente das configurações globais',
+          groups: ["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"],
         });
 
         // Add items
