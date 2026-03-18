@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertChecklistTemplateSchema, insertChecklistTemplateItemSchema } from "@shared/schema";
-import type { ChecklistTemplate, ChecklistTemplateItem, InsertChecklistTemplate, InsertChecklistTemplateItem } from "@shared/schema";
+import type { ChecklistTemplate, ChecklistTemplateItem, InsertChecklistTemplate, InsertChecklistTemplateItem, VehicleType } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
@@ -44,14 +44,20 @@ export default function ChecklistTemplates() {
     enabled: !!selectedTemplate,
   });
 
+  // Fetch Vehicle Types
+  const { data: vehicleTypes = [] } = useQuery<VehicleType[]>({
+    queryKey: ["/api/vehicle-types"],
+  });
+
   // Create Template Mutation
   const createTemplateMutation = useMutation({
-    mutationFn: async (data: InsertChecklistTemplate) => {
+    mutationFn: async (data: InsertChecklistTemplate & { vehicleTypeIds: number[] }) => {
       const res = await apiRequest("POST", "/api/checklist-templates", data);
       return res.json();
     },
     onSuccess: (newTemplate) => {
       queryClient.invalidateQueries({ queryKey: ["/api/checklist-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicle-types"] });
       setIsCreateDialogOpen(false);
       setSelectedTemplate(newTemplate);
       toast({ title: "Template criado", description: "O novo template foi criado com sucesso." });
@@ -63,12 +69,13 @@ export default function ChecklistTemplates() {
 
   // Update Template Mutation
   const updateTemplateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertChecklistTemplate> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertChecklistTemplate> & { vehicleTypeIds?: number[] } }) => {
       const res = await apiRequest("PUT", `/api/checklist-templates/${id}`, data);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/checklist-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vehicle-types"] });
       toast({ title: "Template atualizado", description: "As alterações foram salvas." });
     },
   });
@@ -143,21 +150,23 @@ export default function ChecklistTemplates() {
   });
 
   // Forms
-  const createTemplateForm = useForm<InsertChecklistTemplate>({
+  const createTemplateForm = useForm<InsertChecklistTemplate & { vehicleTypeIds: number[] }>({
     resolver: zodResolver(insertChecklistTemplateSchema),
     defaultValues: {
       name: "",
       description: "",
       groups: ["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"],
+      vehicleTypeIds: [],
     },
   });
 
-  const editTemplateForm = useForm<InsertChecklistTemplate>({
+  const editTemplateForm = useForm<InsertChecklistTemplate & { vehicleTypeIds: number[] }>({
     resolver: zodResolver(insertChecklistTemplateSchema),
     defaultValues: {
       name: "",
       description: "",
       groups: ["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"],
+      vehicleTypeIds: [],
     },
   });
 
@@ -176,11 +185,11 @@ export default function ChecklistTemplates() {
   });
 
   // Handlers
-  const handleCreateTemplate = (data: InsertChecklistTemplate) => {
+  const handleCreateTemplate = (data: InsertChecklistTemplate & { vehicleTypeIds: number[] }) => {
     createTemplateMutation.mutate(data);
   };
 
-  const handleUpdateTemplate = (data: InsertChecklistTemplate) => {
+  const handleUpdateTemplate = (data: InsertChecklistTemplate & { vehicleTypeIds: number[] }) => {
     if (!selectedTemplate) return;
     updateTemplateMutation.mutate({ id: selectedTemplate.id, data });
     setIsEditDialogOpen(false);
@@ -188,10 +197,17 @@ export default function ChecklistTemplates() {
 
   const openEditDialog = () => {
     if (!selectedTemplate) return;
+    
+    // Find vehicle types associated with this template
+    const associatedVehicleTypes = vehicleTypes
+      .filter(vt => vt.checklistTemplateId === selectedTemplate.id)
+      .map(vt => vt.id);
+
     editTemplateForm.reset({
       name: selectedTemplate.name,
       description: selectedTemplate.description || "",
       groups: selectedTemplate.groups || ["Geral", "Mecânica", "Elétrica", "Segurança", "Documentação", "Limpeza", "Acessórios"],
+      vehicleTypeIds: associatedVehicleTypes,
     });
     setIsEditDialogOpen(true);
   };
@@ -245,7 +261,7 @@ export default function ChecklistTemplates() {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <Header title="Modelos de Checklist" subtitle="Gerencie os modelos de checklist de veículos" />
+      <Header title="Modelos de Checklist" subtitle="Gerencie os modelos de checklist e suas associações com frotas" />
       
       <div className="flex-1 flex overflow-hidden p-4 gap-4">
         {/* Sidebar: List of Templates */}
@@ -290,6 +306,45 @@ export default function ChecklistTemplates() {
                           </FormItem>
                         )}
                       />
+                      
+                      <div className="space-y-2">
+                        <FormLabel>Tipos de Veículo (Frotas)</FormLabel>
+                        <div className="border rounded-md p-3 space-y-2 max-h-[200px] overflow-y-auto">
+                          {vehicleTypes.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Nenhum tipo de veículo cadastrado.</p>
+                          ) : (
+                            vehicleTypes.map((vt) => (
+                              <div key={vt.id} className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`vt-create-${vt.id}`} 
+                                  checked={(createTemplateForm.watch("vehicleTypeIds") || []).includes(vt.id)}
+                                  onCheckedChange={(checked) => {
+                                    const current = createTemplateForm.getValues("vehicleTypeIds") || [];
+                                    if (checked) {
+                                      createTemplateForm.setValue("vehicleTypeIds", [...current, vt.id]);
+                                    } else {
+                                      createTemplateForm.setValue("vehicleTypeIds", current.filter(id => id !== vt.id));
+                                    }
+                                  }}
+                                />
+                                <label 
+                                  htmlFor={`vt-create-${vt.id}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                  {vt.name}
+                                  {vt.checklistTemplateId && (
+                                    <span className="ml-2 text-xs text-muted-foreground">(já possui template)</span>
+                                  )}
+                                </label>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        <p className="text-[0.8rem] text-muted-foreground">
+                          Selecione quais tipos de veículo utilizarão este modelo de checklist automaticamente.
+                        </p>
+                      </div>
+
                       <DialogFooter>
                         <Button type="submit">Criar</Button>
                       </DialogFooter>
@@ -552,6 +607,44 @@ export default function ChecklistTemplates() {
                 </div>
                 <p className="text-[0.8rem] text-muted-foreground">
                   Defina os grupos que organizarão os itens deste checklist.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <FormLabel>Tipos de Veículo (Frotas)</FormLabel>
+                <div className="border rounded-md p-3 space-y-2 max-h-[200px] overflow-y-auto">
+                  {vehicleTypes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Nenhum tipo de veículo cadastrado.</p>
+                  ) : (
+                    vehicleTypes.map((vt) => (
+                      <div key={vt.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`vt-edit-${vt.id}`} 
+                          checked={(editTemplateForm.watch("vehicleTypeIds") || []).includes(vt.id)}
+                          onCheckedChange={(checked) => {
+                            const current = editTemplateForm.getValues("vehicleTypeIds") || [];
+                            if (checked) {
+                              editTemplateForm.setValue("vehicleTypeIds", [...current, vt.id]);
+                            } else {
+                              editTemplateForm.setValue("vehicleTypeIds", current.filter(id => id !== vt.id));
+                            }
+                          }}
+                        />
+                        <label 
+                          htmlFor={`vt-edit-${vt.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {vt.name}
+                          {vt.checklistTemplateId && vt.checklistTemplateId !== selectedTemplate?.id && (
+                            <span className="ml-2 text-xs text-muted-foreground">(já possui outro template)</span>
+                          )}
+                        </label>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Selecione quais tipos de veículo utilizarão este modelo de checklist automaticamente.
                 </p>
               </div>
 

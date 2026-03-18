@@ -114,8 +114,8 @@ export interface IStorage {
   // Checklist Templates
   getChecklistTemplates(): Promise<ChecklistTemplate[]>;
   getChecklistTemplate(id: number): Promise<ChecklistTemplate | undefined>;
-  createChecklistTemplate(template: InsertChecklistTemplate): Promise<ChecklistTemplate>;
-  updateChecklistTemplate(id: number, updates: Partial<ChecklistTemplate>): Promise<ChecklistTemplate | undefined>;
+  createChecklistTemplate(template: InsertChecklistTemplate, vehicleTypeIds?: number[]): Promise<ChecklistTemplate>;
+  updateChecklistTemplate(id: number, updates: Partial<InsertChecklistTemplate>, vehicleTypeIds?: number[]): Promise<ChecklistTemplate | undefined>;
   deleteChecklistTemplate(id: number): Promise<boolean>;
 
   // Checklist Template Items
@@ -1701,7 +1701,7 @@ export class MemStorage implements IStorage {
     return this.checklistTemplates.get(id);
   }
 
-  async createChecklistTemplate(template: InsertChecklistTemplate): Promise<ChecklistTemplate> {
+  async createChecklistTemplate(template: InsertChecklistTemplate, vehicleTypeIds?: number[]): Promise<ChecklistTemplate> {
     const id = this.currentChecklistTemplateId++;
     const now = new Date().toISOString();
     const newTemplate: ChecklistTemplate = {
@@ -1714,10 +1714,20 @@ export class MemStorage implements IStorage {
       updatedAt: now,
     };
     this.checklistTemplates.set(id, newTemplate);
+
+    if (vehicleTypeIds && vehicleTypeIds.length > 0) {
+      for (const vtId of vehicleTypeIds) {
+        const vt = this.vehicleTypes.get(vtId);
+        if (vt) {
+          this.vehicleTypes.set(vtId, { ...vt, checklistTemplateId: id });
+        }
+      }
+    }
+
     return newTemplate;
   }
 
-  async updateChecklistTemplate(id: number, updates: Partial<ChecklistTemplate>): Promise<ChecklistTemplate | undefined> {
+  async updateChecklistTemplate(id: number, updates: Partial<InsertChecklistTemplate>, vehicleTypeIds?: number[]): Promise<ChecklistTemplate | undefined> {
     const template = this.checklistTemplates.get(id);
     if (!template) return undefined;
 
@@ -1727,6 +1737,24 @@ export class MemStorage implements IStorage {
       updatedAt: new Date().toISOString(),
     };
     this.checklistTemplates.set(id, updatedTemplate);
+
+    if (vehicleTypeIds) {
+      // Clear existing associations
+      for (const [vtId, vt] of this.vehicleTypes.entries()) {
+        if (vt.checklistTemplateId === id) {
+          this.vehicleTypes.set(vtId, { ...vt, checklistTemplateId: null });
+        }
+      }
+      
+      // Set new associations
+      for (const vtId of vehicleTypeIds) {
+        const vt = this.vehicleTypes.get(vtId);
+        if (vt) {
+          this.vehicleTypes.set(vtId, { ...vt, checklistTemplateId: id });
+        }
+      }
+    }
+
     return updatedTemplate;
   }
 

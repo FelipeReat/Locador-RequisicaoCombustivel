@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FuelRequisition, VehicleChecklist } from '@shared/schema';
 import { isChecklistChecked } from '@/lib/checklist-utils';
+import { fuelLevelOptions, FuelLevel } from '@/lib/checklist-constants';
 
 export interface PDFOptions {
   title?: string;
@@ -315,14 +316,9 @@ export class PDFGenerator {
   }
 
   private getFuelLevelLabel(level: string): string {
-    const labels = {
-      'empty': 'Vazio',
-      'quarter': '1/4',
-      'half': '1/2',
-      'three_quarters': '3/4',
-      'full': 'Cheio'
-    };
-    return labels[level as keyof typeof labels] || level;
+    if (!level) return 'N/A';
+    const option = fuelLevelOptions.find(opt => opt.value === level as FuelLevel);
+    return option ? option.label : level;
   }
 
   private calculateEstimatedValue(fuelType: string, quantity: number): string {

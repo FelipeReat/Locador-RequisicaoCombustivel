@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { VehicleChecklist, ChecklistTemplateItem, Vehicle, VehicleType } from "@shared/schema";
-import { obsConfig as fallbackObsConfig, obsGroups, ObsGroupKey } from "@/lib/checklist-constants";
+import { obsConfig as fallbackObsConfig, obsGroups, ObsGroupKey, fuelLevelOptions, FuelLevel } from "@/lib/checklist-constants";
 import { apiRequest } from "@/lib/queryClient";
 import { Check, X } from "lucide-react";
 import { useMemo } from "react";
@@ -21,6 +21,12 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
     queryKey: [`/api/vehicle-types/${vehicle?.vehicleTypeId}`],
     enabled: !!vehicle?.vehicleTypeId
   });
+
+  const fuelLabel = (v?: string | null) => {
+    if (!v) return "-";
+    const opt = fuelLevelOptions.find(o => o.value === v as FuelLevel);
+    return opt ? opt.label : v;
+  };
 
   const inspectionStart = useMemo(() => {
     if (!checklist.inspectionStart) return {};
@@ -117,11 +123,11 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
   return (
     <div className="space-y-6">
        {/* Exit Inspection View */}
-       <div className="border rounded-md p-4">
+       <div className="border rounded-md p-4 bg-card text-card-foreground">
           <h4 className="font-semibold mb-2">Checklist de Saída</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
              <div><span className="font-medium">KM:</span> {checklist.kmInitial}</div>
-             <div><span className="font-medium">Combustível:</span> {checklist.fuelLevelStart}</div>
+             <div><span className="font-medium">Combustível:</span> {fuelLabel(checklist.fuelLevelStart)}</div>
              <div><span className="font-medium">Data:</span> {new Date(checklist.startDate).toLocaleString('pt-BR')}</div>
           </div>
           
@@ -163,11 +169,11 @@ export function ChecklistDetails({ checklist }: ChecklistDetailsProps) {
 
        {/* Return Inspection View (if exists) */}
        {checklist.endDate && inspectionEnd && (
-          <div className="border rounded-md p-4 bg-slate-50">
+          <div className="border rounded-md p-4 bg-card text-card-foreground">
             <h4 className="font-semibold mb-2">Checklist de Retorno</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
                 <div><span className="font-medium">KM:</span> {checklist.kmFinal}</div>
-                <div><span className="font-medium">Combustível:</span> {checklist.fuelLevelEnd}</div>
+                <div><span className="font-medium">Combustível:</span> {fuelLabel(checklist.fuelLevelEnd)}</div>
                 <div><span className="font-medium">Data:</span> {new Date(checklist.endDate).toLocaleString('pt-BR')}</div>
             </div>
 

@@ -1,4 +1,4 @@
-import { eq, desc, sql, and, gte, lte } from 'drizzle-orm';
+import { eq, desc, sql, and, gte, lte, inArray } from 'drizzle-orm';
 import { db } from './db';
 import bcrypt from 'bcryptjs';
 import { sendPasswordChangeNotification } from './email-service';
@@ -1214,17 +1214,39 @@ export class DatabaseStorage implements IStorage {
     return template;
   }
 
-  async createChecklistTemplate(template: InsertChecklistTemplate): Promise<ChecklistTemplate> {
+  async createChecklistTemplate(template: InsertChecklistTemplate, vehicleTypeIds?: number[]): Promise<ChecklistTemplate> {
     const [newTemplate] = await db.insert(checklistTemplates).values(template).returning();
+    
+    if (vehicleTypeIds && vehicleTypeIds.length > 0) {
+      await db.update(vehicleTypes)
+        .set({ checklistTemplateId: newTemplate.id, updatedAt: new Date().toISOString() })
+        .where(inArray(vehicleTypes.id, vehicleTypeIds));
+    }
+    
     return newTemplate;
   }
 
-  async updateChecklistTemplate(id: number, updates: Partial<ChecklistTemplate>): Promise<ChecklistTemplate | undefined> {
+  async updateChecklistTemplate(id: number, updates: Partial<InsertChecklistTemplate>, vehicleTypeIds?: number[]): Promise<ChecklistTemplate | undefined> {
     const [updated] = await db
       .update(checklistTemplates)
       .set({ ...updates, updatedAt: new Date().toISOString() })
       .where(eq(checklistTemplates.id, id))
       .returning();
+      
+    if (vehicleTypeIds) {
+      // Clear existing associations for this template
+      await db.update(vehicleTypes)
+        .set({ checklistTemplateId: null, updatedAt: new Date().toISOString() })
+        .where(eq(vehicleTypes.checklistTemplateId, id));
+        
+      // Set new associations if any
+      if (vehicleTypeIds.length > 0) {
+        await db.update(vehicleTypes)
+          .set({ checklistTemplateId: id, updatedAt: new Date().toISOString() })
+          .where(inArray(vehicleTypes.id, vehicleTypeIds));
+      }
+    }
+
     return updated;
   }
 

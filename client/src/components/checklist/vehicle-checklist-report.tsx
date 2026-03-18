@@ -53,6 +53,7 @@ interface VehicleChecklistReportProps {
 export function VehicleChecklistReport({ checklists, vehicles, users, currentUser, onExportPDF, onDelete }: VehicleChecklistReportProps) {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,14 +63,21 @@ export function VehicleChecklistReport({ checklists, vehicles, users, currentUse
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
     const filtered = filterChecklistsByDate(checklists, start, end);
-    // Reset page when data changes significantly (optional, but good practice)
-    return groupChecklistsByVehicle(filtered, vehicles);
-  }, [checklists, vehicles, startDate, endDate]);
+    const grouped = groupChecklistsByVehicle(filtered, vehicles);
+
+    if (!searchTerm) return grouped;
+
+    const term = searchTerm.toLowerCase();
+    return grouped.filter(group => 
+      group.plate.toLowerCase().includes(term) || 
+      group.model.toLowerCase().includes(term)
+    );
+  }, [checklists, vehicles, startDate, endDate, searchTerm]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [startDate, endDate]);
+  }, [startDate, endDate, searchTerm]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -118,29 +126,45 @@ export function VehicleChecklistReport({ checklists, vehicles, users, currentUse
           <CardDescription>Selecione o período para análise</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="start-date">Data Inicial</Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <Label htmlFor="search-vehicle">Buscar Veículo</Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search-vehicle"
+                  placeholder="Buscar por placa ou modelo..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="end-date">Data Final</Label>
-              <Input
-                id="end-date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="grid gap-2 flex-1">
+                <Label htmlFor="start-date">Data Inicial</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2 flex-1">
+                <Label htmlFor="end-date">Data Final</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleExportCSV} variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar Excel (CSV)
+              </Button>
             </div>
-            <Button onClick={handleExportCSV} variant="outline" className="gap-2">
-              <Download className="h-4 w-4" />
-              Exportar Excel (CSV)
-            </Button>
           </div>
         </CardContent>
       </Card>

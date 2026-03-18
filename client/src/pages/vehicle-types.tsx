@@ -166,7 +166,7 @@ export default function VehicleTypes() {
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <Header 
         title="Tipos de Veículos" 
         subtitle="Gerencie as categorias e tipos de veículos da frota"
@@ -276,13 +276,13 @@ export default function VehicleTypes() {
           </Dialog>
         </div>
 
-        <Card className="border-none shadow-md bg-white/80 backdrop-blur">
+        <Card className="border-none shadow-md bg-card/80 backdrop-blur">
           <CardHeader className="pb-2">
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome ou descrição..."
-                className="pl-9 bg-white"
+                className="pl-9 bg-background"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -298,11 +298,11 @@ export default function VehicleTypes() {
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="font-semibold text-lg">{type.name}</h3>
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                               {type.description || "Sem descrição"}
                             </p>
-                            <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                              <span className="font-medium text-xs uppercase tracking-wider text-gray-400">Template:</span>
+                            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                              <span className="font-medium text-xs uppercase tracking-wider text-muted-foreground/70">Template:</span>
                               <Badge variant="outline" className="font-normal">
                                 {checklistTemplates?.find(t => t.id === type.checklistTemplateId)?.name || "Padrão"}
                               </Badge>
@@ -313,7 +313,7 @@ export default function VehicleTypes() {
                           </Badge>
                         </div>
                         
-                        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
+                        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-border/50">
                           <Button 
                             variant="ghost" 
                             size="sm" 
@@ -323,7 +323,7 @@ export default function VehicleTypes() {
                               setIsDialogOpen(true);
                             }}
                           >
-                            <Edit className="h-4 w-4 text-blue-600" />
+                            <Edit className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           </Button>
                           
                           <Button 
@@ -333,7 +333,7 @@ export default function VehicleTypes() {
                             onClick={() => toggleStatusMutation.mutate({ id: type.id, active: !type.active })}
                             title={type.active ? "Desativar" : "Ativar"}
                           >
-                            <Power className={`h-4 w-4 ${type.active ? "text-orange-500" : "text-green-500"}`} />
+                            <Power className={`h-4 w-4 ${type.active ? "text-orange-500 dark:text-orange-400" : "text-green-500 dark:text-green-400"}`} />
                           </Button>
 
                           <Button 
@@ -346,7 +346,7 @@ export default function VehicleTypes() {
                               }
                             }}
                           >
-                            <Trash2 className="h-4 w-4 text-red-600" />
+                            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
                           </Button>
                         </div>
                       </CardContent>
@@ -354,8 +354,8 @@ export default function VehicleTypes() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <Truck className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                <div className="text-center py-12 text-muted-foreground">
+                  <Truck className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                   <p>Nenhum tipo de veículo encontrado.</p>
                 </div>
               )}

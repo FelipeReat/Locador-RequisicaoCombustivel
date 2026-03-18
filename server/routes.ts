@@ -1529,8 +1529,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Acesso negado" });
       }
 
-      const validatedData = insertChecklistTemplateSchema.parse(req.body);
-      const template = await storage.createChecklistTemplate(validatedData);
+      const { vehicleTypeIds, ...bodyData } = req.body;
+      const validatedData = insertChecklistTemplateSchema.parse(bodyData);
+      const template = await storage.createChecklistTemplate(validatedData, vehicleTypeIds);
       res.status(201).json(template);
     } catch (error) {
       if (error instanceof Error) {
@@ -1549,8 +1550,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const id = parseInt(req.params.id);
-      const validatedData = insertChecklistTemplateSchema.partial().parse(req.body);
-      const template = await storage.updateChecklistTemplate(id, validatedData);
+      const { vehicleTypeIds, ...bodyData } = req.body;
+      const validatedData = insertChecklistTemplateSchema.partial().parse(bodyData);
+      const template = await storage.updateChecklistTemplate(id, validatedData, vehicleTypeIds);
       
       if (!template) {
         return res.status(404).json({ message: "Template não encontrado" });

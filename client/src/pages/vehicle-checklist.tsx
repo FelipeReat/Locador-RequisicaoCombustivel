@@ -183,13 +183,8 @@ export default function VehicleChecklistPage() {
        }
     }
     
-    if (historyFilterVehicleId !== 'all') {
-      const vid = parseInt(historyFilterVehicleId);
-      data = data.filter(c => c.vehicleId === vid);
-    }
-    
     return data.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-  }, [openChecklists, user, historyFilterMode, historyFilterVehicleId]);
+  }, [openChecklists, user, historyFilterMode]);
 
   const filteredHistory = useMemo(() => {
     let data = [...openChecklists, ...closedChecklists];
@@ -862,7 +857,8 @@ export default function VehicleChecklistPage() {
                         </div>
                      )}
 
-                     <div className="w-full sm:w-[200px]">
+                     {entradaViewMode !== 'pending' && (
+                       <div className="w-full sm:w-[200px]">
                         <Select value={historyFilterVehicleId} onValueChange={setHistoryFilterVehicleId}>
                           <SelectTrigger className="h-9 bg-background">
                             <SelectValue placeholder="Filtrar por Veículo" />
@@ -875,8 +871,9 @@ export default function VehicleChecklistPage() {
                           </SelectContent>
                         </Select>
                      </div>
+                     )}
                      
-                     {(historyFilterMode !== 'mine' || historyFilterVehicleId !== 'all') && (
+                     {(historyFilterMode !== 'mine' || (entradaViewMode !== 'pending' && historyFilterVehicleId !== 'all')) && (
                        <Button variant="ghost" size="sm" onClick={clearHistoryFilters} className="h-9 px-2 text-muted-foreground hover:text-foreground">
                          <X className="h-4 w-4 mr-1" />
                          Limpar

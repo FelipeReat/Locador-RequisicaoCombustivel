@@ -57,10 +57,10 @@ export function NotificationsPopover() {
     }
   }, []);
 
-  const generateNotifications = (): NotificationItem[] => {
+  const notifications = React.useMemo((): NotificationItem[] => {
     if (!requisitions) return [];
 
-    const notifications: NotificationItem[] = [];
+    const result: NotificationItem[] = [];
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -72,7 +72,7 @@ export function NotificationsPopover() {
         const notificationId = `new_${req.id}_${createdAt.getTime()}`;
         const isRecent = createdAt > oneHourAgo;
 
-        notifications.push({
+        result.push({
           id: notificationId,
           type: "new_requisition",
           title: "Nova Requisição",
@@ -86,7 +86,7 @@ export function NotificationsPopover() {
 
       if (req.status === "pending") {
         const notificationId = `pending_${req.id}_${req.status}`;
-        notifications.push({
+        result.push({
           id: notificationId,
           type: "pending_approval",
           title: "Aguardando Aprovação",
@@ -103,7 +103,7 @@ export function NotificationsPopover() {
         const notificationId = `status_${req.id}_${req.status}_${approvedDate.getTime()}`;
         const isRecent = approvedDate > oneHourAgo;
 
-        notifications.push({
+        result.push({
           id: notificationId,
           type: "status_change",
           title: req.status === "approved" ? "Requisição Aprovada" : "Status Alterado",
@@ -116,15 +116,14 @@ export function NotificationsPopover() {
       }
     });
 
-    return notifications.sort((a, b) => {
+    return result.sort((a, b) => {
       if (a.isRead !== b.isRead) {
         return a.isRead ? 1 : -1;
       }
       return new Date(b.time).getTime() - new Date(a.time).getTime();
     });
-  };
+  }, [requisitions, readNotifications]);
 
-  const notifications = generateNotifications();
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   useEffect(() => {

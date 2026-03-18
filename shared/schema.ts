@@ -66,6 +66,8 @@ export const insertChecklistTemplateSchema = createInsertSchema(checklistTemplat
   active: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  vehicleTypeIds: z.array(z.number()).optional(),
 });
 
 export const insertChecklistTemplateItemSchema = createInsertSchema(checklistTemplateItems, {
