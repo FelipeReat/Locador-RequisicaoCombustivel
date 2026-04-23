@@ -72,6 +72,17 @@ export default function VehicleChecklistPage() {
   const { invalidateByOperation } = useSmartInvalidation();
   useRealTimeUpdates();
 
+  function safeJsonObject(value: unknown): Record<string, any> {
+    if (!value || typeof value !== 'string') return {};
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object') return parsed;
+      return {};
+    } catch {
+      return {};
+    }
+  }
+
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
   const [expandedReturnId, setExpandedReturnId] = useState<null | number>(null);
   const [expandedClosedId, setExpandedClosedId] = useState<null | number>(null);
@@ -173,39 +184,64 @@ export default function VehicleChecklistPage() {
   const [historyFilterVehicleId, setHistoryFilterVehicleId] = useState<string>('all');
   const [entradaViewMode, setEntradaViewMode] = useState<'pending' | 'history'>('pending');
 
+  const historyVehicleId = useMemo(() => {
+    if (historyFilterVehicleId === 'all') return null;
+    const parsed = parseInt(historyFilterVehicleId);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [historyFilterVehicleId]);
+
+  const {
+    data: vehicleHistoryChecklists = [],
+    isLoading: isLoadingVehicleHistory,
+  } = useQuery<VehicleChecklist[]>({
+    queryKey: ["/api/vehicles", historyVehicleId, "checklists"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/vehicles/${historyVehicleId}/checklists`);
+      return res.json();
+    },
+    enabled: entradaViewMode === 'history' && historyVehicleId !== null,
+  });
+
   const pendingReturns = useMemo(() => {
     let data = openChecklists;
-    // Apply permissions (drivers see only theirs)
     const isAdmin = user?.role === 'admin' || user?.role === 'manager';
-    if (!isAdmin || historyFilterMode === 'mine') {
-       if (user) {
-         data = data.filter(c => c.userId === user.id);
-       }
+    const isDriver = user?.role === 'driver';
+    if (user) {
+      if (isDriver) {
+        data = data.filter(c => c.userId === user.id);
+      } else if (isAdmin && historyFilterMode === 'mine') {
+        data = data.filter(c => c.userId === user.id);
+      }
     }
-    
-    return data.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+
+    return [...data].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   }, [openChecklists, user, historyFilterMode]);
 
   const filteredHistory = useMemo(() => {
-    let data = [...openChecklists, ...closedChecklists];
+    let data: VehicleChecklist[] = [];
+
+    if (historyVehicleId !== null) {
+      data = vehicleHistoryChecklists.length > 0
+        ? vehicleHistoryChecklists
+        : [...openChecklists, ...closedChecklists].filter(c => c.vehicleId === historyVehicleId);
+    } else {
+      data = [...openChecklists, ...closedChecklists];
+    }
     
-    // Filter by User
-    // If not admin/manager, force 'mine' effectively (or just don't show the option, but enforce here too for safety)
     const isAdmin = user?.role === 'admin' || user?.role === 'manager';
-    if (!isAdmin || historyFilterMode === 'mine') {
-       if (user) {
-         data = data.filter(c => c.userId === user.id);
-       }
+    const isDriver = user?.role === 'driver';
+    if (user) {
+      if (isDriver) {
+        data = data.filter(c => c.userId === user.id);
+      } else if (!isAdmin) {
+        data = data.filter(c => c.userId === user.id);
+      } else if (historyFilterMode === 'mine') {
+        data = data.filter(c => c.userId === user.id);
+      }
     }
-    
-    // Filter by Vehicle
-    if (historyFilterVehicleId !== 'all') {
-      const vid = parseInt(historyFilterVehicleId);
-      data = data.filter(c => c.vehicleId === vid);
-    }
-    
-    return data.sort((a, b) => new Date((b.endDate || b.startDate)).getTime() - new Date((a.endDate || a.startDate)).getTime());
-  }, [openChecklists, closedChecklists, historyFilterMode, historyFilterVehicleId, user]);
+
+    return [...data].sort((a, b) => new Date((b.endDate || b.startDate)).getTime() - new Date((a.endDate || a.startDate)).getTime());
+  }, [openChecklists, closedChecklists, historyFilterMode, historyVehicleId, user, vehicleHistoryChecklists]);
 
   // Reset filters
   const clearHistoryFilters = () => {
@@ -833,7 +869,11 @@ export default function VehicleChecklistPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <CardTitle>{entradaViewMode === 'pending' ? 'Veículos Pendentes de Retorno' : 'Histórico de Saídas'}</CardTitle>
-                    <CardDescription>{entradaViewMode === 'pending' ? 'Veículos que saíram e ainda não retornaram. Necessitam de inspeção.' : 'Registros de saídas e retornos por veículo'}</CardDescription>
+                    <CardDescription>
+                      {entradaViewMode === 'pending'
+                        ? `Veículos que saíram e ainda não retornaram. Necessitam de inspeção. Mostrando ${pendingReturns.length} de ${openChecklists.length} em aberto.`
+                        : 'Registros de saídas e retornos por veículo'}
+                    </CardDescription>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center bg-muted/30 p-2 rounded-lg">
@@ -902,7 +942,11 @@ export default function VehicleChecklistPage() {
                       {(entradaViewMode === 'pending' ? pendingReturns : filteredHistory).length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                            {entradaViewMode === 'pending' ? "Nenhum veículo pendente de retorno." : "Nenhum registro encontrado com os filtros selecionados."}
+                            {entradaViewMode === 'pending'
+                              ? "Nenhum veículo pendente de retorno."
+                              : (historyVehicleId !== null && isLoadingVehicleHistory)
+                                ? "Carregando histórico do veículo..."
+                                : "Nenhum registro encontrado com os filtros selecionados."}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -911,8 +955,8 @@ export default function VehicleChecklistPage() {
                           const checklistUser = users.find(u => u.id === c.userId);
                           const isClosed = c.status === 'closed';
                           const isExpanded = c.status === 'closed' ? expandedClosedId === c.id : expandedReturnId === c.id;
-                          const start = c.inspectionStart ? JSON.parse(c.inspectionStart) : {};
-                          const end = c.inspectionEnd ? JSON.parse(c.inspectionEnd) : {};
+                          const start = safeJsonObject(c.inspectionStart);
+                          const end = safeJsonObject(c.inspectionEnd);
                           return (
                             <Fragment key={`hist-${c.id}-${c.status}`}>
                               <TableRow>

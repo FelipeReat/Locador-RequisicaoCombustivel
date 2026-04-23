@@ -850,12 +850,29 @@ export class DatabaseStorage implements IStorage {
 
   // ====== Vehicle Checklists (DB implementation) ======
   async getOpenChecklists(): Promise<VehicleChecklist[]> {
-    const rows = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.status, 'open'));
+    const rows = await db
+      .select()
+      .from(vehicleChecklists)
+      .where(sql`trim(lower(${vehicleChecklists.status})) = 'open'`)
+      .orderBy(desc(vehicleChecklists.startDate));
     return rows as unknown as VehicleChecklist[];
   }
 
   async getClosedChecklists(): Promise<VehicleChecklist[]> {
-    const rows = await db.select().from(vehicleChecklists).where(eq(vehicleChecklists.status, 'closed'));
+    const rows = await db
+      .select()
+      .from(vehicleChecklists)
+      .where(sql`trim(lower(${vehicleChecklists.status})) = 'closed'`)
+      .orderBy(desc(vehicleChecklists.endDate));
+    return rows as unknown as VehicleChecklist[];
+  }
+
+  async getChecklistsByVehicle(vehicleId: number): Promise<VehicleChecklist[]> {
+    const rows = await db
+      .select()
+      .from(vehicleChecklists)
+      .where(eq(vehicleChecklists.vehicleId, vehicleId))
+      .orderBy(desc(vehicleChecklists.startDate));
     return rows as unknown as VehicleChecklist[];
   }
 

@@ -105,6 +105,7 @@ export interface IStorage {
   // Vehicle Checklists
   getOpenChecklists(): Promise<VehicleChecklist[]>;
   getClosedChecklists(): Promise<VehicleChecklist[]>;
+  getChecklistsByVehicle(vehicleId: number): Promise<VehicleChecklist[]>;
   createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string; checklistTemplateId?: number }): Promise<VehicleChecklist>;
   closeReturnChecklist(id: number, payload: { kmFinal: number; fuelLevelEnd: FuelLevel; endDate?: string; inspectionEnd?: string }): Promise<VehicleChecklist | undefined>;
   approveChecklist(id: number, approver: { userId: number; name: string; date?: string }): Promise<VehicleChecklist | undefined>;
@@ -1413,6 +1414,11 @@ export class MemStorage implements IStorage {
     return Array.from(this.vehicleChecklists.values()).filter(c => c.status === 'closed');
   }
 
+  async getChecklistsByVehicle(vehicleId: number): Promise<VehicleChecklist[]> {
+    const list = Array.from(this.vehicleChecklists.values()).filter(c => c.vehicleId === vehicleId);
+    return list.sort((a, b) => new Date((b.endDate || b.startDate)).getTime() - new Date((a.endDate || a.startDate)).getTime());
+  }
+
   async createExitChecklist(payload: { vehicleId: number; userId: number; kmInitial: number; fuelLevelStart: FuelLevel; startDate?: string; inspectionStart?: string }): Promise<VehicleChecklist> {
     const vehicle = this.vehicles.get(payload.vehicleId);
     if (!vehicle) throw new Error('Veículo não encontrado');
@@ -1740,7 +1746,7 @@ export class MemStorage implements IStorage {
 
     if (vehicleTypeIds) {
       // Clear existing associations
-      for (const [vtId, vt] of this.vehicleTypes.entries()) {
+      for (const [vtId, vt] of Array.from(this.vehicleTypes.entries())) {
         if (vt.checklistTemplateId === id) {
           this.vehicleTypes.set(vtId, { ...vt, checklistTemplateId: null });
         }

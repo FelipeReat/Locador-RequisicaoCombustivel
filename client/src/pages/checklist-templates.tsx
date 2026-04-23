@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,6 +32,7 @@ export default function ChecklistTemplates() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistTemplateItem | null>(null);
+  const [editOriginalVehicleTypeIds, setEditOriginalVehicleTypeIds] = useState<number[]>([]);
 
   // Fetch Templates
   const { data: templates = [], isLoading: isLoadingTemplates } = useQuery<ChecklistTemplate[]>({
@@ -73,10 +74,22 @@ export default function ChecklistTemplates() {
       const res = await apiRequest("PUT", `/api/checklist-templates/${id}`, data);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/checklist-templates"] });
+    onSuccess: (updatedTemplate: ChecklistTemplate) => {
+      queryClient.setQueryData<ChecklistTemplate[]>(["/api/checklist-templates"], (current) => {
+        if (!current) return current;
+        return current.map((t) => (t.id === updatedTemplate.id ? updatedTemplate : t));
+      });
+      setSelectedTemplate(updatedTemplate);
       queryClient.invalidateQueries({ queryKey: ["/api/vehicle-types"] });
+      setIsEditDialogOpen(false);
       toast({ title: "Template atualizado", description: "As alterações foram salvas." });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Erro ao salvar alterações",
+        description: err?.message || "Não foi possível salvar as alterações.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -191,9 +204,32 @@ export default function ChecklistTemplates() {
 
   const handleUpdateTemplate = (data: InsertChecklistTemplate & { vehicleTypeIds: number[] }) => {
     if (!selectedTemplate) return;
-    updateTemplateMutation.mutate({ id: selectedTemplate.id, data });
-    setIsEditDialogOpen(false);
+    const { vehicleTypeIds, ...templateData } = data;
+
+    const isSameVehicleTypeIds = (() => {
+      if (vehicleTypeIds.length !== editOriginalVehicleTypeIds.length) return false;
+      const setB = new Set(editOriginalVehicleTypeIds);
+      for (const id of vehicleTypeIds) {
+        if (!setB.has(id)) return false;
+      }
+      return true;
+    })();
+
+    const payload: Partial<InsertChecklistTemplate> & { vehicleTypeIds?: number[] } = templateData;
+    if (!isSameVehicleTypeIds) {
+      payload.vehicleTypeIds = vehicleTypeIds;
+    }
+
+    updateTemplateMutation.mutate({ id: selectedTemplate.id, data: payload });
   };
+
+  useEffect(() => {
+    if (!selectedTemplate?.id) return;
+    const updated = templates.find((t) => t.id === selectedTemplate.id);
+    if (updated && updated !== selectedTemplate) {
+      setSelectedTemplate(updated);
+    }
+  }, [templates, selectedTemplate?.id]);
 
   const openEditDialog = () => {
     if (!selectedTemplate) return;
@@ -202,6 +238,8 @@ export default function ChecklistTemplates() {
     const associatedVehicleTypes = vehicleTypes
       .filter(vt => vt.checklistTemplateId === selectedTemplate.id)
       .map(vt => vt.id);
+
+    setEditOriginalVehicleTypeIds(associatedVehicleTypes);
 
     editTemplateForm.reset({
       name: selectedTemplate.name,
@@ -649,7 +687,9 @@ export default function ChecklistTemplates() {
               </div>
 
               <DialogFooter>
-                <Button type="submit">Salvar Alterações</Button>
+                <Button type="submit" disabled={updateTemplateMutation.isPending}>
+                  {updateTemplateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

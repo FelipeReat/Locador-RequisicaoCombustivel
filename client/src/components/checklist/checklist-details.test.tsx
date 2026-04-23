@@ -55,6 +55,15 @@ vi.mock("@/lib/checklist-constants", () => ({
   obsGroups: [
     { key: 'group1', label: 'Group 1' }
   ],
+  fuelLevelOptions: [
+    { value: 'empty', label: 'Vazio' },
+    { value: 'quarter', label: '1/4' },
+    { value: 'half', label: '1/2' },
+    { value: 'three_quarters', label: '3/4' },
+    { value: 'full', label: 'Cheio' },
+  ],
+  FuelLevel: {},
+  ObsGroupKey: {},
   fallbackObsConfig: []
 }));
 

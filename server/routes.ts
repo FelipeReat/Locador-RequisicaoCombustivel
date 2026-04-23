@@ -1224,6 +1224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/checklists/open", async (req, res) => {
     try {
       const list = await storage.getOpenChecklists();
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(list);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar checklists em aberto" });
@@ -1233,9 +1236,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/checklists/closed", async (req, res) => {
     try {
       const list = await storage.getClosedChecklists();
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
       res.json(list);
     } catch (error) {
       res.status(500).json({ message: "Erro ao buscar checklists fechados" });
+    }
+  });
+
+  app.get("/api/vehicles/:id/checklists", async (req, res) => {
+    try {
+      const vehicleId = parseInt(req.params.id);
+      if (!Number.isFinite(vehicleId)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+
+      const currentUser = (req as any).user;
+      const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'manager';
+      const list = await storage.getChecklistsByVehicle(vehicleId);
+
+      const filtered = isAdmin
+        ? list
+        : list.filter(c => (c as any).userId === currentUser?.id);
+
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.json(filtered);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar checklists do veículo" });
     }
   });
 
