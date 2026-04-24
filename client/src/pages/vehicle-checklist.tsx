@@ -180,9 +180,19 @@ export default function VehicleChecklistPage() {
   });
 
   // Filters for Return Tab
-  const [historyFilterMode, setHistoryFilterMode] = useState<'mine' | 'all'>('mine');
+  const [historyFilterMode, setHistoryFilterMode] = useState<'mine' | 'all'>(() =>
+    user?.role === 'admin' || user?.role === 'manager' ? 'all' : 'mine'
+  );
   const [historyFilterVehicleId, setHistoryFilterVehicleId] = useState<string>('all');
   const [entradaViewMode, setEntradaViewMode] = useState<'pending' | 'history'>('pending');
+
+  useEffect(() => {
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      setHistoryFilterMode('all');
+      return;
+    }
+    setHistoryFilterMode('mine');
+  }, [user?.role]);
 
   const historyVehicleId = useMemo(() => {
     if (historyFilterVehicleId === 'all') return null;
@@ -245,7 +255,7 @@ export default function VehicleChecklistPage() {
 
   // Reset filters
   const clearHistoryFilters = () => {
-    setHistoryFilterMode('mine');
+    setHistoryFilterMode(user?.role === 'admin' || user?.role === 'manager' ? 'all' : 'mine');
     setHistoryFilterVehicleId('all');
   };
 
