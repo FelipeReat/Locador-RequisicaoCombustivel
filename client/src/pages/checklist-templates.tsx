@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -23,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 
 export default function ChecklistTemplates() {
   const { toast } = useToast();
@@ -301,12 +301,48 @@ export default function ChecklistTemplates() {
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <Header title="Modelos de Checklist" subtitle="Gerencie os modelos de checklist e suas associações com frotas" />
       
-      <div className="flex-1 flex overflow-hidden p-4 gap-4">
+      <div className="flex-1 overflow-auto p-4 space-y-6">
+        <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+          <div className="grid gap-px bg-white/10 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="bg-white/5 p-6">
+              <div className="space-y-2">
+                <div className="text-sm text-white/80">Padronização</div>
+                <h2 className="text-2xl font-semibold tracking-tight">Modelos de Checklist</h2>
+                <p className="max-w-2xl text-sm text-white/80">
+                  Organize grupos, itens e vínculos com tipos de veículo em uma área mais clara para administração.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-px bg-white/10">
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Modelos</div>
+                <div className="mt-1 text-2xl font-semibold">{templates.length}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Itens do modelo</div>
+                <div className="mt-1 text-2xl font-semibold">{templateItems.length}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Tipos de veículo</div>
+                <div className="mt-1 text-2xl font-semibold">{vehicleTypes.length}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Modelo ativo</div>
+                <div className="mt-1 text-lg font-semibold truncate">{selectedTemplate?.name || "Nenhum"}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <div className="grid flex-1 gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
         {/* Sidebar: List of Templates */}
-        <Card className="w-1/3 flex flex-col">
-          <CardHeader>
+          <Card className="flex min-h-[640px] flex-col overflow-hidden border-muted/60">
+          <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
             <div className="flex justify-between items-center">
-              <CardTitle>Modelos</CardTitle>
+              <div>
+                <CardTitle>Modelos</CardTitle>
+                <CardDescription>Selecione um modelo para editar grupos e itens.</CardDescription>
+              </div>
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Novo</Button>
@@ -392,32 +428,40 @@ export default function ChecklistTemplates() {
               </Dialog>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 overflow-auto">
+          <CardContent className="flex-1 overflow-auto p-4">
             {isLoadingTemplates ? (
               <div className="text-center py-4">Carregando...</div>
             ) : templates.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground">Nenhum modelo encontrado.</div>
+              <div className="rounded-xl border border-dashed py-10 text-center text-muted-foreground">Nenhum modelo encontrado.</div>
             ) : (
               <div className="space-y-2">
                 {templates.map((template) => (
                   <div
                     key={template.id}
-                    className={`p-3 rounded-lg border cursor-pointer hover:bg-accent transition-colors ${
-                      selectedTemplate?.id === template.id ? "bg-accent border-primary" : ""
-                    }`}
+                    className={cn(
+                      "cursor-pointer rounded-xl border p-3 transition-all hover:bg-accent/60",
+                      selectedTemplate?.id === template.id
+                        ? "border-amber-500/40 bg-amber-500/10 shadow-sm"
+                        : "border-border"
+                    )}
                     onClick={() => setSelectedTemplate(template)}
                   >
-                    <div className="font-medium">{template.name}</div>
-                    {template.description && (
-                      <div className="text-xs text-muted-foreground truncate">{template.description}</div>
-                    )}
-                    <div className="mt-2 flex gap-2">
-                       {template.active ? (
-                         <Badge variant="default" className="text-[10px] h-5">Ativo</Badge>
-                       ) : (
-                         <Badge variant="secondary" className="text-[10px] h-5">Inativo</Badge>
-                       )}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{template.name}</div>
+                        {template.description && (
+                          <div className="text-xs text-muted-foreground truncate">{template.description}</div>
+                        )}
+                      </div>
+                      <Badge variant={template.active ? "default" : "secondary"} className="text-[10px] h-5 shrink-0">
+                        {template.active ? "Ativo" : "Inativo"}
+                      </Badge>
                     </div>
+                    {template.description && (
+                      <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+                        <span>{templates.filter(t => t.id === template.id).length ? "Modelo disponível" : ""}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -426,14 +470,21 @@ export default function ChecklistTemplates() {
         </Card>
 
         {/* Main Content: Template Details */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex min-h-[640px] flex-col overflow-hidden">
           {selectedTemplate ? (
-            <Card className="flex-1 flex flex-col overflow-hidden">
-              <CardHeader className="border-b bg-muted/20">
+            <Card className="flex-1 flex flex-col overflow-hidden border-muted/60">
+              <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                 <div className="flex justify-between items-start">
-                  <div>
+                  <div className="space-y-2">
                     <CardTitle>{selectedTemplate.name}</CardTitle>
                     <CardDescription>{selectedTemplate.description}</CardDescription>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline">{templateItems.length} item(ns)</Badge>
+                      <Badge variant="outline">{selectedTemplate.groups?.length || 0} grupo(s)</Badge>
+                      <Badge variant="outline">
+                        {vehicleTypes.filter(vt => vt.checklistTemplateId === selectedTemplate.id).length} frota(s)
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                      <Button 
@@ -457,8 +508,11 @@ export default function ChecklistTemplates() {
                 </div>
               </CardHeader>
               <CardContent className="flex-1 overflow-hidden flex flex-col p-0">
-                <div className="p-4 border-b flex justify-between items-center bg-background">
-                  <h3 className="font-semibold">Itens do Checklist</h3>
+                <div className="flex flex-col gap-3 border-b bg-background p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="font-semibold">Itens do Checklist</h3>
+                    <p className="text-sm text-muted-foreground">Gerencie a ordem, agrupamento e itens padrão deste modelo.</p>
+                  </div>
                   <Button size="sm" onClick={() => openItemDialog()}>
                     <Plus className="h-4 w-4 mr-2" /> Adicionar Item
                   </Button>
@@ -468,7 +522,7 @@ export default function ChecklistTemplates() {
                   {isLoadingItems ? (
                     <div className="text-center py-8">Carregando itens...</div>
                   ) : templateItems.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                    <div className="rounded-xl border-2 border-dashed py-10 text-center text-muted-foreground">
                       Este modelo não possui itens ainda.
                     </div>
                   ) : (
@@ -542,11 +596,16 @@ export default function ChecklistTemplates() {
               </CardContent>
             </Card>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg m-4">
-              Selecione um modelo para ver os detalhes ou crie um novo.
-            </div>
+            <Card className="flex-1 border-muted/60">
+              <CardContent className="flex h-full items-center justify-center p-8">
+                <div className="rounded-xl border-2 border-dashed px-8 py-16 text-center text-muted-foreground">
+                  Selecione um modelo para ver os detalhes ou crie um novo.
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
+      </div>
       </div>
 
       {/* Edit Template Dialog */}

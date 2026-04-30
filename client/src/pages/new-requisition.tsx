@@ -5,6 +5,7 @@ import Header from "@/components/layout/header";
 import RequisitionForm from "@/components/requisition/requisition-form";
 import { useLanguage } from "@/contexts/language-context";
 import type { FuelRequisition } from "@shared/schema";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function NewRequisition() {
   const [location, setLocation] = useLocation();
@@ -13,11 +14,9 @@ export default function NewRequisition() {
 
   // Parse URL parameters to check if we're editing
   useEffect(() => {
-    console.log('Current location:', location);
     const searchParams = location.includes('?') ? location.split('?')[1] : '';
     const urlParams = new URLSearchParams(searchParams);
     const editId = urlParams.get('edit');
-    console.log('Edit ID from URL:', editId);
     if (editId && !isNaN(parseInt(editId))) {
       setEditingRequisitionId(parseInt(editId));
     } else {
@@ -47,14 +46,16 @@ export default function NewRequisition() {
           title={title} 
           subtitle={subtitle} 
         />
-        <main className="flex-1 mobile-container py-4 lg:py-6">
+        <main className="flex-1 mobile-content pt-12 sm:pt-4 lg:pt-6">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2">Carregando dados da requisição...</span>
-              </div>
-            </div>
+            <Card>
+              <CardContent className="p-8">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-2">Carregando dados da requisição...</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </main>
       </>
@@ -75,8 +76,6 @@ export default function NewRequisition() {
     fuelType: editingRequisition.fuelType as "gasolina" | "etanol" | "diesel" | "diesel_s10"
   } : undefined;
 
-  console.log('New Requisition - isEditing:', isEditing, 'editingRequisition:', editingRequisition, 'initialData:', initialData);
-
   return (
     <>
       <Header 
@@ -84,25 +83,39 @@ export default function NewRequisition() {
         subtitle={subtitle} 
       />
 
-      <main className="flex-1 mobile-container py-4 lg:py-6">
+      <main className="flex-1 mobile-content pt-12 sm:pt-4 lg:pt-6">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="mobile-card border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white">
-                {isEditing ? t('edit-requisition-form') : t('requisition-form')}
-              </h3>
-              <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300 mt-1">
-                {t('fill-required-data')}
-              </p>
-            </div>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-r from-zinc-600/10 via-stone-600/10 to-amber-600/10 blur-3xl" />
+            <div className="relative space-y-6">
+              <div className="overflow-hidden rounded-xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+                <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <div className="text-sm text-white/80">{isEditing ? "Edição" : "Nova solicitação"}</div>
+                    <div className="text-2xl font-semibold tracking-tight">{title}</div>
+                    <div className="text-sm text-white/80">{subtitle}</div>
+                  </div>
+                </div>
+              </div>
 
-            <div className="mobile-card">
-              <RequisitionForm 
-                onSuccess={handleSuccess} 
-                initialData={initialData}
-                isEditing={isEditing}
-                editingId={editingRequisitionId}
-              />
+              <Card className="border">
+                <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 pb-4 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
+                  <CardTitle className="text-lg">
+                    {isEditing ? t('edit-requisition-form') : t('requisition-form')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('fill-required-data')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <RequisitionForm 
+                    onSuccess={handleSuccess} 
+                    initialData={initialData}
+                    isEditing={isEditing}
+                    editingId={editingRequisitionId}
+                  />
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

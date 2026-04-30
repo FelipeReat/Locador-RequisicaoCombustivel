@@ -43,7 +43,7 @@ import {
   type ChecklistTemplateItem,
   type InsertChecklistTemplateItem
 } from '@shared/schema';
-import { IStorage, type VehicleChecklist, type FuelLevel } from './storage';
+import { IStorage, type VehicleChecklist, type FuelLevel, type PaginatedFuelRequisitionsResult } from './storage';
 
 function safeParseJSON(text: any): any {
   try {
@@ -652,6 +652,64 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select().from(fuelRequisitions).orderBy(desc(fuelRequisitions.createdAt));
     console.log(`DatabaseStorage: Fetched ${result.length} fuel requisitions from database`);
     return result;
+  }
+
+  async getFuelRequisitionsPaginated(page: number, limit: number, status?: string): Promise<PaginatedFuelRequisitionsResult> {
+    const normalizedPage = Math.max(1, Math.floor(page) || 1);
+    const normalizedLimit = Math.max(1, Math.floor(limit) || 15);
+    const normalizedStatus = status && status !== 'all' ? status : undefined;
+    const filters = normalizedStatus ? [eq(fuelRequisitions.status, normalizedStatus as any)] : [];
+    const whereClause = filters.length > 0 ? and(...filters) : undefined;
+    const baseOffset = (normalizedPage - 1) * normalizedLimit;
+
+    const [totalResult, requisitions] = await Promise.all([
+      whereClause
+        ? db.select({ total: sql<number>`count(*)` }).from(fuelRequisitions).where(whereClause)
+        : db.select({ total: sql<number>`count(*)` }).from(fuelRequisitions),
+      whereClause
+        ? db
+            .select()
+            .from(fuelRequisitions)
+            .where(whereClause)
+            .orderBy(desc(fuelRequisitions.createdAt))
+            .limit(normalizedLimit)
+            .offset(baseOffset)
+        : db
+            .select()
+            .from(fuelRequisitions)
+            .orderBy(desc(fuelRequisitions.createdAt))
+            .limit(normalizedLimit)
+            .offset(baseOffset),
+    ]);
+
+    const total = Number(totalResult[0]?.total || 0);
+    const totalPages = Math.max(1, Math.ceil(total / normalizedLimit));
+    const safePage = Math.min(normalizedPage, totalPages);
+
+    const data = safePage === normalizedPage
+      ? requisitions
+      : whereClause
+        ? await db
+            .select()
+            .from(fuelRequisitions)
+            .where(whereClause)
+            .orderBy(desc(fuelRequisitions.createdAt))
+            .limit(normalizedLimit)
+            .offset((safePage - 1) * normalizedLimit)
+        : await db
+            .select()
+            .from(fuelRequisitions)
+            .orderBy(desc(fuelRequisitions.createdAt))
+            .limit(normalizedLimit)
+            .offset((safePage - 1) * normalizedLimit);
+
+    return {
+      data,
+      page: safePage,
+      limit: normalizedLimit,
+      total,
+      totalPages,
+    };
   }
 
   async getFuelRequisition(id: number): Promise<FuelRequisition | undefined> {

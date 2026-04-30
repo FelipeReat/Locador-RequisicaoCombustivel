@@ -354,6 +354,11 @@ function UserManagement() {
         user.email?.toLowerCase().includes(searchTerm.toLowerCase())
     ).sort((a, b) => (a.fullName || a.username).localeCompare(b.fullName || b.username, 'pt-BR')) || [];
 
+  const activeUsers = users?.filter((user) => user.active === "true").length || 0;
+  const inactiveUsers = (users?.length || 0) - activeUsers;
+  const adminAndManagers = users?.filter((user) => user.role === "admin" || user.role === "manager").length || 0;
+  const drivers = users?.filter((user) => user.role === "driver").length || 0;
+
   // Pagination logic
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const paginatedUsers = filteredUsers.slice(
@@ -394,182 +399,213 @@ function UserManagement() {
 
       <main className="flex-1 mobile-content py-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          {/* Actions Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="relative flex-1 sm:flex-none">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder={t("search-users")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full sm:w-64"
-                />
+          <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+            <div className="p-6 space-y-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="space-y-2">
+                  <div className="text-sm text-white/75">Controle de acesso</div>
+                  <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
+                    <Users className="h-8 w-8 text-white" />
+                    {t("user-management")}
+                  </h1>
+                  <p className="max-w-2xl text-sm text-white/80">
+                    Gerencie perfis, permissões e usuários ativos da operação com uma visão mais clara da equipe.
+                  </p>
+                </div>
+
+                <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+                  <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
+                    <Input
+                      placeholder={t("search-users")}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="border-white/15 bg-white/10 pl-10 text-white placeholder:text-white/55"
+                    />
+                  </div>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={handleNew} className="bg-white text-amber-700 hover:bg-white/90">
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t("new-user")}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingUser ? t("edit-user") : t("new-user")}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {editingUser ? t("update-user-info") : t("add-new-user")}
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <Form {...form}>
+                        <form
+                          onSubmit={form.handleSubmit(onSubmit)}
+                          className="space-y-4"
+                        >
+                          <FormField
+                            control={form.control}
+                            name="username"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t("username")} *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder={t("username")} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="fullName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t("full-name")} *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder={t("full-name")} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="email"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t("email")}</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="email"
+                                      placeholder={t("email")}
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="phone"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t("phone")}</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="(11) 99999-9999"
+                                      {...field}
+                                      onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        let formattedValue = value;
+
+                                        if (value.length > 2) {
+                                          formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2);
+                                        }
+                                        if (value.length > 7) {
+                                          formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
+                                        }
+
+                                        field.onChange(formattedValue);
+                                      }}
+                                      maxLength={15}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="position"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t("position")} *</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder={t("position")} {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="role"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t("role")} *</FormLabel>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder={t("select-option")} />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="employee">{t("employee")}</SelectItem>
+                                      <SelectItem value="manager">{t("manager")}</SelectItem>
+                                      <SelectItem value="admin">{t("administrator")}</SelectItem>
+                                      <SelectItem value="driver">Motorista</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setIsDialogOpen(false)}
+                            >
+                              {t("cancel")}
+                            </Button>
+                            <Button
+                              type="submit"
+                              disabled={createUser.isPending || updateUser.isPending}
+                              className="bg-amber-600 hover:bg-amber-700 text-white"
+                            >
+                              {editingUser ? t("update") : t("create")}
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+
+              <div className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="bg-white/5 p-4">
+                  <div className="text-xs text-white/70">Usuários ativos</div>
+                  <div className="mt-1 text-2xl font-semibold">{activeUsers}</div>
+                </div>
+                <div className="bg-white/5 p-4">
+                  <div className="text-xs text-white/70">Usuários inativos</div>
+                  <div className="mt-1 text-2xl font-semibold">{inactiveUsers}</div>
+                </div>
+                <div className="bg-white/5 p-4">
+                  <div className="text-xs text-white/70">Admins e gestores</div>
+                  <div className="mt-1 text-2xl font-semibold">{adminAndManagers}</div>
+                </div>
+                <div className="bg-white/5 p-4">
+                  <div className="text-xs text-white/70">Motoristas</div>
+                  <div className="mt-1 text-2xl font-semibold">{drivers}</div>
+                </div>
               </div>
             </div>
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={handleNew} className="w-full sm:w-auto">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t("new-user")}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingUser ? t("edit-user") : t("new-user")}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {editingUser ? t("update-user-info") : t("add-new-user")}
-                  </DialogDescription>
-                </DialogHeader>
-
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-4"
-                  >
-                    <FormField
-                      control={form.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("username")} *</FormLabel>
-                          <FormControl>
-                            <Input placeholder={t("username")} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("full-name")} *</FormLabel>
-                          <FormControl>
-                            <Input placeholder={t("full-name")} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("email")}</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="email"
-                                placeholder={t("email")}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("phone")}</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="(11) 99999-9999"
-                                {...field}
-                                onChange={(e) => {
-                                  const value = e.target.value.replace(/\D/g, '');
-                                  let formattedValue = value;
-
-                                  if (value.length > 2) {
-                                    formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2);
-                                  }
-                                  if (value.length > 7) {
-                                    formattedValue = '(' + value.slice(0, 2) + ') ' + value.slice(2, 7) + '-' + value.slice(7, 11);
-                                  }
-
-                                  field.onChange(formattedValue);
-                                }}
-                                maxLength={15}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="position"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("position")} *</FormLabel>
-                            <FormControl>
-                              <Input placeholder={t("position")} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="role"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t("role")} *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t("select-option")} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="employee">{t("employee")}</SelectItem>
-                                <SelectItem value="manager">{t("manager")}</SelectItem>
-                                <SelectItem value="admin">{t("administrator")}</SelectItem>
-                                <SelectItem value="driver">Motorista</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-
-
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsDialogOpen(false)}
-                      >
-                        {t("cancel")}
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={createUser.isPending || updateUser.isPending}
-                      >
-                        {editingUser ? t("update") : t("create")}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
           </div>
 
           {/* Password Reset Dialog */}
@@ -683,18 +719,30 @@ function UserManagement() {
 
           {/* Users List */}
           <div className="space-y-4">
-            <div className="text-center text-sm text-muted-foreground mb-6">
-              Usuários ordenados alfabeticamente ({filteredUsers.length} total)
-            </div>
+            <Card className="border-muted/60">
+              <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <CardTitle>Equipe cadastrada</CardTitle>
+                    <CardDescription>
+                      Usuários ordenados alfabeticamente com status, cargo e informações principais.
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="w-fit">
+                    {filteredUsers.length} usuário(s)
+                  </Badge>
+                </div>
+              </CardHeader>
+            </Card>
             {paginatedUsers.map((user) => (
-              <Card key={user.id} className="hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <Card key={user.id} className="overflow-hidden border-muted/60 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex flex-col space-y-6">
                     {/* Header com Avatar e Info Principal */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
                       <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/30 rounded-full flex items-center justify-center ring-4 ring-primary/10 shadow-lg">
-                          <Users className="h-8 w-8 text-primary" />
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-zinc-200 via-stone-200 to-amber-200 dark:from-zinc-800 dark:via-stone-800 dark:to-amber-950/40 flex items-center justify-center ring-4 ring-amber-100 dark:ring-amber-950/30 shadow-lg">
+                          <Users className="h-8 w-8 text-amber-700 dark:text-amber-300" />
                         </div>
                         <div className="text-center sm:text-left">
                           <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
@@ -750,7 +798,7 @@ function UserManagement() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(user)}
-                          className="px-4 py-2 rounded-lg hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/20 transition-colors"
+                          className="px-4 py-2 rounded-lg hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 transition-colors"
                           title="Editar usuário"
                         >
                           <Edit className="h-4 w-4" />
@@ -760,7 +808,7 @@ function UserManagement() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handlePasswordReset(user)}
-                          className="px-4 py-2 rounded-lg text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 transition-colors"
+                          className="px-4 py-2 rounded-lg text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors"
                           title="Definir Nova Senha"
                         >
                           <Key className="h-4 w-4" />
@@ -784,33 +832,33 @@ function UserManagement() {
 
                     {/* Informações Detalhadas */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700/50 text-center">
-                        <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-                        <p className="font-semibold text-blue-800 dark:text-blue-300 text-xs uppercase tracking-wider mb-1">
+                      <div className="bg-gradient-to-r from-zinc-50 to-stone-100 dark:from-zinc-900/30 dark:to-stone-900/20 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700/50 text-center">
+                        <Mail className="h-5 w-5 text-zinc-600 dark:text-zinc-300 mx-auto mb-2" />
+                        <p className="font-semibold text-zinc-800 dark:text-zinc-200 text-xs uppercase tracking-wider mb-1">
                           {t("email")}
                         </p>
-                        <p className="text-blue-900 dark:text-blue-100 font-medium break-all">
-                          {user.email || <span className="text-blue-500 dark:text-blue-400 italic">Não informado</span>}
+                        <p className="text-zinc-900 dark:text-zinc-100 font-medium break-all">
+                          {user.email || <span className="text-zinc-500 dark:text-zinc-400 italic">Não informado</span>}
                         </p>
                       </div>
 
-                      <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700/50 text-center">
-                        <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-                        <p className="font-semibold text-purple-800 dark:text-purple-300 text-xs uppercase tracking-wider mb-1">
+                      <div className="bg-gradient-to-r from-amber-50 to-yellow-100 dark:from-amber-950/20 dark:to-yellow-950/10 p-4 rounded-lg border border-amber-200 dark:border-amber-800/40 text-center">
+                        <Briefcase className="h-5 w-5 text-amber-600 dark:text-amber-400 mx-auto mb-2" />
+                        <p className="font-semibold text-amber-800 dark:text-amber-300 text-xs uppercase tracking-wider mb-1">
                           {t("position")}
                         </p>
-                        <p className="text-purple-900 dark:text-purple-100 font-medium">
-                          {user.position || <span className="text-purple-500 dark:text-purple-400 italic">Não informado</span>}
+                        <p className="text-amber-900 dark:text-amber-100 font-medium">
+                          {user.position || <span className="text-amber-500 dark:text-amber-400 italic">Não informado</span>}
                         </p>
                       </div>
 
-                      <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-700/50 text-center">
-                        <Phone className="h-5 w-5 text-green-600 dark:text-green-400 mx-auto mb-2" />
-                        <p className="font-semibold text-green-800 dark:text-green-300 text-xs uppercase tracking-wider mb-1">
+                      <div className="bg-gradient-to-r from-stone-50 to-zinc-100 dark:from-stone-900/20 dark:to-zinc-900/20 p-4 rounded-lg border border-stone-200 dark:border-stone-800/40 text-center">
+                        <Phone className="h-5 w-5 text-stone-600 dark:text-stone-300 mx-auto mb-2" />
+                        <p className="font-semibold text-stone-800 dark:text-stone-200 text-xs uppercase tracking-wider mb-1">
                           {t("phone")}
                         </p>
-                        <p className="text-green-900 dark:text-green-100 font-medium">
-                          {user.phone || <span className="text-green-500 dark:text-green-400 italic">Não informado</span>}
+                        <p className="text-stone-900 dark:text-stone-100 font-medium">
+                          {user.phone || <span className="text-stone-500 dark:text-stone-400 italic">Não informado</span>}
                         </p>
                       </div>
                     </div>
@@ -821,10 +869,10 @@ function UserManagement() {
           </div>
 
           {filteredUsers.length === 0 && (
-            <Card className="border-dashed border-2 border-gray-300 dark:border-gray-600">
+            <Card className="border-dashed border-2 border-zinc-300 dark:border-zinc-700">
               <CardContent className="p-16 text-center">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-primary/5">
-                  <Users className="h-10 w-10 text-primary/60" />
+                <div className="w-20 h-20 bg-amber-100 dark:bg-amber-950/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-amber-100/60 dark:ring-amber-950/20">
+                  <Users className="h-10 w-10 text-amber-600 dark:text-amber-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   {t("no-users-found")}
@@ -833,7 +881,7 @@ function UserManagement() {
                   {searchTerm ? t("adjust-search") : t("start-creating-user")}
                 </p>
                 {!searchTerm && (
-                  <Button onClick={handleNew} className="mt-4">
+                  <Button onClick={handleNew} className="mt-4 bg-amber-600 hover:bg-amber-700 text-white">
                     <Plus className="mr-2 h-4 w-4" />
                     {t("new-user")}
                   </Button>

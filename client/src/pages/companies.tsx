@@ -5,12 +5,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Building2, Search, Mail, Phone, UserRound } from "lucide-react";
 import { CNPJInput } from "@/components/cnpj-input";
 import { PhoneInput } from "@/components/phone-input";
 import type { Company, InsertCompany } from "@shared/schema";
@@ -21,6 +21,7 @@ export default function Companies() {
   const { t } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState<Partial<InsertCompany>>({
     name: "",
     cnpj: "",
@@ -41,6 +42,14 @@ export default function Companies() {
 
   // Sort companies alphabetically by name
   const companies = companiesData.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  const filteredCompanies = companies.filter((company) =>
+    company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    company.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    company.cnpj.includes(searchTerm) ||
+    company.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const activeCompanies = companies.filter((company) => company.active === "true").length;
+  const companiesWithEmail = companies.filter((company) => company.email).length;
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCompany) => {
@@ -146,13 +155,6 @@ export default function Companies() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create fleets if they don't exist
-    if (formData.name === "GERADOR CABINADO 218KVA 127V/220V FG" || formData.name === "GALÃO 50 LT") {
-      // In a real application, you would likely have a separate mutation or API call
-      // to create fleets. For this example, we'll simulate it by just logging.
-      console.log(`Fleet "${formData.name}" created.`);
-    }
-
     if (editingCompany) {
       updateMutation.mutate({ id: editingCompany.id, data: formData as InsertCompany });
     } else {
@@ -166,21 +168,27 @@ export default function Companies() {
 
   return (
     <div className="mobile-content space-y-4 lg:space-y-6">
-      <div className="flex items-center justify-between gap-3 sm:gap-4">
-        <div className="flex-1 min-w-0 ml-12 sm:ml-0">
-          <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white truncate">{t("companies")}</h1>
-          <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1 hidden sm:block">
-            {t("manage-client-companies")}
-          </p>
-        </div>
+      <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <div className="text-sm text-white/75">Base de clientes</div>
+              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                <Building2 className="h-8 w-8 text-white" />
+                {t("companies")}
+              </h1>
+              <p className="max-w-2xl text-sm text-white/80">
+                {t("manage-client-companies")}
+              </p>
+            </div>
 
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingCompany(null)} className="shrink-0 h-8 sm:h-10">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t("new-company")}</span>
-            </Button>
-          </DialogTrigger>
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setEditingCompany(null)} className="bg-white text-amber-700 hover:bg-white/90 shadow-sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t("new-company")}
+                </Button>
+              </DialogTrigger>
 
           <DialogContent className="mobile-container max-w-lg">
             <DialogHeader>
@@ -274,7 +282,35 @@ export default function Companies() {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+            </Dialog>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+            <div className="relative w-full xl:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
+              <Input
+                placeholder="Buscar por nome, CNPJ ou email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-white/15 bg-white/10 pl-10 text-white placeholder:text-white/55"
+              />
+            </div>
+            <div className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-3">
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Empresas</div>
+                <div className="mt-1 text-2xl font-semibold">{companies.length}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Ativas</div>
+                <div className="mt-1 text-2xl font-semibold">{activeCompanies}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Com email</div>
+                <div className="mt-1 text-2xl font-semibold">{companiesWithEmail}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {isLoading ? (
@@ -285,10 +321,22 @@ export default function Companies() {
           </div>
         </div>
       ) : (
+        <>
+        <Card className="overflow-hidden border-muted/60">
+          <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Empresas cadastradas</CardTitle>
+                <CardDescription>Visão rápida das empresas clientes com contatos e ações de manutenção.</CardDescription>
+              </div>
+              <div className="text-sm text-muted-foreground">{filteredCompanies.length} resultado(s)</div>
+            </div>
+          </CardHeader>
+        </Card>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {companies.map((company) => (
-            <Card key={company.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/20">
-              <CardHeader className="pb-3">
+          {filteredCompanies.map((company) => (
+            <Card key={company.id} className="overflow-hidden border-muted/60 hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5">
+              <CardHeader className="pb-3 border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50/70 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/10">
                 <div className="flex justify-between items-start">
                   <div className="min-w-0 flex-1 pr-2">
                     <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate mb-1">
@@ -308,41 +356,25 @@ export default function Companies() {
               </CardHeader>
 
               <CardContent className="pt-0 space-y-3">
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-0">
-                      {t("company-full-name")}:
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400 ml-2 text-right">
-                      {company.fullName}
-                    </span>
+                <div className="space-y-3 pt-4">
+                  <div className="rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-3">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">{t("company-full-name")}</div>
+                    <div className="mt-1 text-sm text-gray-700 dark:text-gray-300">{company.fullName}</div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t("contact")}:
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {company.contact}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {t("phone")}:
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {company.phone}
-                    </span>
-                  </div>
-
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-0">
-                      {t("email")}:
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400 ml-2 text-right truncate">
-                      {company.email}
-                    </span>
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2 rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-3 text-sm text-gray-700 dark:text-gray-300">
+                      <UserRound className="h-4 w-4 text-amber-600" />
+                      <span className="truncate">{company.contact}</span>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-3 text-sm text-gray-700 dark:text-gray-300">
+                      <Phone className="h-4 w-4 text-zinc-500" />
+                      <span>{company.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-3 text-sm text-gray-700 dark:text-gray-300">
+                      <Mail className="h-4 w-4 text-zinc-500" />
+                      <span className="truncate">{company.email}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -370,12 +402,17 @@ export default function Companies() {
             </Card>
           ))}
         </div>
+        </>
       )}
 
-      {companies.length === 0 && !isLoading && (
-        <Card>
-          <CardContent className="mobile-card text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">Nenhuma empresa cadastrada ainda.</p>
+      {filteredCompanies.length === 0 && !isLoading && (
+        <Card className="border-dashed border-2 border-zinc-300 dark:border-zinc-700">
+          <CardContent className="mobile-card text-center py-12">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/20">
+              <Building2 className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 font-medium">Nenhuma empresa encontrada.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Ajuste a busca ou cadastre uma nova empresa.</p>
           </CardContent>
         </Card>
       )}

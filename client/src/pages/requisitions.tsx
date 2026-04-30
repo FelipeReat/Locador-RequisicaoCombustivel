@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type FuelRequisition, type Supplier } from "@shared/schema";
 import Header from "@/components/layout/header";
@@ -7,49 +7,35 @@ import RequisitionDetailsModal from "@/components/requisition/requisition-detail
 import EditApprovedRequisitionModal from "@/components/requisition/edit-approved-requisition-modal";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Eye, Edit, Search, Filter, Check, Download, Plus, Trash2, Undo2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Check, Edit, Eye, Plus, Trash2, Undo2, X } from "lucide-react";
 import { useLocation } from "wouter";
-import { useLanguage } from "@/contexts/language-context";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { useSystemSettings } from "@/contexts/system-settings-context";
-import { useRealTimeUpdates, useSmartInvalidation } from "@/hooks/useRealTimeUpdates";
+import { useRealTimeUpdates } from "@/hooks/useRealTimeUpdates";
 import { apiRequest } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils"; // Assuming cn utility for classNames
+import { Badge } from "@/components/ui/badge";
+
+const ITEMS_PER_PAGE = 15;
 
 export default function Requisitions() {
   const [, setLocation] = useLocation();
   const [selectedRequisition, setSelectedRequisition] = useState<FuelRequisition | null>(null);
   const [editingRequisition, setEditingRequisition] = useState<FuelRequisition | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [supplierFilter, setSupplierFilter] = useState<string>("all"); // Added supplier filter state
-  const { t } = useLanguage();
-  const { userRole, hasPermission, canAccessRequisition, canActOnRequisition } = usePermissions();
+  const [currentPage, setCurrentPage] = useState(1);
+  const { userRole, hasPermission, canActOnRequisition } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { settings: systemSettings } = useSystemSettings();
-
-  // Removed pagination - showing all items
 
   // Hooks for real-time updates
   const { forceRefresh } = useRealTimeUpdates();
-  const { invalidateByOperation } = useSmartInvalidation();
 
-  const { data: requisitions, isLoading } = useQuery<FuelRequisition[]>({
+  const { data: requisitions = [], isLoading, isFetching } = useQuery<FuelRequisition[]>({
     queryKey: ["/api/fuel-requisitions"],
   });
 
@@ -72,18 +58,6 @@ export default function Requisitions() {
       const response = await apiRequest("DELETE", `/api/fuel-requisitions/${requisitionId}`);
       return await response.json();
     },
-    // Optimistic update
-    onMutate: async (requisitionId: number) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
-      const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
-
-      queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
-        if (!old) return old;
-        return old.filter(req => req.id !== requisitionId);
-      });
-
-      return { previousRequisitions };
-    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
@@ -94,11 +68,7 @@ export default function Requisitions() {
         description: "Requisição excluída com sucesso",
       });
     },
-    onError: (error: any, variables, context) => {
-      if (context?.previousRequisitions) {
-        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
-      }
-
+    onError: (error: any) => {
       toast({
         title: "Erro",
         description: error.message || "Erro ao excluir requisição",
@@ -117,32 +87,6 @@ export default function Requisitions() {
       const response = await apiRequest("PATCH", `/api/fuel-requisitions/${requisitionId}/undo`);
       return await response.json();
     },
-    // Optimistic update
-    onMutate: async (requisitionId: number) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
-      const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
-      const previousStats = queryClient.getQueryData(["/api/fuel-requisitions/stats/overview"]);
-
-      queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
-        if (!old) return old;
-        return old.map(req => 
-          req.id === requisitionId 
-            ? { ...req, status: 'approved' as any, fulfilledAt: null }
-            : req
-        );
-      });
-
-      queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          approvedRequests: (old.approvedRequests || 0) + 1,
-          fulfilledRequests: Math.max(0, (old.fulfilledRequests || 0) - 1)
-        };
-      });
-
-      return { previousRequisitions, previousStats };
-    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
@@ -156,14 +100,7 @@ export default function Requisitions() {
         description: "Requisição desfeita com sucesso. Status alterado para aprovada.",
       });
     },
-    onError: (error: any, variables, context) => {
-      if (context?.previousRequisitions) {
-        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
-      }
-      if (context?.previousStats) {
-        queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], context.previousStats);
-      }
-
+    onError: (error: any) => {
       toast({
         title: "Erro",
         description: error.message || "Erro ao desfazer requisição",
@@ -184,32 +121,6 @@ export default function Requisitions() {
       });
       return await response.json();
     },
-    // Optimistic update
-    onMutate: async (requisitionId: number) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/fuel-requisitions"] });
-      const previousRequisitions = queryClient.getQueryData(["/api/fuel-requisitions"]);
-      const previousStats = queryClient.getQueryData(["/api/fuel-requisitions/stats/overview"]);
-
-      queryClient.setQueryData(["/api/fuel-requisitions"], (old: FuelRequisition[] | undefined) => {
-        if (!old) return old;
-        return old.map(req => 
-          req.id === requisitionId 
-            ? { ...req, status: 'fulfilled' as any, fulfilledAt: new Date().toISOString() }
-            : req
-        );
-      });
-
-      queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          approvedRequests: Math.max(0, (old.approvedRequests || 0) - 1),
-          fulfilledRequests: (old.fulfilledRequests || 0) + 1
-        };
-      });
-
-      return { previousRequisitions, previousStats };
-    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/fuel-requisitions/stats/overview"] });
@@ -223,14 +134,7 @@ export default function Requisitions() {
         description: "Requisição confirmada como realizada",
       });
     },
-    onError: (error: any, variables, context) => {
-      if (context?.previousRequisitions) {
-        queryClient.setQueryData(["/api/fuel-requisitions"], context.previousRequisitions);
-      }
-      if (context?.previousStats) {
-        queryClient.setQueryData(["/api/fuel-requisitions/stats/overview"], context.previousStats);
-      }
-
+    onError: (error: any) => {
       toast({
         title: "Erro",
         description: error.message || "Erro ao confirmar requisição",
@@ -244,34 +148,56 @@ export default function Requisitions() {
   });
 
   const filteredRequisitions = useMemo(() => {
-    if (!requisitions) return [];
-
-    return requisitions.filter(req => {
-      // Todos podem ver todas as requisições
-      // A restrição de ações é feita nos botões individuais
-      const reqUser = users.find((u: any) => u.id === req.requesterId);
-      const matchesSearch = 
-        (reqUser?.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (req.client || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (req.fuelType || "").toLowerCase().includes(searchTerm.toLowerCase());
-
+    return requisitions.filter((req) => {
       const matchesStatus = !statusFilter || statusFilter === "all" || req.status === statusFilter;
-      const matchesSupplier = !supplierFilter || supplierFilter === "all" || req.supplierId.toString() === supplierFilter;
-
-      return matchesSearch && matchesStatus && matchesSupplier;
+      return matchesStatus;
     });
-  }, [requisitions, searchTerm, statusFilter, supplierFilter, users]);
+  }, [requisitions, statusFilter]);
 
-
-  // Sort by created date descending (most recent first)
-  const sortedRequisitions = useMemo(() => 
-    [...filteredRequisitions].sort((a, b) => 
+  const sortedRequisitions = useMemo(() =>
+    [...filteredRequisitions].sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    ), 
+    ),
   [filteredRequisitions]);
 
-  // Show all requisitions without pagination
-  const displayedRequisitions = sortedRequisitions;
+  const filteredCounts = useMemo(() => {
+    const base = {
+      total: filteredRequisitions.length,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      fulfilled: 0,
+    };
+
+    for (const requisition of filteredRequisitions) {
+      if (requisition.status === "pending") base.pending += 1;
+      if (requisition.status === "approved") base.approved += 1;
+      if (requisition.status === "rejected") base.rejected += 1;
+      if (requisition.status === "fulfilled") base.fulfilled += 1;
+    }
+
+    return base;
+  }, [filteredRequisitions]);
+
+  const currentResultsCount = sortedRequisitions.length;
+  const totalPages = Math.max(1, Math.ceil(currentResultsCount / ITEMS_PER_PAGE));
+  const activePage = Math.min(currentPage, totalPages);
+  const displayedRequisitions = useMemo(() => {
+    const start = (activePage - 1) * ITEMS_PER_PAGE;
+    return sortedRequisitions.slice(start, start + ITEMS_PER_PAGE);
+  }, [activePage, sortedRequisitions]);
+  const paginationStart = currentResultsCount === 0 ? 0 : (activePage - 1) * ITEMS_PER_PAGE + 1;
+  const paginationEnd = currentResultsCount === 0 ? 0 : Math.min(paginationStart + displayedRequisitions.length - 1, currentResultsCount);
+
+  const statusQuickFilters = useMemo(() => ([
+    { value: "all", label: "Todos", count: filteredCounts.total },
+    { value: "pending", label: "Pendentes", count: filteredCounts.pending },
+    { value: "approved", label: "Aprovadas", count: filteredCounts.approved },
+    { value: "rejected", label: "Rejeitadas", count: filteredCounts.rejected },
+    { value: "fulfilled", label: "Realizadas", count: filteredCounts.fulfilled },
+  ]), [filteredCounts]);
+
+  const hasActiveFilters = statusFilter !== "all";
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
@@ -303,7 +229,7 @@ export default function Requisitions() {
 
   const handleConfirmRequisition = async (requisitionId: number) => {
     // Verificar se a requisição tem os valores obrigatórios preenchidos
-    const requisition = requisitions?.find(req => req.id === requisitionId);
+    const requisition = displayedRequisitions.find(req => req.id === requisitionId);
     if (!requisition) return;
 
     // Verificar se pricePerLiter foi preenchido (obrigatório para confirmar)
@@ -390,7 +316,7 @@ export default function Requisitions() {
     }
   };
 
-  if (isLoading || suppliersLoading) {
+  if (isLoading && !requisitions.length) {
     return <LoadingSpinner message="Carregando dados..." />;
   }
 
@@ -402,94 +328,58 @@ export default function Requisitions() {
       />
 
       <main className="flex-1 mobile-content pt-12 sm:pt-4 lg:pt-6">
-        {/* Filters */}
-      <Card className="border-l-4 border-l-blue-500/30">
-        <CardHeader className="mobile-card pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="mobile-text-lg text-gray-800 dark:text-gray-100">
-                🔍 Filtros
-              </CardTitle>
-              <CardDescription className="mobile-text-sm text-gray-600 dark:text-gray-300">
-                Filtrar requisições • {filteredRequisitions.length} resultados
-              </CardDescription>
-            </div>
-            {(statusFilter !== 'all' || supplierFilter !== 'all' || searchTerm) && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  setStatusFilter('all');
-                  setSupplierFilter('all');
-                  setSearchTerm('');
-                }}
-                className="text-xs"
-              >
-                Limpar filtros
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="mobile-card pt-0">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="status-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Status
-              </Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger id="status-filter" className="bg-white dark:bg-gray-800">
-                  <SelectValue placeholder="Todos os status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">📋 Todos os status</SelectItem>
-                  <SelectItem value="pending">⏳ Pendente</SelectItem>
-                  <SelectItem value="approved">✅ Aprovado</SelectItem>
-                  <SelectItem value="rejected">❌ Rejeitado</SelectItem>
-                  <SelectItem value="fulfilled">🏁 Realizado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="supplier-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Fornecedor
-              </Label>
-              <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-                <SelectTrigger id="supplier-filter" className="bg-white dark:bg-gray-800">
-                  <SelectValue placeholder="Todos os fornecedores" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">🏪 Todos os fornecedores</SelectItem>
-                  {suppliers?.sort((a, b) => a.fantasia.localeCompare(b.fantasia, 'pt-BR')).map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                      {supplier.fantasia}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="search" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Pesquisar
-              </Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Pesquisar requisições..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white dark:bg-gray-800"
-                />
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-r from-zinc-600/10 via-stone-600/10 to-amber-600/10 blur-3xl" />
+          <div className="relative space-y-6">
+            <div className="overflow-hidden rounded-xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+              <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <div className="text-sm text-white/80">Gerenciamento</div>
+                  <div className="text-2xl font-semibold tracking-tight">Requisições de Combustível</div>
+                  <div className="text-sm text-white/80">
+                    {currentResultsCount} resultado(s) • {filteredCounts.pending} pendente(s) • {filteredCounts.approved} aprovado(s)
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    className="bg-white/15 text-white hover:bg-white/25 border border-white/20"
+                    onClick={() => forceRefresh()}
+                  >
+                    Atualizar
+                  </Button>
+                  {hasPermission('create_fuel_requisition') && (
+                    <Button
+                      className="bg-white text-amber-700 hover:bg-white/90"
+                      onClick={() => setLocation("/new-requisition")}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nova Requisição
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/10">
+                <div className="p-4 bg-white/5">
+                  <div className="text-xs text-white/70">Total</div>
+                  <div className="mt-1 text-xl font-semibold">{filteredCounts.total}</div>
+                </div>
+                <div className="p-4 bg-white/5">
+                  <div className="text-xs text-white/70">Pendentes</div>
+                  <div className="mt-1 text-xl font-semibold">{filteredCounts.pending}</div>
+                </div>
+                <div className="p-4 bg-white/5">
+                  <div className="text-xs text-white/70">Aprovadas</div>
+                  <div className="mt-1 text-xl font-semibold">{filteredCounts.approved}</div>
+                </div>
+                <div className="p-4 bg-white/5">
+                  <div className="text-xs text-white/70">Realizadas</div>
+                  <div className="mt-1 text-xl font-semibold">{filteredCounts.fulfilled}</div>
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-        {/* Requisitions Table */}
-      <Card className="border-l-4 border-l-primary/30 mt-6">
+            <Card className="border mt-6">
         <CardHeader className="mobile-card pb-3">
           <div className="flex items-center justify-between">
             <div>
@@ -497,12 +387,58 @@ export default function Requisitions() {
                 📋 Requisições
               </CardTitle>
               <CardDescription className="mobile-text-sm text-gray-600 dark:text-gray-300">
-                Gerenciar requisições de combustível • Organizadas por data (mais recentes primeiro)
+                Gerenciar requisições de combustível • Organizadas por data e carregadas em lotes de 15
               </CardDescription>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredRequisitions.length} requisições encontradas
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-muted-foreground">
+                {currentResultsCount} requisições encontradas
+              </div>
+              {hasActiveFilters ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setCurrentPage(1);
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Limpar
+                </Button>
+              ) : null}
             </div>
+          </div>
+
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {statusQuickFilters.map((s) => {
+              const active = statusFilter === s.value;
+              return (
+                <Button
+                  key={s.value}
+                  type="button"
+                  variant={active ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter(s.value);
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    "h-9 gap-2 whitespace-nowrap",
+                    active
+                      ? "bg-gradient-to-r from-zinc-600/15 via-stone-600/15 to-amber-500/15 border-amber-600/25"
+                      : ""
+                  )}
+                >
+                  <span className="text-sm">{s.label}</span>
+                  <Badge variant="secondary" className={cn("h-6 px-2", active ? "bg-white/40 text-foreground" : "")}>
+                    {s.count}
+                  </Badge>
+                </Button>
+              );
+            })}
           </div>
         </CardHeader>
         <CardContent className="mobile-card pt-0">
@@ -710,16 +646,72 @@ export default function Requisitions() {
             </Table>
           </div>
 
-          {/* Pagination removed - showing all requisitions */}
-          {sortedRequisitions.length > 0 && (
+          {currentResultsCount > 0 && (
+            <div className="flex flex-col gap-3 border-t border-gray-200 bg-gray-50 px-4 py-4 dark:border-gray-700 dark:bg-gray-800/30 sm:flex-row sm:items-center sm:justify-between rounded-b-lg">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Exibindo <span className="font-medium">{paginationStart}</span> a{" "}
+                <span className="font-medium">{paginationEnd}</span> de{" "}
+                <span className="font-medium">{currentResultsCount}</span> requisições
+                {isFetching ? " • Atualizando..." : ""}
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={activePage <= 1 || isFetching}
+                >
+                  <ChevronsLeft className="mr-2 h-4 w-4" />
+                  Primeira
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={activePage <= 1 || isFetching}
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Anterior
+                </Button>
+                <div className="min-w-[110px] text-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Página {activePage} de {totalPages}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={activePage >= totalPages || isFetching}
+                >
+                  Próxima
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={activePage >= totalPages || isFetching}
+                >
+                  Última
+                  <ChevronsRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          {currentResultsCount === 0 && !isFetching && (
             <div className="flex items-center justify-center px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 rounded-b-lg">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Exibindo <span className="font-medium">{sortedRequisitions.length}</span> requisições
+                Nenhuma requisição disponível para os filtros atuais
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+          </div>
+        </div>
       </main>
 
       <RequisitionDetailsModal

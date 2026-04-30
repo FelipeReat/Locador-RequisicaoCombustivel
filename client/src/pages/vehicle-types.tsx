@@ -158,6 +158,9 @@ export default function VehicleTypes() {
     type.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     type.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const activeTypes = vehicleTypes?.filter((type) => type.active).length || 0;
+  const inactiveTypes = (vehicleTypes?.length || 0) - activeTypes;
+  const linkedTemplates = vehicleTypes?.filter((type) => type.checklistTemplateId).length || 0;
 
   const onSubmit = (data: InsertVehicleType) => {
     mutation.mutate(data);
@@ -173,116 +176,149 @@ export default function VehicleTypes() {
       />
       
       <main className="container mx-auto px-4 pt-24 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <Truck className="h-8 w-8 text-primary" />
-              Tipos de Veículos
-            </h1>
-            <p className="text-gray-500 mt-1">
-              Gerencie as categorias e tipos de veículos da frota
-            </p>
-          </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) setEditingType(null);
-          }}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-white shadow-sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Tipo
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>{editingType ? "Editar Tipo de Veículo" : "Novo Tipo de Veículo"}</DialogTitle>
-                <DialogDescription>
-                  Preencha os dados do tipo de veículo abaixo.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ex: Caminhão, Carro de Passeio, Motocicleta" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="checklistTemplateId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Template de Checklist</FormLabel>
-                        <Select 
-                          onValueChange={(value) => field.onChange(value === "null" ? null : Number(value))} 
-                          value={field.value === null || field.value === undefined ? "null" : field.value.toString()}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um template (opcional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="null">Nenhum (Padrão)</SelectItem>
-                            {checklistTemplates?.filter(t => t.active).map((template) => (
-                              <SelectItem key={template.id} value={template.id.toString()}>
-                                {template.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Descrição</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Breve descrição do tipo de veículo" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+          <div className="p-6 space-y-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-2">
+                <div className="text-sm text-white/75">Estrutura da frota</div>
+                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                  <Truck className="h-8 w-8 text-white" />
+                  Tipos de Veículos
+                </h1>
+                <p className="max-w-2xl text-sm text-white/80">
+                  Organize categorias, associe templates de checklist e padronize a base da frota.
+                </p>
+              </div>
 
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={mutation.isPending}>
-                      {mutation.isPending && <LoadingSpinner className="mr-2 h-4 w-4" />}
-                      {editingType ? "Salvar Alterações" : "Criar Tipo"}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) setEditingType(null);
+              }}>
+                <DialogTrigger asChild>
+                  <Button className="bg-white text-amber-700 hover:bg-white/90 shadow-sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Tipo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>{editingType ? "Editar Tipo de Veículo" : "Novo Tipo de Veículo"}</DialogTitle>
+                    <DialogDescription>
+                      Preencha os dados do tipo de veículo abaixo.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ex: Caminhão, Carro de Passeio, Motocicleta" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="checklistTemplateId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Template de Checklist</FormLabel>
+                            <Select 
+                              onValueChange={(value) => field.onChange(value === "null" ? null : Number(value))} 
+                              value={field.value === null || field.value === undefined ? "null" : field.value.toString()}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um template (opcional)" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="null">Nenhum (Padrão)</SelectItem>
+                                {checklistTemplates?.filter(t => t.active).map((template) => (
+                                  <SelectItem key={template.id} value={template.id.toString()}>
+                                    {template.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Descrição</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Breve descrição do tipo de veículo" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex justify-end gap-2 pt-4">
+                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button type="submit" disabled={mutation.isPending} className="bg-amber-600 hover:bg-amber-700 text-white">
+                          {mutation.isPending && <LoadingSpinner className="mr-2 h-4 w-4" />}
+                          {editingType ? "Salvar Alterações" : "Criar Tipo"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Total de tipos</div>
+                <div className="mt-1 text-2xl font-semibold">{vehicleTypes?.length || 0}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Tipos ativos</div>
+                <div className="mt-1 text-2xl font-semibold">{activeTypes}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Tipos inativos</div>
+                <div className="mt-1 text-2xl font-semibold">{inactiveTypes}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Com template vinculado</div>
+                <div className="mt-1 text-2xl font-semibold">{linkedTemplates}</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <Card className="border-none shadow-md bg-card/80 backdrop-blur">
-          <CardHeader className="pb-2">
-            <div className="relative">
+        <Card className="border-muted/60 overflow-hidden">
+          <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <CardTitle>Catálogo de tipos</CardTitle>
+                <CardDescription>Pesquise, revise status e ajuste vínculos de template por categoria.</CardDescription>
+              </div>
+              <Badge variant="outline" className="w-fit">
+                {filteredTypes?.length || 0} tipo(s)
+              </Badge>
+            </div>
+            <div className="relative pt-2">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome ou descrição..."
-                className="pl-9 bg-background"
+                className="pl-9 bg-background/90"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -293,7 +329,7 @@ export default function VehicleTypes() {
               {filteredTypes && filteredTypes.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {filteredTypes.map((type) => (
-                    <Card key={type.id} className="overflow-hidden transition-all hover:shadow-md border-l-4" style={{ borderLeftColor: type.active ? '#10b981' : '#ef4444' }}>
+                    <Card key={type.id} className="overflow-hidden border-muted/60 transition-all hover:-translate-y-0.5 hover:shadow-md border-l-4" style={{ borderLeftColor: type.active ? '#D4A017' : '#71717a' }}>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
                           <div>
@@ -301,14 +337,14 @@ export default function VehicleTypes() {
                             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                               {type.description || "Sem descrição"}
                             </p>
-                            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
                               <span className="font-medium text-xs uppercase tracking-wider text-muted-foreground/70">Template:</span>
                               <Badge variant="outline" className="font-normal">
                                 {checklistTemplates?.find(t => t.id === type.checklistTemplateId)?.name || "Padrão"}
                               </Badge>
                             </div>
                           </div>
-                          <Badge variant={type.active ? "default" : "destructive"}>
+                          <Badge className={type.active ? "bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300" : "bg-zinc-200 text-zinc-800 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"}>
                             {type.active ? "Ativo" : "Inativo"}
                           </Badge>
                         </div>
@@ -323,7 +359,7 @@ export default function VehicleTypes() {
                               setIsDialogOpen(true);
                             }}
                           >
-                            <Edit className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <Edit className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
                           </Button>
                           
                           <Button 
@@ -333,7 +369,7 @@ export default function VehicleTypes() {
                             onClick={() => toggleStatusMutation.mutate({ id: type.id, active: !type.active })}
                             title={type.active ? "Desativar" : "Ativar"}
                           >
-                            <Power className={`h-4 w-4 ${type.active ? "text-orange-500 dark:text-orange-400" : "text-green-500 dark:text-green-400"}`} />
+                            <Power className={`h-4 w-4 ${type.active ? "text-amber-600 dark:text-amber-400" : "text-zinc-500 dark:text-zinc-300"}`} />
                           </Button>
 
                           <Button 
@@ -355,7 +391,7 @@ export default function VehicleTypes() {
                 </div>
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
-                  <Truck className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                  <Truck className="h-12 w-12 mx-auto text-amber-500/80 mb-4" />
                   <p>Nenhum tipo de veículo encontrado.</p>
                 </div>
               )}

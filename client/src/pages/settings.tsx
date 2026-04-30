@@ -179,9 +179,40 @@ export default function Settings() {
       />
 
       <main className="flex-1 p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+            <div className="p-6 space-y-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="space-y-2">
+                  <div className="text-sm text-white/75">Preferências e conta</div>
+                  <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
+                    <SettingsIcon className="h-8 w-8 text-white" />
+                    {t('settings')}
+                  </h1>
+                  <p className="max-w-2xl text-sm text-white/80">
+                    Ajuste perfil, segurança, notificações e comportamento do sistema em um só lugar.
+                  </p>
+                </div>
+                <div className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-3">
+                  <div className="bg-white/5 p-4">
+                    <div className="text-xs text-white/70">Tema</div>
+                    <div className="mt-1 text-lg font-semibold capitalize">{theme}</div>
+                  </div>
+                  <div className="bg-white/5 p-4">
+                    <div className="text-xs text-white/70">Idioma</div>
+                    <div className="mt-1 text-lg font-semibold">{language}</div>
+                  </div>
+                  <div className="bg-white/5 p-4">
+                    <div className="text-xs text-white/70">Itens por página</div>
+                    <div className="mt-1 text-lg font-semibold">{systemSettings.itemsPerPage}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 gap-2 rounded-xl border bg-zinc-100 p-1 dark:bg-zinc-900 md:grid-cols-4">
               <TabsTrigger value="profile">{t('profile')}</TabsTrigger>
               <TabsTrigger value="security">{t('security')}</TabsTrigger>
               <TabsTrigger value="notifications">{t('notifications')}</TabsTrigger>
@@ -189,8 +220,8 @@ export default function Settings() {
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6">
-              <Card>
-                <CardHeader>
+              <Card className="overflow-hidden border-muted/60">
+                <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                   <CardTitle className="flex items-center">
                     <UserIcon className="mr-2 h-5 w-5" />
                     {t('personal-info')}
@@ -203,8 +234,8 @@ export default function Settings() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                       <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                          <UserIcon className="h-8 w-8 text-primary" />
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-zinc-200 via-stone-200 to-amber-200 dark:from-zinc-800 dark:via-stone-800 dark:to-amber-950/40 flex items-center justify-center">
+                          <UserIcon className="h-8 w-8 text-amber-700 dark:text-amber-300" />
                         </div>
                         <div>
                           <h3 className="text-lg font-semibold">{user?.fullName || user?.username}</h3>
@@ -218,15 +249,15 @@ export default function Settings() {
                       <Separator />
 
                       <div className="space-y-3">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-3">
                           <Mail className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">{user?.email || "Email não cadastrado"}</span>
                         </div>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-3">
                           <Phone className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">{user?.phone || "Telefone não cadastrado"}</span>
                         </div>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-3">
                           <Briefcase className="h-4 w-4 text-gray-500" />
                           <span className="text-sm">{user?.position || "Cargo não definido"}</span>
                         </div>
@@ -294,7 +325,7 @@ export default function Settings() {
                             )}
                           />
 
-                          <Button type="submit" disabled={updateProfile.isPending} className="w-full">
+                          <Button type="submit" disabled={updateProfile.isPending} className="w-full bg-amber-600 hover:bg-amber-700 text-white">
                             {updateProfile.isPending && (
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
@@ -312,8 +343,8 @@ export default function Settings() {
             </TabsContent>
 
             <TabsContent value="security" className="space-y-6">
-              <Card>
-                <CardHeader>
+              <Card className="overflow-hidden border-muted/60">
+                <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                   <CardTitle className="flex items-center">
                     <Lock className="mr-2 h-5 w-5" />
                     {t('change-password-title')}
@@ -368,7 +399,7 @@ export default function Settings() {
                           )}
                         />
 
-                        <Button type="submit" disabled={changePassword.isPending}>
+                        <Button type="submit" disabled={changePassword.isPending} className="bg-amber-600 hover:bg-amber-700 text-white">
                           {changePassword.isPending && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           )}
@@ -381,8 +412,8 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-muted/60">
+                <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                   <CardTitle>{t('security-tips')}</CardTitle>
                   <CardDescription>{t('keep-account-always-secure')}</CardDescription>
                 </CardHeader>
@@ -399,8 +430,8 @@ export default function Settings() {
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6">
-              <Card>
-                <CardHeader>
+              <Card className="overflow-hidden border-muted/60">
+                <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                   <CardTitle className="flex items-center">
                     <Bell className="mr-2 h-5 w-5" />
                     {t('notification-settings-title')}
@@ -411,7 +442,7 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">{t('new-requisitions-notif')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('new-requisitions-desc')}</p>
@@ -420,12 +451,13 @@ export default function Settings() {
                         variant={notificationSettings.newRequisitions ? "default" : "outline"} 
                         size="sm"
                         onClick={() => updateSetting('newRequisitions', !notificationSettings.newRequisitions)}
+                        className={notificationSettings.newRequisitions ? "bg-amber-600 hover:bg-amber-700 text-white" : ""}
                       >
                         {notificationSettings.newRequisitions ? t('enabled') : t('disabled')}
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">{t('pending-approvals-notif')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('pending-approvals-desc')}</p>
@@ -434,12 +466,13 @@ export default function Settings() {
                         variant={notificationSettings.pendingApprovals ? "default" : "outline"} 
                         size="sm"
                         onClick={() => updateSetting('pendingApprovals', !notificationSettings.pendingApprovals)}
+                        className={notificationSettings.pendingApprovals ? "bg-amber-600 hover:bg-amber-700 text-white" : ""}
                       >
                         {notificationSettings.pendingApprovals ? t('enabled') : t('disabled')}
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">{t('requisition-status-notif')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('requisition-status-desc')}</p>
@@ -448,12 +481,13 @@ export default function Settings() {
                         variant={notificationSettings.requisitionStatus ? "default" : "outline"} 
                         size="sm"
                         onClick={() => updateSetting('requisitionStatus', !notificationSettings.requisitionStatus)}
+                        className={notificationSettings.requisitionStatus ? "bg-amber-600 hover:bg-amber-700 text-white" : ""}
                       >
                         {notificationSettings.requisitionStatus ? t('enabled') : t('disabled')}
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">{t('monthly-reports-notif')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('monthly-reports-desc')}</p>
@@ -462,6 +496,7 @@ export default function Settings() {
                         variant={notificationSettings.monthlyReports ? "default" : "outline"} 
                         size="sm"
                         onClick={() => updateSetting('monthlyReports', !notificationSettings.monthlyReports)}
+                        className={notificationSettings.monthlyReports ? "bg-amber-600 hover:bg-amber-700 text-white" : ""}
                       >
                         {notificationSettings.monthlyReports ? t('enabled') : t('disabled')}
                       </Button>
@@ -472,8 +507,8 @@ export default function Settings() {
             </TabsContent>
 
             <TabsContent value="system" className="space-y-6">
-              <Card>
-                <CardHeader>
+              <Card className="overflow-hidden border-muted/60">
+                <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                   <CardTitle className="flex items-center">
                     <SettingsIcon className="mr-2 h-5 w-5" />
                     {t('system-configurations')}
@@ -484,7 +519,7 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">{t('theme-label')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('choose-theme')}</p>
@@ -501,7 +536,7 @@ export default function Settings() {
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">{t('language-label')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('system-interface-language')}</p>
@@ -518,7 +553,7 @@ export default function Settings() {
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">{t('date-format-label')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('how-dates-displayed')}</p>
@@ -535,7 +570,7 @@ export default function Settings() {
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">Tela Inicial</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">Escolha a tela que será exibida ao iniciar o sistema</p>
@@ -564,7 +599,7 @@ export default function Settings() {
                       </Select>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-4">
                       <div>
                         <h4 className="font-medium">{t('items-per-page-label')}</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-300">{t('items-displayed-tables')}</p>
@@ -596,8 +631,8 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-muted/60">
+                <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                   <CardTitle className="flex items-center">
                     <Database className="mr-2 h-5 w-5" />
                     Gerenciamento de Dados
@@ -618,8 +653,8 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="border-muted/60">
+                <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                   <CardTitle>{t('about-system-title')}</CardTitle>
                   <CardDescription>{t('about-fuelcontrol')}</CardDescription>
                 </CardHeader>

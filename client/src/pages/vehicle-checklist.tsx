@@ -30,6 +30,7 @@ import { FuelLevelSlider } from "@/components/checklist/fuel-level-slider";
 import { ChecklistDetails } from "@/components/checklist/checklist-details";
 import { VehicleChecklistReport } from "@/components/checklist/vehicle-checklist-report";
 import { formatDateBR } from "@/lib/checklist-utils";
+import { cn } from "@/lib/utils";
 
 type Company = {
   id: number;
@@ -678,9 +679,64 @@ export default function VehicleChecklistPage() {
       <Header title={t('vehicle-checklist')} subtitle={t('manage-company-vehicles')} />
 
       <div className="mobile-container space-y-6">
+        <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+          <div className="p-6 space-y-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-2">
+                <div className="text-sm text-white/80">Operação de frota</div>
+                <h2 className="text-2xl font-semibold tracking-tight">Checklists de Veículos</h2>
+                <p className="max-w-2xl text-sm text-white/80">
+                  Controle saídas, retornos e histórico dos veículos em um fluxo mais claro para a equipe.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  className="bg-white text-amber-700 hover:bg-white/90"
+                  onClick={() => {
+                    setActiveTab("saida");
+                    setLockedVehicleId(null);
+                    setIsExitDialogOpen(true);
+                    applyObsDefaultsToFormFor(null);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Saída
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="bg-white/15 text-white hover:bg-white/25 border border-white/20"
+                  onClick={() => setActiveTab("entrada")}
+                >
+                  <CalendarCheck className="mr-2 h-4 w-4" />
+                  Ver Entradas
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Saídas em aberto</div>
+                <div className="mt-1 text-2xl font-semibold">{openChecklists.length}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Checklists concluídos</div>
+                <div className="mt-1 text-2xl font-semibold">{closedChecklists.length}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Veículos ativos</div>
+                <div className="mt-1 text-2xl font-semibold">{activeVehicles.length}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Taxa de conclusão</div>
+                <div className="mt-1 text-2xl font-semibold">{analytics?.completenessRate ?? 0}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <TabsList className="w-full sm:w-auto">
+            <TabsList className="h-auto w-full gap-2 rounded-xl border bg-muted/40 p-1 sm:w-auto">
               <TabsTrigger value="saida">Saída</TabsTrigger>
               <TabsTrigger value="entrada">Entrada</TabsTrigger>
               <TabsTrigger value="relatorio">Relatório</TabsTrigger>
@@ -688,7 +744,7 @@ export default function VehicleChecklistPage() {
           </div>
 
           <TabsContent value="saida" className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center ring-4 ring-primary/10">
                   <ClipboardCheck className="h-5 w-5 text-primary" />
@@ -709,8 +765,8 @@ export default function VehicleChecklistPage() {
 
 
 
-            <Card>
-              <CardHeader>
+            <Card className="overflow-hidden border-muted/60">
+              <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                 <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <span>Veículos Ativos</span>
                   <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
@@ -720,7 +776,7 @@ export default function VehicleChecklistPage() {
                     </div>
                     <div className="w-full sm:w-64">
                       <Select value={selectedCompanyId === null ? 'all' : String(selectedCompanyId)} onValueChange={(val) => setSelectedCompanyId(val === 'all' ? null : parseInt(val))}>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background">
                           <SelectValue placeholder="Empresa" />
                         </SelectTrigger>
                         <SelectContent>
@@ -787,7 +843,7 @@ export default function VehicleChecklistPage() {
                       {filteredVehicles.map(v => {
                         const type = vehicleTypes.find(t => t.id === v.vehicleTypeId);
                         return (
-                          <TableRow key={v.id}>
+                          <TableRow key={v.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/30">
                             <TableCell className="font-medium">
                               {type?.name || '-'}
                             </TableCell>
@@ -802,7 +858,7 @@ export default function VehicleChecklistPage() {
                                     toggleFavorite.mutate(v.id);
                                   }}
                                 >
-                                  <Star className={`h-4 w-4 ${favorites.includes(v.id) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                                  <Star className={`h-4 w-4 ${favorites.includes(v.id) ? "fill-amber-500 text-amber-500" : "text-muted-foreground"}`} />
                                 </Button>
                                 <span className="font-mono">{v.plate}</span>
                               </div>
@@ -810,9 +866,9 @@ export default function VehicleChecklistPage() {
                             <TableCell className="hidden sm:table-cell">{v.model}</TableCell>
                             <TableCell>
                               {openByVehicle.has(v.id) ? (
-                                <Badge variant="outline" className="text-yellow-700 bg-yellow-50 border-yellow-200">Saída Aberta</Badge>
+                                <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">Saída Aberta</Badge>
                               ) : (
-                                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">Disponível</Badge>
+                                <Badge variant="secondary" className="border border-zinc-300 bg-zinc-100 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">Disponível</Badge>
                               )}
                             </TableCell>
                             <TableCell className="text-right">
@@ -849,7 +905,7 @@ export default function VehicleChecklistPage() {
           
           <TabsContent value="entrada" className="space-y-6">
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border bg-card p-4 shadow-sm">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">Retorno de Veículos</h2>
                 <p className="text-muted-foreground">Gerencie as entradas e conferências de veículos</p>
@@ -877,8 +933,8 @@ export default function VehicleChecklistPage() {
             </div>
 
             {/* Histórico resumido */}
-            <Card className={entradaViewMode === 'pending' ? "border-l-4 border-l-yellow-500" : ""}>
-              <CardHeader>
+            <Card className={cn("overflow-hidden border-muted/60", entradaViewMode === 'pending' ? "border-l-4 border-l-amber-500" : "")}>
+              <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <CardTitle>{entradaViewMode === 'pending' ? 'Veículos Pendentes de Retorno' : 'Histórico de Saídas'}</CardTitle>
@@ -889,9 +945,9 @@ export default function VehicleChecklistPage() {
                     </CardDescription>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center bg-muted/30 p-2 rounded-lg">
+                  <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center rounded-lg border bg-background/70 p-2">
                      {(user?.role === 'admin' || user?.role === 'manager') && (
-                        <div className="flex items-center bg-background p-1 rounded-md border">
+                        <div className="flex items-center rounded-md border bg-background p-1">
                           <RadioGroup 
                             value={historyFilterMode} 
                             onValueChange={(v) => setHistoryFilterMode(v as 'mine'|'all')}
@@ -980,14 +1036,14 @@ export default function VehicleChecklistPage() {
                                 <TableCell className="hidden sm:table-cell">{formatDateBR(c.startDate)}</TableCell>
                                 <TableCell>
                                   {c.status === 'open' ? (
-                                    <Badge variant="outline" className="text-yellow-700">Aberta</Badge>
+                                    <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">Aberta</Badge>
                                   ) : (
                                     <div className="flex items-center gap-2">
-                                      <Badge variant="secondary">Concluída</Badge>
+                                      <Badge variant="secondary" className="border border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">Concluída</Badge>
                                       {end?.approvedByName && (
                                         <Badge 
                                           variant="default" 
-                                          className="bg-green-600 hover:bg-green-600"
+                                          className="bg-amber-600 hover:bg-amber-600 text-zinc-950"
                                           title={`Conferido por ${end.approvedByName}${end?.approvedAt ? ` em ${formatDateBR(end.approvedAt)}` : ''}`}
                                         >
                                           <Check className="h-3 w-3 mr-1" />
@@ -1131,14 +1187,22 @@ null
           </TabsContent>
           
           <TabsContent value="relatorio">
-            <VehicleChecklistReport 
-              checklists={[...openChecklists, ...closedChecklists]} 
-              vehicles={vehicles} 
-              users={users} 
-              currentUser={user}
-              onExportPDF={handleExportPDF}
-              onDelete={(id) => setConfirmDeleteChecklistId(id)}
-            />
+            <Card className="overflow-hidden border-muted/60">
+              <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
+                <CardTitle>Relatórios e Exportação</CardTitle>
+                <CardDescription>Visualize o histórico consolidado e exporte checklists em PDF.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <VehicleChecklistReport 
+                  checklists={[...openChecklists, ...closedChecklists]} 
+                  vehicles={vehicles} 
+                  users={users} 
+                  currentUser={user}
+                  onExportPDF={handleExportPDF}
+                  onDelete={(id) => setConfirmDeleteChecklistId(id)}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
-import { Pencil, Trash2, Plus, Search } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, Building2, UserRound, Phone, MapPin } from "lucide-react";
 import type { Supplier, InsertSupplier } from "@shared/schema";
 
 export default function Suppliers() {
@@ -160,6 +160,8 @@ export default function Suppliers() {
       supplier.responsavel.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => a.fantasia.localeCompare(b.fantasia, 'pt-BR'));
+  const suppliersWithPhone = suppliers.filter((supplier) => supplier.phone).length;
+  const suppliersWithAddress = suppliers.filter((supplier) => supplier.address).length;
 
   const formatCNPJ = (cnpj: string) => {
     const cleaned = cnpj.replace(/\D/g, "");
@@ -187,18 +189,24 @@ export default function Suppliers() {
 
   return (
     <div className="mobile-content space-y-4 lg:space-y-6">
-      <div className="flex items-center justify-between gap-3 sm:gap-4">
-        <div className="flex-1 min-w-0 ml-12 sm:ml-0">
-          <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white truncate">{t('suppliers')}</h1>
-          <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-300 mt-1 hidden sm:block">{t('supplier-management')}</p>
-        </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="shrink-0 h-8 sm:h-10">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">{t('new-supplier')}</span>
-            </Button>
-          </DialogTrigger>
+      <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <div className="text-sm text-white/75">Rede de abastecimento</div>
+              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+                <Building2 className="h-8 w-8 text-white" />
+                {t('suppliers')}
+              </h1>
+              <p className="max-w-2xl text-sm text-white/80">{t('supplier-management')}</p>
+            </div>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-white text-amber-700 hover:bg-white/90 shadow-sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('new-supplier')}
+                </Button>
+              </DialogTrigger>
           <DialogContent className="mobile-container max-w-lg">
             <DialogHeader>
               <DialogTitle>{t('new-supplier')}</DialogTitle>
@@ -305,29 +313,53 @@ export default function Suppliers() {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+            </Dialog>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+            <div className="relative w-full xl:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60" />
+              <Input
+                placeholder={t('search-suppliers')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-white/15 bg-white/10 pl-10 text-white placeholder:text-white/55"
+              />
+            </div>
+            <div className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-3">
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Fornecedores</div>
+                <div className="mt-1 text-2xl font-semibold">{suppliers.length}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Com telefone</div>
+                <div className="mt-1 text-2xl font-semibold">{suppliersWithPhone}</div>
+              </div>
+              <div className="bg-white/5 p-4">
+                <div className="text-xs text-white/70">Com endereço</div>
+                <div className="mt-1 text-2xl font-semibold">{suppliersWithAddress}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader className="mobile-card">
-          <CardTitle className="mobile-text-lg">{t('suppliers-list')}</CardTitle>
-          <CardDescription className="mobile-text-sm">
-            {t('supplier-management')}
-          </CardDescription>
-          <div className="flex items-center space-x-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('search-suppliers')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+      <Card className="overflow-hidden border-muted/60">
+        <CardHeader className="mobile-card border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="mobile-text-lg">{t('suppliers-list')}</CardTitle>
+              <CardDescription className="mobile-text-sm">
+                Lista ordenada por nome fantasia com dados principais e ações rápidas.
+              </CardDescription>
+            </div>
+            <div className="text-sm text-muted-foreground">{filteredSuppliers.length} resultado(s)</div>
           </div>
         </CardHeader>
         <CardContent className="mobile-card pt-0">
-          <div className="mobile-table-container">
+          <div className="mobile-table-container rounded-xl border mt-6">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-zinc-100 dark:bg-zinc-800">
                 <TableRow className="border-b-2">
                   <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
                     {t('supplier-fantasia')} 
@@ -344,7 +376,9 @@ export default function Suppliers() {
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
                       <div className="flex flex-col items-center space-y-2">
-                        <div className="text-4xl">📋</div>
+                        <div className="rounded-full bg-amber-100 dark:bg-amber-950/20 p-4">
+                          <Building2 className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                        </div>
                         <p className="text-lg font-medium">{t('no-suppliers')}</p>
                         <p className="text-sm">Adicione fornecedores para começar</p>
                       </div>
@@ -352,9 +386,12 @@ export default function Suppliers() {
                   </TableRow>
                 ) : (
                   filteredSuppliers.map((supplier, index) => (
-                    <TableRow key={supplier.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${index % 2 === 0 ? 'bg-gray-25 dark:bg-gray-900/20' : ''}`}>
+                    <TableRow key={supplier.id} className={`transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-zinc-50/60 dark:bg-zinc-900/60'}`}>
                       <TableCell className="font-medium text-gray-900 dark:text-gray-100 py-4">
-                        {supplier.fantasia}
+                        <div className="space-y-1">
+                          <div>{supplier.fantasia}</div>
+                          <div className="text-xs text-muted-foreground">{supplier.name}</div>
+                        </div>
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 font-mono text-sm">
                         {formatCNPJ(supplier.cnpj)}
@@ -371,7 +408,7 @@ export default function Suppliers() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(supplier)}
-                            className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                            className="h-8 w-8 p-0 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
                             title="Editar fornecedor"
                           >
                             <Pencil className="h-4 w-4" />
@@ -463,6 +500,21 @@ export default function Suppliers() {
               />
             </div>
             
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-xl border bg-zinc-50/80 dark:bg-zinc-900/40 p-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <UserRound className="h-4 w-4 text-amber-600" />
+                Contato principal
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Phone className="h-4 w-4 text-zinc-500" />
+                Telefone opcional
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4 text-zinc-500" />
+                Endereço opcional
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="edit-phone">{t('supplier-phone')}</Label>
               <Input

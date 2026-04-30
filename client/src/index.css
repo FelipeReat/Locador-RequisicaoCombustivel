@@ -69,6 +69,17 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at top right, rgba(245, 158, 11, 0.10), transparent 24rem),
+      radial-gradient(circle at left center, rgba(120, 113, 108, 0.10), transparent 26rem),
+      linear-gradient(180deg, rgba(250, 250, 249, 0.98), rgba(245, 245, 244, 0.98));
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), transparent 24rem),
+      radial-gradient(circle at left center, rgba(120, 113, 108, 0.08), transparent 26rem),
+      linear-gradient(180deg, rgba(9, 9, 11, 0.98), rgba(12, 10, 9, 0.98));
   }
 }
 
@@ -137,11 +148,11 @@
   }
 
   .sidebar-link {
-    @apply flex items-center px-6 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary transition-colors;
+    @apply mx-2 mb-1 flex items-center rounded-xl px-4 py-3 text-zinc-300 hover:bg-white/10 hover:text-white transition-all duration-200;
   }
 
   .sidebar-link.active {
-    @apply text-primary bg-blue-50 dark:bg-blue-900/20 border-r-2 border-primary;
+    @apply bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-transparent text-amber-200 ring-1 ring-amber-400/20 shadow-sm;
   }
 
   .status-badge {
@@ -173,7 +184,7 @@
   }
 
   .stats-card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow p-6;
+    @apply rounded-lg border border-zinc-200/80 bg-gradient-to-br from-white via-zinc-50 to-amber-50/40 p-6 shadow dark:border-zinc-800/80 dark:from-zinc-950 dark:via-zinc-900 dark:to-amber-950/10;
   }
 
   .stats-icon {

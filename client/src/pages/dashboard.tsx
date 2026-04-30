@@ -259,550 +259,576 @@ export default function Dashboard() {
       />
 
       <main className="flex-1 mobile-content pt-12 sm:pt-4 lg:pt-6">
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('total-requests')}
-              </CardTitle>
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                {stats.totalRequests || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Todo o período • Sistema completo</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-yellow-500/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('pending-requests')}
-              </CardTitle>
-              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
-                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">
-                {stats.pendingRequests || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Aguardando aprovação • Ação necessária</p>
-              {(stats.pendingRequests || 0) > 0 && (
-                <div className="mt-2">
-                  <Badge variant="secondary" className="text-xs">
-                    Requer atenção
-                  </Badge>
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-x-0 -top-10 h-40 bg-gradient-to-r from-zinc-600/10 via-stone-600/10 to-amber-600/10 blur-3xl" />
+          <div className="relative space-y-6">
+            <div className="overflow-hidden rounded-xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+              <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <div className="text-sm text-white/80">{t('fuel-requisitions-overview')}</div>
+                  <div className="text-2xl font-semibold tracking-tight">
+                    Olá, {user?.fullName || user?.username || "Usuário"}
+                  </div>
+                  <div className="text-sm text-white/80">
+                    Atualizado em {new Date().toLocaleString("pt-BR")}
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    className="bg-white/15 text-white hover:bg-white/25 border border-white/20"
+                    onClick={() => forceRefresh()}
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Atualizar
+                  </Button>
+                  {hasPermission('create_fuel_requisition') && (
+                    <Button
+                      className="bg-white text-amber-700 hover:bg-white/90"
+                      onClick={() => setLocation("/new-requisition")}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nova Requisição
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/10">
+                <div className="p-4 bg-white/5">
+                  <div className="text-xs text-white/70">{t('total-requests')}</div>
+                  <div className="mt-1 text-xl font-semibold">{stats.totalRequests || 0}</div>
+                </div>
+                <div className="p-4 bg-white/5">
+                  <div className="text-xs text-white/70">{t('pending-requests')}</div>
+                  <div className="mt-1 text-xl font-semibold">{stats.pendingRequests || 0}</div>
+                </div>
+                <div className="p-4 bg-white/5">
+                  <div className="text-xs text-white/70">{t('approved-requests')}</div>
+                  <div className="mt-1 text-xl font-semibold">{stats.approvedRequests || 0}</div>
+                </div>
+                <div className="p-4 bg-white/5">
+                  <div className="text-xs text-white/70">Litros aprovados</div>
+                  <div className="mt-1 text-xl font-semibold">
+                    {stats.totalLiters ? parseFloat(stats.totalLiters).toLocaleString('pt-BR') : '0'}L
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('approved-requests')}
-              </CardTitle>
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
-                {stats.approvedRequests || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Este mês • Processadas com sucesso</p>
-            </CardContent>
-          </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="relative overflow-hidden border-white/10 bg-gradient-to-br from-zinc-600/10 via-stone-600/10 to-amber-500/10 dark:from-zinc-500/20 dark:via-stone-500/20 dark:to-amber-500/20 backdrop-blur hover:shadow-md transition-shadow">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-medium text-foreground/90">{t('total-requests')}</CardTitle>
+                  <div className="p-2 rounded-full bg-gradient-to-br from-zinc-600/20 to-amber-500/20 text-zinc-700 dark:text-zinc-200">
+                    <ClipboardList className="h-4 w-4" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-semibold tracking-tight">{stats.totalRequests || 0}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Visão geral do sistema</div>
+                </CardContent>
+              </Card>
 
-          <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-purple-500/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('total-liters')}
-              </CardTitle>
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                <Fuel className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                {stats.totalLiters ? parseFloat(stats.totalLiters).toLocaleString('pt-BR') : '0'}L
-              </div>
-              <p className="text-xs text-muted-foreground">Total aprovado • Consumo autorizado</p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card className="relative overflow-hidden border-white/10 bg-gradient-to-br from-zinc-600/10 via-stone-600/10 to-amber-500/10 dark:from-zinc-500/20 dark:via-stone-500/20 dark:to-amber-500/20 backdrop-blur hover:shadow-md transition-shadow">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-medium text-foreground/90">{t('pending-requests')}</CardTitle>
+                  <div className="p-2 rounded-full bg-gradient-to-br from-amber-500/25 to-orange-500/20 text-amber-800 dark:text-amber-300">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-semibold tracking-tight">{stats.pendingRequests || 0}</div>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                    Aguardando aprovação
+                    {(stats.pendingRequests || 0) > 0 && (
+                      <Badge variant="secondary" className="h-5 px-2 text-[10px]">Ação</Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* Quick Actions */}
-        <Card className="border-l-4 border-l-indigo-500/30 mt-6">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl text-gray-800 dark:text-gray-100">
-              ⚡ {t('quick-actions')}
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-300">
-              Atalhos para tarefas comuns • Acesso rápido às principais funcionalidades
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {hasPermission('create_fuel_requisition') && (
-                <Button
-                  variant="outline"
-                  className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  onClick={() => setLocation("/new-requisition")}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full">
-                      <Plus className="h-5 w-5 text-white" />
+              <Card className="relative overflow-hidden border-white/10 bg-gradient-to-br from-zinc-600/10 via-stone-600/10 to-amber-500/10 dark:from-zinc-500/20 dark:via-stone-500/20 dark:to-amber-500/20 backdrop-blur hover:shadow-md transition-shadow">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-medium text-foreground/90">{t('approved-requests')}</CardTitle>
+                  <div className="p-2 rounded-full bg-gradient-to-br from-amber-500/20 to-zinc-600/20 text-amber-800 dark:text-amber-300">
+                    <CheckCircle className="h-4 w-4" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-semibold tracking-tight">{stats.approvedRequests || 0}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Prontas para realização</div>
+                </CardContent>
+              </Card>
+
+              <Card className="relative overflow-hidden border-white/10 bg-gradient-to-br from-zinc-600/10 via-stone-600/10 to-amber-500/10 dark:from-zinc-500/20 dark:via-stone-500/20 dark:to-amber-500/20 backdrop-blur hover:shadow-md transition-shadow">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-medium text-foreground/90">Realizadas</CardTitle>
+                  <div className="p-2 rounded-full bg-gradient-to-br from-stone-600/20 to-amber-500/20 text-stone-700 dark:text-stone-200">
+                    <Fuel className="h-4 w-4" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-semibold tracking-tight">{stats.fulfilledRequests || 0}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">Confirmadas como abastecidas</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-3">
+              <Card className="lg:col-span-1">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">{t('quick-actions')}</CardTitle>
+                  <CardDescription>Atalhos para o dia a dia</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {hasPermission('create_fuel_requisition') && (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start h-12 px-4 hover:shadow-sm transition-shadow"
+                      onClick={() => setLocation("/new-requisition")}
+                    >
+                        <div className="mr-3 grid place-items-center h-9 w-9 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                        <Plus className="h-5 w-5" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium">Nova Requisição</div>
+                        <div className="text-xs text-muted-foreground">Solicitar combustível</div>
+                      </div>
+                    </Button>
+                  )}
+
+                  {hasPermission('read_fuel_requisition') && (
+                    <Button asChild variant="outline" className="w-full justify-start h-12 px-4 hover:shadow-sm transition-shadow">
+                      <a href="/requisitions">
+                        <div className="mr-3 grid place-items-center h-9 w-9 rounded-lg bg-gray-600/10 text-gray-700 dark:text-gray-300">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium">Requisições</div>
+                          <div className="text-xs text-muted-foreground">Ver e gerenciar</div>
+                        </div>
+                      </a>
+                    </Button>
+                  )}
+
+                  {hasPermission('read_vehicle') && (
+                    <Button asChild variant="outline" className="w-full justify-start h-12 px-4 hover:shadow-sm transition-shadow">
+                      <a href="/fleet-management">
+                        <div className="mr-3 grid place-items-center h-9 w-9 rounded-lg bg-zinc-600/10 text-zinc-700 dark:text-zinc-300">
+                          <Truck className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium">Gestão de Frota</div>
+                          <div className="text-xs text-muted-foreground">Veículos e status</div>
+                        </div>
+                      </a>
+                    </Button>
+                  )}
+
+                  {hasPermission('read_supplier') && (
+                    <Button asChild variant="outline" className="w-full justify-start h-12 px-4 hover:shadow-sm transition-shadow">
+                      <a href="/suppliers">
+                        <div className="mr-3 grid place-items-center h-9 w-9 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                          <Building className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium">Fornecedores</div>
+                          <div className="text-xs text-muted-foreground">Cadastro e edição</div>
+                        </div>
+                      </a>
+                    </Button>
+                  )}
+
+                  {hasPermission('read_company') && (
+                    <Button asChild variant="outline" className="w-full justify-start h-12 px-4 hover:shadow-sm transition-shadow">
+                      <a href="/companies">
+                        <div className="mr-3 grid place-items-center h-9 w-9 rounded-lg bg-zinc-600/10 text-zinc-700 dark:text-zinc-300">
+                          <Users className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium">Empresas</div>
+                          <div className="text-xs text-muted-foreground">Gerenciar cadastros</div>
+                        </div>
+                      </a>
+                    </Button>
+                  )}
+
+                  {hasPermission('view_reports') && (
+                    <Button asChild variant="outline" className="w-full justify-start h-12 px-4 hover:shadow-sm transition-shadow">
+                      <a href="/reports">
+                        <div className="mr-3 grid place-items-center h-9 w-9 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                          <BarChart className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium">Relatórios</div>
+                          <div className="text-xs text-muted-foreground">Análises e exportação</div>
+                        </div>
+                      </a>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <CardTitle className="text-lg">{t('recent-requisitions')}</CardTitle>
+                      <CardDescription>As últimas 5 requisições visíveis para você</CardDescription>
                     </div>
-                    <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Nova Requisição</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Solicitar combustível</div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setLocation("/requisitions")}
+                      className="shrink-0"
+                    >
+                      {t('view-all')}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="lg:hidden">
+                    {recentRequisitions.length === 0 ? (
+                      <div className="px-6 py-8 text-center text-muted-foreground">
+                        {t('no-results')}
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {recentRequisitions.map((requisition) => (
+                          <div key={requisition.id} className="px-6 py-4">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <div className="font-medium text-sm">
+                                  #REQ{String(requisition.id).padStart(3, "0")}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {formatDate(requisition.createdAt)}
+                                </div>
+                              </div>
+                              <StatusBadge status={requisition.status as any} />
+                            </div>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Responsável:</span>
+                                <span>{getUserName(requisition.requesterId)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Fornecedor:</span>
+                                <span>{getSupplierName(requisition.supplierId)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Combustível:</span>
+                                <span>{getFuelTypeLabel(requisition.fuelType)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Quantidade:</span>
+                                <span>{requisition.tanqueCheio === "true" ? "Tanque Cheio" : `${requisition.quantity || '0'} L`}</span>
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openRequisitionModal(requisition)}
+                                  className="flex-1 text-xs"
+                                >
+                                  <Eye className="mr-1 h-3 w-3" />
+                                  Ver
+                                </Button>
+                                {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && user?.id === requisition.requesterId && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setEditingRequisition(requisition)}
+                                      className="flex-1 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                      title="Editar valores após aprovação"
+                                    >
+                                      <Edit className="mr-1 h-3 w-3" />
+                                      Editar
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+                                          toast({
+                                            title: "Ação não permitida",
+                                            description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+                                            variant: "destructive",
+                                          });
+                                          return;
+                                        }
+                                        confirmRequisition.mutate(requisition.id);
+                                      }}
+                                      disabled={confirmRequisition.isPending}
+                                      className="flex-1 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                      title="Confirmar realização"
+                                    >
+                                      <Check className="mr-1 h-3 w-3" />
+                                      Confirmar
+                                    </Button>
+                                  </>
+                                )}
+                                {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setEditingRequisition(requisition)}
+                                      className="flex-1 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                      title="Editar valores após aprovação"
+                                    >
+                                      <Edit className="mr-1 h-3 w-3" />
+                                      Editar
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+                                          toast({
+                                            title: "Ação não permitida",
+                                            description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+                                            variant: "destructive",
+                                          });
+                                          return;
+                                        }
+                                        confirmRequisition.mutate(requisition.id);
+                                      }}
+                                      disabled={confirmRequisition.isPending}
+                                      className="flex-1 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                      title="Confirmar realização"
+                                    >
+                                      <Check className="mr-1 h-3 w-3" />
+                                      Confirmar
+                                    </Button>
+                                  </>
+                                )}
+                                {(userRole === 'manager' || userRole === 'admin') && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeleteRequisition(requisition.id)}
+                                    disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
+                                    className="flex-1 text-xs bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    title={
+                                      requisition.status === "fulfilled" && userRole !== 'admin'
+                                        ? "Apenas administradores podem excluir requisições realizadas"
+                                        : "Excluir requisição"
+                                    }
+                                  >
+                                    {deleteRequisition.isPending ? (
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                    ) : (
+                                      <Trash2 className="mr-1 h-3 w-3" />
+                                    )}
+                                    Excluir
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="hidden lg:block">
+                    <div className="mobile-table-container">
+                      <table className="w-full">
+                        <thead className="bg-muted/40">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              ID
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              RESPONSÁVEL
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              FORNECEDOR
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              TIPO DE COMBUSTÍVEL
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              QUANTIDADE
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              STATUS
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              DATA
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                              AÇÕES
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {recentRequisitions.length === 0 ? (
+                            <tr>
+                              <td colSpan={8} className="px-6 py-10 text-center text-muted-foreground">
+                                {t('no-results')}
+                              </td>
+                            </tr>
+                          ) : (
+                            recentRequisitions.map((requisition) => (
+                              <tr key={requisition.id} className="hover:bg-muted/30">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                  #REQ{String(requisition.id).padStart(3, "0")}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                  {getUserName(requisition.requesterId)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                  {getSupplierName(requisition.supplierId)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                  {getFuelTypeLabel(requisition.fuelType)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                  {requisition.tanqueCheio === "true" ? "Tanque Cheio" : `${requisition.quantity || "0"}L`}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <StatusBadge status={requisition.status as any} />
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                  {formatDate(requisition.createdAt)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSelectedRequisition(requisition)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && user?.id === requisition.requesterId && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingRequisition(requisition)}
+                                        title="Editar valores após aprovação"
+                                        className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+                                            toast({
+                                              title: "Ação não permitida",
+                                              description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+                                              variant: "destructive",
+                                            });
+                                            return;
+                                          }
+                                          confirmRequisition.mutate(requisition.id);
+                                        }}
+                                        disabled={confirmRequisition.isPending}
+                                        title="Confirmar como realizada"
+                                        className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700 text-white"
+                                      >
+                                        {confirmRequisition.isPending ? (
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        ) : (
+                                          <Check className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </>
+                                  )}
+                                  {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingRequisition(requisition)}
+                                        title="Editar valores reais"
+                                        className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
+                                            toast({
+                                              title: "Ação não permitida",
+                                              description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
+                                              variant: "destructive",
+                                            });
+                                            return;
+                                          }
+                                          confirmRequisition.mutate(requisition.id);
+                                        }}
+                                        disabled={confirmRequisition.isPending}
+                                        title="Confirmar como realizada"
+                                        className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700 text-white"
+                                      >
+                                        {confirmRequisition.isPending ? (
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        ) : (
+                                          <Check className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </>
+                                  )}
+                                  {(userRole === 'manager' || userRole === 'admin') && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteRequisition(requisition.id)}
+                                      disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
+                                      className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                      title={
+                                        requisition.status === "fulfilled" && userRole !== 'admin'
+                                          ? "Apenas administradores podem excluir requisições realizadas"
+                                          : "Excluir requisição"
+                                      }
+                                    >
+                                      {deleteRequisition.isPending ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  )}
+                                  {userRole === 'admin' && requisition.status === 'fulfilled' && canActOnRequisition(requisition.requesterId) && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleUndoRequisition(requisition.id)}
+                                      disabled={undoRequisition.isPending}
+                                      className="h-8 w-8 p-0 bg-yellow-500 hover:bg-yellow-600 text-white"
+                                      title="Desfazer Requisição Realizada"
+                                    >
+                                      {undoRequisition.isPending ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                      ) : (
+                                        <Undo2 className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  )}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                </Button>
-              )}
-
-              {hasPermission('read_fuel_requisition') && (
-                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <a href="/requisitions" className="flex items-center space-x-4">
-                    <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
-                      <FileText className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Ver Requisições</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Gerenciar solicitações</div>
-                    </div>
-                  </a>
-                </Button>
-              )}
-
-              {hasPermission('read_vehicle') && (
-                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <a href="/fleet-management" className="flex items-center space-x-4">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                      <Truck className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Gestão de Frota</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Gerenciar veículos</div>
-                    </div>
-                  </a>
-                </Button>
-              )}
-
-              {hasPermission('read_supplier') && (
-                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <a href="/suppliers" className="flex items-center space-x-4">
-                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-full">
-                      <Building className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Fornecedores</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Gerenciar fornecedores</div>
-                    </div>
-                  </a>
-                </Button>
-              )}
-
-              {hasPermission('read_company') && (
-                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <a href="/companies" className="flex items-center space-x-4">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                      <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Empresas</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Gerenciar empresas</div>
-                    </div>
-                  </a>
-                </Button>
-              )}
-
-              {hasPermission('view_reports') && (
-                <Button asChild variant="outline" className="h-auto p-4 justify-start hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <a href="/reports" className="flex items-center space-x-4">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
-                      <BarChart className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div className="text-left">
-                      <div className="font-semibold text-base text-gray-900 dark:text-gray-100">Relatórios</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Ver análises</div>
-                    </div>
-                  </a>
-                </Button>
-              )}
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Requisitions */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mt-6">
-          <div className="mobile-card border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white">{t('recent-requisitions')}</h3>
-              <Button
-                variant="link"
-                onClick={() => setLocation("/requisitions")}
-                className="text-primary hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
-              >
-                {t('view-all')}
-              </Button>
-            </div>
-          </div>
-
-          {/* Mobile Cards View */}
-          <div className="lg:hidden">
-            {recentRequisitions.length === 0 ? (
-              <div className="mobile-card px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                {t('no-results')}
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {recentRequisitions.map((requisition) => (
-                  <div key={requisition.id} className="mobile-card px-6 py-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-white text-sm">
-                          #REQ{String(requisition.id).padStart(3, "0")}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatDate(requisition.createdAt)}
-                        </div>
-                      </div>
-                      <StatusBadge status={requisition.status as any} />
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Responsável:</span>
-                        <span className="text-gray-900 dark:text-white">{getUserName(requisition.requesterId)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Fornecedor:</span>
-                        <span className="text-gray-900 dark:text-white">{getSupplierName(requisition.supplierId)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Combustível:</span>
-                        <span className="text-gray-900 dark:text-white">{getFuelTypeLabel(requisition.fuelType)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Quantidade:</span>
-                        <span className="text-gray-900 dark:text-white">{requisition.tanqueCheio === "true" ? "Tanque Cheio" : `${requisition.quantity || '0'} L`}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openRequisitionModal(requisition)}
-                          className="flex-1 text-xs"
-                        >
-                          <Eye className="mr-1 h-3 w-3" />
-                          Ver
-                        </Button>
-                        {/* Botões para funcionários apenas quando a requisição está aprovada e é do próprio usuário */}
-                        {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && user?.id === requisition.requesterId && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingRequisition(requisition)}
-                              className="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white"
-                              title="Editar valores após aprovação"
-                            >
-                              <Edit className="mr-1 h-3 w-3" />
-                              Editar
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Verificar se pricePerLiter foi preenchido
-                                if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
-                                  toast({
-                                    title: "Ação não permitida",
-                                    description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                confirmRequisition.mutate(requisition.id);
-                              }}
-                              disabled={confirmRequisition.isPending}
-                              className="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white"
-                              title="Confirmar realização"
-                            >
-                              <Check className="mr-1 h-3 w-3" />
-                              Confirmar
-                            </Button>
-                          </>
-                        )}
-                        {/* Botões para gerentes/admins quando a requisição está aprovada */}
-                        {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingRequisition(requisition)}
-                              className="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white"
-                              title="Editar valores após aprovação"
-                            >
-                              <Edit className="mr-1 h-3 w-3" />
-                              Editar
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Verificar se pricePerLiter foi preenchido
-                                if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
-                                  toast({
-                                    title: "Ação não permitida",
-                                    description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                confirmRequisition.mutate(requisition.id);
-                              }}
-                              disabled={confirmRequisition.isPending}
-                              className="flex-1 text-xs bg-green-500 hover:bg-green-600 text-white"
-                              title="Confirmar realização"
-                            >
-                              <Check className="mr-1 h-3 w-3" />
-                              Confirmar
-                            </Button>
-                          </>
-                        )}
-                        {/* Botão de exclusão para gerentes/admins - realizadas só admin pode excluir */}
-                        {(userRole === 'manager' || userRole === 'admin') && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteRequisition(requisition.id)}
-                            disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
-                            className="flex-1 text-xs bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-                            title={
-                              requisition.status === "fulfilled" && userRole !== 'admin'
-                                ? "Apenas administradores podem excluir requisições realizadas"
-                                : "Excluir requisição"
-                            }
-                          >
-                            {deleteRequisition.isPending ? (
-                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                            ) : (
-                              <Trash2 className="mr-1 h-3 w-3" />
-                            )}
-                            Excluir
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Desktop Table View */}
-          <div className="mobile-table-container hidden lg:block">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    RESPONSÁVEL
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    FORNECEDOR
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    TIPO DE COMBUSTÍVEL
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    QUANTIDADE
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    STATUS
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    DATA
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    AÇÕES
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {recentRequisitions.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                      {t('no-results')}
-                    </td>
-                  </tr>
-                ) : (
-                  recentRequisitions.map((requisition) => (
-                    <tr key={requisition.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        #REQ{String(requisition.id).padStart(3, "0")}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                        {getUserName(requisition.requesterId)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                        {getSupplierName(requisition.supplierId)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                        {getFuelTypeLabel(requisition.fuelType)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                        {requisition.tanqueCheio === "true" ? "Tanque Cheio" : `${requisition.quantity || "0"}L`}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <StatusBadge status={requisition.status as any} />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">
-                        {formatDate(requisition.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedRequisition(requisition)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {/* Botões para funcionários apenas quando a requisição está aprovada e é do próprio usuário */}
-                        {userRole === 'employee' && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && user?.id === requisition.requesterId && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingRequisition(requisition)}
-                              title="Editar valores após aprovação"
-                              className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                // Verificar se pricePerLiter foi preenchido
-                                if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
-                                  toast({
-                                    title: "Ação não permitida",
-                                    description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                confirmRequisition.mutate(requisition.id);
-                              }}
-                              disabled={confirmRequisition.isPending}
-                              title="Confirmar como realizada"
-                              className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
-                            >
-                              {confirmRequisition.isPending ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              ) : (
-                                <Check className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </>
-                        )}
-                        {/* Botões para gerentes/admins quando a requisição está aprovada */}
-                        {(userRole === 'manager' || userRole === 'admin') && requisition.status === 'approved' && canActOnRequisition(requisition.requesterId) && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingRequisition(requisition)}
-                              title="Editar valores reais"
-                              className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 text-white"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                // Verificar se pricePerLiter foi preenchido
-                                if (!requisition.pricePerLiter || parseFloat(requisition.pricePerLiter) <= 0) {
-                                  toast({
-                                    title: "Ação não permitida",
-                                    description: "Antes de confirmar a realização, você deve editar a requisição e informar o preço por litro e outros valores reais do abastecimento.",
-                                    variant: "destructive",
-                                  });
-                                  return;
-                                }
-                                confirmRequisition.mutate(requisition.id);
-                              }}
-                              disabled={confirmRequisition.isPending}
-                              title="Confirmar como realizada"
-                              className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600 text-white"
-                            >
-                              {confirmRequisition.isPending ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              ) : (
-                                <Check className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </>
-                        )}
-                        {/* Botão de exclusão para gerentes/admins - realizadas só admin pode excluir */}
-                        {(userRole === 'manager' || userRole === 'admin') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteRequisition(requisition.id)}
-                            disabled={(requisition.status === "fulfilled" && userRole !== 'admin') || deleteRequisition.isPending}
-                            className="h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-                            title={
-                              requisition.status === "fulfilled" && userRole !== 'admin'
-                                ? "Apenas administradores podem excluir requisições realizadas"
-                                : "Excluir requisição"
-                            }
-                          >
-                            {deleteRequisition.isPending ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-
-                        {/* Botão para desfazer requisições realizadas (apenas para administradores) */}
-                        {userRole === 'admin' && requisition.status === 'fulfilled' && canActOnRequisition(requisition.requesterId) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleUndoRequisition(requisition.id)}
-                            disabled={undoRequisition.isPending}
-                            className="h-8 w-8 p-0 bg-yellow-500 hover:bg-yellow-600 text-white"
-                            title="Desfazer Requisição Realizada"
-                          >
-                            {undoRequisition.isPending ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            ) : (
-                              <Undo2 className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
           </div>
         </div>
       </main>

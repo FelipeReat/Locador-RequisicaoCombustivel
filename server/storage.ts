@@ -17,6 +17,14 @@ export interface VehicleChecklist {
   endDate?: string;
 }
 
+export interface PaginatedFuelRequisitionsResult {
+  data: FuelRequisition[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -64,6 +72,7 @@ export interface IStorage {
 
   // Fuel Requisitions
   getFuelRequisitions(): Promise<FuelRequisition[]>;
+  getFuelRequisitionsPaginated(page: number, limit: number, status?: string): Promise<PaginatedFuelRequisitionsResult>;
   getFuelRequisition(id: number): Promise<FuelRequisition | undefined>;
   createFuelRequisition(requisition: InsertFuelRequisition): Promise<FuelRequisition>;
   updateFuelRequisition(id: number, updates: Partial<FuelRequisition>): Promise<FuelRequisition | undefined>;
@@ -1195,6 +1204,30 @@ export class MemStorage implements IStorage {
     return Array.from(this.fuelRequisitions.values()).sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+  }
+
+  async getFuelRequisitionsPaginated(page: number, limit: number, status?: string): Promise<PaginatedFuelRequisitionsResult> {
+    const normalizedPage = Math.max(1, Math.floor(page) || 1);
+    const normalizedLimit = Math.max(1, Math.floor(limit) || 15);
+    const normalizedStatus = status && status !== "all" ? status : undefined;
+
+    const allRequisitions = await this.getFuelRequisitions();
+    const filteredRequisitions = normalizedStatus
+      ? allRequisitions.filter((requisition) => requisition.status === normalizedStatus)
+      : allRequisitions;
+
+    const total = filteredRequisitions.length;
+    const totalPages = Math.max(1, Math.ceil(total / normalizedLimit));
+    const safePage = Math.min(normalizedPage, totalPages);
+    const offset = (safePage - 1) * normalizedLimit;
+
+    return {
+      data: filteredRequisitions.slice(offset, offset + normalizedLimit),
+      page: safePage,
+      limit: normalizedLimit,
+      total,
+      totalPages,
+    };
   }
 
   async getFuelRequisition(id: number): Promise<FuelRequisition | undefined> {

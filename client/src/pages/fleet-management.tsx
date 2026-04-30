@@ -225,20 +225,14 @@ function FleetManagement() {
 
   const toggleVehicleStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      console.log(`🔄 Alterando status do veículo ${id} para ${status}`);
       const response = await apiRequest("PATCH", `/api/vehicles/${id}/status`, { status });
       const result = await response.json();
-      console.log(`✅ Resposta do servidor:`, result);
       return result;
     },
     onSuccess: (data, { id, status }) => {
-      console.log(`🎉 Sucesso na mutação - Veículo ${id} agora tem status ${status}`);
-
-      // Invalidação agressiva e refetch imediato para garantir dados atualizados
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
       queryClient.refetchQueries({ queryKey: ["/api/vehicles"] });
 
-      // Atualização otimista adicional com dados do servidor
       queryClient.setQueryData<Vehicle[]>(["/api/vehicles"], (old) => {
         if (!old) return old;
         return old.map(vehicle => 
@@ -246,17 +240,12 @@ function FleetManagement() {
         );
       });
 
-      console.log(`🔄 Cache invalidado e atualizado com força`);
-
       toast({
         title: t("success"),
         description: t("vehicle-status-changed"),
       });
     },
     onError: (error) => {
-      console.error(`❌ Erro na mutação:`, error);
-
-      // Forçar refresh dos dados para garantir consistência
       queryClient.invalidateQueries({ queryKey: ["/api/vehicles"] });
 
       toast({
@@ -406,6 +395,10 @@ function FleetManagement() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+  const maintenanceCount = groupedVehicles.maintenance?.length || 0;
+  const inactiveCount = groupedVehicles.inactive?.length || 0;
+  const totalCount = vehicles?.length || 0;
+  const groupedCount = Object.keys(vehiclesGroupedByType).length;
 
   if (vehiclesLoading) {
     return <LoadingSpinner message={t("loading-fleet")} />;
@@ -420,344 +413,377 @@ function FleetManagement() {
 
       <main className="flex-1 mobile-content py-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          {/* Actions Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-2 flex-wrap gap-y-2">
-              <div className="relative flex-1 sm:flex-none">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder={t('search-vehicles')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full sm:w-64"
-                />
-              </div>
+          <div className="overflow-hidden rounded-2xl border bg-gradient-to-br from-zinc-700 via-stone-700 to-amber-600 text-white shadow-sm">
+            <div className="p-6 space-y-6">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div className="space-y-2">
+                  <div className="text-sm text-white/75">Gestão da frota</div>
+                  <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
+                    <Car className="h-8 w-8 text-white" />
+                    {t('fleet-management')}
+                  </h1>
+                  <p className="max-w-2xl text-sm text-white/80">
+                    Organize veículos, acompanhe status operacionais e filtre a frota com mais clareza.
+                  </p>
+                </div>
 
-              {/* Type Filter */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-10 border-dashed">
-                    <Filter className="mr-2 h-4 w-4" />
-                    Tipo
-                    {selectedVehicleTypes.length > 0 && (
-                      <Badge variant="secondary" className="ml-2 rounded-sm px-1 font-normal">
-                        {selectedVehicleTypes.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[200px]">
-                  <DropdownMenuLabel>Filtrar por Tipo</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={selectedVehicleTypes.length === 0}
-                    onCheckedChange={() => setSelectedVehicleTypes([])}
-                  >
-                    Todos
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={selectedVehicleTypes.includes(0)}
-                    onCheckedChange={(checked) => {
-                      if (checked) setSelectedVehicleTypes([...selectedVehicleTypes, 0]);
-                      else setSelectedVehicleTypes(selectedVehicleTypes.filter(id => id !== 0));
-                    }}
-                  >
-                    Sem Tipo
-                  </DropdownMenuCheckboxItem>
-                  {vehicleTypes?.filter(t => t.active).map((type) => (
-                    <DropdownMenuCheckboxItem
-                      key={type.id}
-                      checked={selectedVehicleTypes.includes(type.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          // Remove "Todos" implicit selection if specific type is selected? 
-                          // No, logic handles empty array as "All".
-                          setSelectedVehicleTypes([...selectedVehicleTypes, type.id]);
-                        } else {
-                          setSelectedVehicleTypes(selectedVehicleTypes.filter(id => id !== type.id));
-                        }
-                      }}
+                <div className="flex flex-col gap-3 lg:flex-row xl:w-auto">
+                  {isAdminOrManager && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate("/vehicle-types")}
+                      className="border-white/20 bg-white/10 text-white hover:bg-white/15"
                     >
-                      {type.name}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      <Car className="mr-2 h-4 w-4" />
+                      Tipos de Veículos
+                    </Button>
+                  )}
 
-              {/* Group Toggle */}
-              <Button
-                variant={isGroupedByType ? "secondary" : "outline"}
-                size="sm"
-                className="h-10"
-                onClick={() => setIsGroupedByType(!isGroupedByType)}
-                title={isGroupedByType ? "Desagrupar" : "Agrupar por Tipo"}
-              >
-                <Layers className="mr-2 h-4 w-4" />
-                Agrupar
-              </Button>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={handleNew} className="bg-white text-amber-700 hover:bg-white/90">
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t('new-vehicle')}
+                      </Button>
+                    </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {editingVehicle ? t('edit-vehicle') : t('new-vehicle')}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {editingVehicle ? t('update-vehicle-info') : t('add-new-vehicle')}
+                      </DialogDescription>
+                    </DialogHeader>
 
-              <div className="flex items-center bg-muted p-1 rounded-md border">
-                <Button
-                  variant={viewMode === "grid" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => setViewMode("grid")}
-                  title="Visualização em Grade"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => setViewMode("list")}
-                  title="Visualização em Lista"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="plate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t('plate')} *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="ABC-1234" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="year"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t('year')} *</FormLabel>
+                                <FormControl>
+                                  <Input type="number" min="1900" max={new Date().getFullYear() + 1} {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="vehicleTypeId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tipo de Veículo</FormLabel>
+                                <Select 
+                                  onValueChange={(value) => field.onChange(value === "null" ? null : Number(value))} 
+                                  value={field.value === null || field.value === undefined ? "null" : field.value.toString()}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione um tipo" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="null">Selecione um tipo</SelectItem>
+                                    {vehicleTypes?.filter(t => t.active).map((type) => (
+                                      <SelectItem key={type.id} value={type.id.toString()}>
+                                        {type.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="brand"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t('brand')} *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Toyota, Volkswagen, etc." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="model"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t('model')} *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Corolla, Gol, etc." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="fuelType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t('fuel')} *</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder={t('select-option')} />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="gasolina">{t('gasoline')}</SelectItem>
+                                    <SelectItem value="etanol">{t('ethanol')}</SelectItem>
+                                    <SelectItem value="diesel">{t('diesel')}</SelectItem>
+                                    <SelectItem value="diesel_s10">{t('diesel-s10')}</SelectItem>
+                                    <SelectItem value="flex">{t('flex')}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="companyId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Empresa</FormLabel>
+                                <Select 
+                                  onValueChange={(value) => field.onChange(value === "null" ? null : Number(value))} 
+                                  value={field.value === null || field.value === undefined ? "null" : field.value.toString()}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecionar empresa" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="null">Sem empresa</SelectItem>
+                                    {companies?.map((company) => (
+                                      <SelectItem key={company.id} value={company.id.toString()}>
+                                        {company.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="mileage"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t('mileage')}</FormLabel>
+                                <FormControl>
+                                  <Input type="number" placeholder="0" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                          <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                            {t('cancel')}
+                          </Button>
+                          <Button type="submit" disabled={createVehicle.isPending || updateVehicle.isPending} className="bg-amber-600 hover:bg-amber-700 text-white">
+                            {editingVehicle ? t('update') : t('create')}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row gap-2">
-              {isAdminOrManager && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate("/vehicle-types")}
-                  className="w-full sm:w-auto"
-                >
-                  <Car className="mr-2 h-4 w-4" />
-                  Tipos de Veículos
-                </Button>
-              )}
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+                <div className="space-y-3">
+                  <div className="relative w-full xl:max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 h-4 w-4" />
+                    <Input
+                      placeholder={t('search-vehicles')}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="border-white/15 bg-white/10 pl-10 text-white placeholder:text-white/55"
+                    />
+                  </div>
 
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={handleNew} className="w-full sm:w-auto">
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t('new-vehicle')}
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingVehicle ? t('edit-vehicle') : t('new-vehicle')}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {editingVehicle ? t('update-vehicle-info') : t('add-new-vehicle')}
-                  </DialogDescription>
-                </DialogHeader>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-10 border-white/20 bg-white/10 text-white hover:bg-white/15">
+                          <Filter className="mr-2 h-4 w-4" />
+                          Tipo
+                          {selectedVehicleTypes.length > 0 && (
+                            <Badge variant="secondary" className="ml-2 rounded-sm px-1 font-normal text-zinc-900">
+                              {selectedVehicleTypes.length}
+                            </Badge>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-[220px]">
+                        <DropdownMenuLabel>Filtrar por Tipo</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuCheckboxItem
+                          checked={selectedVehicleTypes.length === 0}
+                          onCheckedChange={() => setSelectedVehicleTypes([])}
+                        >
+                          Todos
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuCheckboxItem
+                          checked={selectedVehicleTypes.includes(0)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedVehicleTypes([...selectedVehicleTypes, 0]);
+                            else setSelectedVehicleTypes(selectedVehicleTypes.filter(id => id !== 0));
+                          }}
+                        >
+                          Sem Tipo
+                        </DropdownMenuCheckboxItem>
+                        {vehicleTypes?.filter(t => t.active).map((type) => (
+                          <DropdownMenuCheckboxItem
+                            key={type.id}
+                            checked={selectedVehicleTypes.includes(type.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedVehicleTypes([...selectedVehicleTypes, type.id]);
+                              } else {
+                                setSelectedVehicleTypes(selectedVehicleTypes.filter(id => id !== type.id));
+                              }
+                            }}
+                          >
+                            {type.name}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="plate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('plate')} *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="ABC-1234" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <Button
+                      variant={isGroupedByType ? "secondary" : "outline"}
+                      size="sm"
+                      className={isGroupedByType ? "h-10 bg-white text-amber-700 hover:bg-white/90" : "h-10 border-white/20 bg-white/10 text-white hover:bg-white/15"}
+                      onClick={() => setIsGroupedByType(!isGroupedByType)}
+                      title={isGroupedByType ? "Desagrupar" : "Agrupar por Tipo"}
+                    >
+                      <Layers className="mr-2 h-4 w-4" />
+                      Agrupar
+                    </Button>
 
-                      <FormField
-                        control={form.control}
-                        name="year"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('year')} *</FormLabel>
-                            <FormControl>
-                              <Input type="number" min="1900" max={new Date().getFullYear() + 1} {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="vehicleTypeId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo de Veículo</FormLabel>
-                            <Select 
-                              onValueChange={(value) => field.onChange(value === "null" ? null : Number(value))} 
-                              value={field.value === null || field.value === undefined ? "null" : field.value.toString()}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione um tipo" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="null">Selecione um tipo</SelectItem>
-                                {vehicleTypes?.filter(t => t.active).map((type) => (
-                                  <SelectItem key={type.id} value={type.id.toString()}>
-                                    {type.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="brand"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('brand')} *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Toyota, Volkswagen, etc." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="model"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('model')} *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Corolla, Gol, etc." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="fuelType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('fuel')} *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('select-option')} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="gasolina">{t('gasoline')}</SelectItem>
-                                <SelectItem value="etanol">{t('ethanol')}</SelectItem>
-                                <SelectItem value="diesel">{t('diesel')}</SelectItem>
-                                <SelectItem value="diesel_s10">{t('diesel-s10')}</SelectItem>
-                                <SelectItem value="flex">{t('flex')}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="companyId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Empresa</FormLabel>
-                            <Select 
-                              onValueChange={(value) => field.onChange(value === "null" ? null : Number(value))} 
-                              value={field.value === null || field.value === undefined ? "null" : field.value.toString()}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecionar empresa" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="null">Sem empresa</SelectItem>
-                                {companies?.map((company) => (
-                                  <SelectItem key={company.id} value={company.id.toString()}>
-                                    {company.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="mileage"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('mileage')}</FormLabel>
-                            <FormControl>
-                              <Input type="number" placeholder="0" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        {t('cancel')}
+                    <div className="flex items-center rounded-md border border-white/15 bg-white/10 p-1">
+                      <Button
+                        variant={viewMode === "grid" ? "secondary" : "ghost"}
+                        size="sm"
+                        className={viewMode === "grid" ? "h-8 w-8 p-0 bg-white text-amber-700 hover:bg-white/90" : "h-8 w-8 p-0 text-white hover:bg-white/10"}
+                        onClick={() => setViewMode("grid")}
+                        title="Visualização em Grade"
+                      >
+                        <LayoutGrid className="h-4 w-4" />
                       </Button>
-                      <Button type="submit" disabled={createVehicle.isPending || updateVehicle.isPending}>
-                        {editingVehicle ? t('update') : t('create')}
+                      <Button
+                        variant={viewMode === "list" ? "secondary" : "ghost"}
+                        size="sm"
+                        className={viewMode === "list" ? "h-8 w-8 p-0 bg-white text-amber-700 hover:bg-white/90" : "h-8 w-8 p-0 text-white hover:bg-white/10"}
+                        onClick={() => setViewMode("list")}
+                        title="Visualização em Lista"
+                      >
+                        <List className="h-4 w-4" />
                       </Button>
                     </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+                  </div>
+                </div>
+
+                <div className="grid gap-px overflow-hidden rounded-xl bg-white/10 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="bg-white/5 p-4">
+                    <div className="text-xs text-white/70">{t('active')}</div>
+                    <div className="mt-1 text-2xl font-semibold">{groupedVehicles.active?.length || 0}</div>
+                  </div>
+                  <div className="bg-white/5 p-4">
+                    <div className="text-xs text-white/70">{t('maintenance')}</div>
+                    <div className="mt-1 text-2xl font-semibold">{maintenanceCount}</div>
+                  </div>
+                  <div className="bg-white/5 p-4">
+                    <div className="text-xs text-white/70">{t('inactive')}</div>
+                    <div className="mt-1 text-2xl font-semibold">{inactiveCount}</div>
+                  </div>
+                  <div className="bg-white/5 p-4">
+                    <div className="text-xs text-white/70">Tipos visuais</div>
+                    <div className="mt-1 text-2xl font-semibold">{groupedCount}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Vehicles Statistics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <Card 
-              className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                statusFilter === "active" ? "ring-2 ring-green-500 bg-green-50 dark:bg-green-900/20" : ""
+              className={`cursor-pointer border-muted/60 p-4 transition-all hover:shadow-md ${
+                statusFilter === "active" ? "ring-2 ring-amber-500 bg-amber-50/80 dark:bg-amber-950/20" : ""
               }`}
               onClick={() => setStatusFilter(statusFilter === "active" ? "all" : "active")}
             >
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-amber-700 dark:text-amber-300">
                   {groupedVehicles.active?.length || 0}
                 </div>
                 <div className="text-sm text-muted-foreground">{t('active')}</div>
               </div>
             </Card>
             <Card 
-              className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                statusFilter === "maintenance" ? "ring-2 ring-yellow-500 bg-yellow-50 dark:bg-yellow-900/20" : ""
+              className={`cursor-pointer border-muted/60 p-4 transition-all hover:shadow-md ${
+                statusFilter === "maintenance" ? "ring-2 ring-amber-500 bg-amber-50/80 dark:bg-amber-950/20" : ""
               }`}
               onClick={() => setStatusFilter(statusFilter === "maintenance" ? "all" : "maintenance")}
             >
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {groupedVehicles.maintenance?.length || 0}
+                <div className="text-2xl font-bold text-amber-700 dark:text-amber-300">
+                  {maintenanceCount}
                 </div>
                 <div className="text-sm text-muted-foreground">{t('maintenance')}</div>
               </div>
             </Card>
             <Card 
-              className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+              className={`cursor-pointer border-muted/60 p-4 transition-all hover:shadow-md ${
                 statusFilter === "inactive" ? "ring-2 ring-red-500 bg-red-50 dark:bg-red-900/20" : ""
               }`}
               onClick={() => setStatusFilter(statusFilter === "inactive" ? "all" : "inactive")}
@@ -770,14 +796,14 @@ function FleetManagement() {
               </div>
             </Card>
             <Card 
-              className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                statusFilter === "all" ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""
+              className={`cursor-pointer border-muted/60 p-4 transition-all hover:shadow-md ${
+                statusFilter === "all" ? "ring-2 ring-zinc-400 bg-zinc-100 dark:bg-zinc-800/70" : ""
               }`}
               onClick={() => setStatusFilter("all")}
             >
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {vehicles?.length || 0}
+                <div className="text-2xl font-bold text-zinc-700 dark:text-zinc-200">
+                  {totalCount}
                 </div>
                 <div className="text-sm text-muted-foreground">Total</div>
               </div>
@@ -785,7 +811,8 @@ function FleetManagement() {
           </div>
 
           {/* Vehicles List */}
-          <div className="space-y-4 mb-6">
+          <Card className="border-muted/60">
+            <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -814,16 +841,17 @@ function FleetManagement() {
                 {filteredVehicles.length} veículos encontrados
               </div>
             </div>
-          </div>
+            </CardHeader>
+          </Card>
 
           {viewMode === "grid" ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {paginatedVehicles.map((vehicle) => (
-                <Card key={vehicle.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
-                  <CardHeader className="pb-4">
+                <Card key={vehicle.id} className="overflow-hidden border-muted/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+                  <CardHeader className="border-b bg-gradient-to-r from-zinc-50 via-background to-amber-50/70 dark:from-zinc-900/40 dark:via-background dark:to-amber-950/10 pb-4">
                     <div className="flex items-center justify-between">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center ring-2 ring-primary/20">
-                        <Car className="h-6 w-6 text-primary" />
+                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-zinc-200 via-stone-200 to-amber-200 dark:from-zinc-800 dark:via-stone-800 dark:to-amber-950/40 flex items-center justify-center ring-2 ring-amber-100 dark:ring-amber-950/20">
+                        <Car className="h-6 w-6 text-amber-700 dark:text-amber-300" />
                       </div>
                       <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
                         <Select
@@ -844,7 +872,7 @@ function FleetManagement() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(vehicle)}
-                            className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                            className="h-8 w-8 p-0 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
                             title="Editar veículo"
                           >
                             <Edit className="h-4 w-4" />
@@ -870,9 +898,9 @@ function FleetManagement() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                      <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-2">
                         <div className="flex items-center space-x-2">
-                          <Fuel className="h-4 w-4 text-gray-500" />
+                          <Fuel className="h-4 w-4 text-zinc-500" />
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             {t('fuel')}:
                           </span>
@@ -882,9 +910,9 @@ function FleetManagement() {
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                      <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-2">
                         <div className="flex items-center space-x-2">
-                          <Gauge className="h-4 w-4 text-gray-500" />
+                          <Gauge className="h-4 w-4 text-zinc-500" />
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             KM:
                           </span>
@@ -895,9 +923,9 @@ function FleetManagement() {
                       </div>
 
                       {vehicle.lastMaintenance && (
-                        <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-2 rounded">
+                        <div className="flex items-center justify-between rounded-lg border bg-zinc-50/80 dark:bg-zinc-900/40 p-2">
                           <div className="flex items-center space-x-2">
-                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <Calendar className="h-4 w-4 text-zinc-500" />
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                               Última manutenção:
                             </span>
@@ -925,9 +953,9 @@ function FleetManagement() {
               ))}
             </div>
           ) : (
-            <div className="rounded-md border bg-white dark:bg-gray-900 overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border bg-white dark:bg-gray-900">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-zinc-100 dark:bg-zinc-800">
                   <TableRow>
                     <TableHead>{t('plate')}</TableHead>
                     <TableHead>{t('model')}</TableHead>
@@ -949,7 +977,7 @@ function FleetManagement() {
                       return (
                         <React.Fragment key={typeId}>
                           <TableRow 
-                            className="bg-muted/50 hover:bg-muted cursor-pointer"
+                            className="bg-zinc-100/80 dark:bg-zinc-800/70 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 cursor-pointer"
                             onClick={() => toggleGroup(typeId)}
                           >
                             <TableCell colSpan={8} className="font-semibold py-2">
@@ -963,8 +991,8 @@ function FleetManagement() {
                               </div>
                             </TableCell>
                           </TableRow>
-                          {isExpanded && vehicles.map(vehicle => (
-                            <TableRow key={vehicle.id}>
+                          {isExpanded && vehicles.map((vehicle, index) => (
+                            <TableRow key={vehicle.id} className={index % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-zinc-50/60 dark:bg-zinc-900/60"}>
                               <TableCell className="font-medium">{vehicle.plate}</TableCell>
                               <TableCell>{vehicle.model}</TableCell>
                               <TableCell>{vehicle.brand}</TableCell>
@@ -992,7 +1020,7 @@ function FleetManagement() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleEdit(vehicle)}
-                                    className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                                    className="h-8 w-8 p-0 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
                                     title="Editar veículo"
                                   >
                                     <Edit className="h-4 w-4" />
@@ -1014,8 +1042,8 @@ function FleetManagement() {
                       );
                     })
                   ) : (
-                    paginatedVehicles.map((vehicle) => (
-                    <TableRow key={vehicle.id}>
+                    paginatedVehicles.map((vehicle, index) => (
+                    <TableRow key={vehicle.id} className={index % 2 === 0 ? "bg-white dark:bg-gray-900" : "bg-zinc-50/60 dark:bg-zinc-900/60"}>
                       <TableCell className="font-medium">{vehicle.plate}</TableCell>
                       <TableCell>{vehicle.model}</TableCell>
                       <TableCell>{vehicle.brand}</TableCell>
@@ -1043,7 +1071,7 @@ function FleetManagement() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(vehicle)}
-                            className="h-8 w-8 p-0 hover:bg-blue-100 hover:text-blue-600"
+                            className="h-8 w-8 p-0 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
                             title="Editar veículo"
                           >
                             <Edit className="h-4 w-4" />
@@ -1067,9 +1095,9 @@ function FleetManagement() {
           )}
 
           {filteredVehicles.length === 0 && (
-            <Card>
+            <Card className="border-dashed border-2 border-zinc-300 dark:border-zinc-700">
               <CardContent className="p-12 text-center">
-                <Car className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <Car className="mx-auto h-12 w-12 text-amber-500 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{t('no-vehicles-found')}</h3>
                 <p className="text-gray-600 dark:text-gray-300">
                   {searchTerm ? t('adjust-filters') : t('start-adding-vehicle')}

@@ -62,9 +62,15 @@ function Router() {
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex bg-zinc-100 dark:bg-zinc-950">
       <Sidebar />
-      <div className="flex-1 flex flex-col lg:ml-0 ml-0 min-w-0">
+      <div className="relative flex-1 flex min-w-0 flex-col overflow-hidden bg-gradient-to-br from-zinc-100 via-stone-50 to-amber-100/50 dark:from-zinc-950 dark:via-zinc-950 dark:to-amber-950/10">
+        <div className="pointer-events-none absolute inset-0 opacity-70">
+          <div className="absolute -top-24 right-0 h-80 w-80 rounded-full bg-amber-300/20 blur-3xl dark:bg-amber-500/10" />
+          <div className="absolute top-1/3 left-0 h-72 w-72 rounded-full bg-stone-300/30 blur-3xl dark:bg-stone-500/10" />
+          <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-zinc-300/30 blur-3xl dark:bg-zinc-700/10" />
+        </div>
+        <div className="relative flex min-w-0 flex-1 flex-col">
         <Switch>
           <Route path="/">
             <HomeRedirect />
@@ -141,6 +147,7 @@ function Router() {
           </Route>
           <Route component={NotFound} />
         </Switch>
+        </div>
       </div>
     </div>
   );

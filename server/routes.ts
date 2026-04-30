@@ -275,10 +275,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all fuel requisitions
   app.get("/api/fuel-requisitions", async (req, res) => {
     try {
-      const requisitions = await storage.getFuelRequisitions();
+      const pageParam = Number.parseInt(req.query.page as string, 10);
+      const limitParam = Number.parseInt(req.query.limit as string, 10);
+      const statusParam = typeof req.query.status === "string" ? req.query.status : undefined;
 
-      // Retorna todas as requisições sem paginação
-      // Cache muito baixo para dados críticos
+      if (Number.isFinite(pageParam) || Number.isFinite(limitParam) || statusParam) {
+        const paginatedRequisitions = await storage.getFuelRequisitionsPaginated(
+          Number.isFinite(pageParam) ? pageParam : 1,
+          Number.isFinite(limitParam) ? limitParam : 15,
+          statusParam,
+        );
+
+        res.set('Cache-Control', 'public, max-age=2');
+        return res.json(paginatedRequisitions);
+      }
+
+      const requisitions = await storage.getFuelRequisitions();
       res.set('Cache-Control', 'public, max-age=2');
       res.json(requisitions);
     } catch (error) {
