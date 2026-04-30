@@ -11,8 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import type { FuelRequisition } from "@shared/schema";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 interface NotificationItem {
   id: string;
@@ -20,6 +18,7 @@ interface NotificationItem {
   title: string;
   description: string;
   time: string;
+  timestamp: number;
   requisitionId?: number;
   priority?: "low" | "medium" | "high" | "urgent";
   isRead?: boolean;
@@ -78,6 +77,7 @@ export function NotificationsPopover() {
           title: "Nova Requisição",
           description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
           time: formatTimeAgo(createdAt),
+          timestamp: createdAt.getTime(),
           requisitionId: req.id,
           priority: req.priority as any,
           isRead: readNotifications.has(notificationId) || !isRecent,
@@ -92,6 +92,7 @@ export function NotificationsPopover() {
           title: "Aguardando Aprovação",
           description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
           time: formatTimeAgo(createdAt),
+          timestamp: createdAt.getTime(),
           requisitionId: req.id,
           priority: req.priority as any,
           isRead: readNotifications.has(notificationId),
@@ -109,6 +110,7 @@ export function NotificationsPopover() {
           title: req.status === "approved" ? "Requisição Aprovada" : "Status Alterado",
           description: `REQ${String(req.id).padStart(3, "0")} - ${req.client}`,
           time: formatTimeAgo(approvedDate),
+          timestamp: approvedDate.getTime(),
           requisitionId: req.id,
           priority: req.priority as any,
           isRead: readNotifications.has(notificationId) || !isRecent,
@@ -120,7 +122,7 @@ export function NotificationsPopover() {
       if (a.isRead !== b.isRead) {
         return a.isRead ? 1 : -1;
       }
-      return new Date(b.time).getTime() - new Date(a.time).getTime();
+      return b.timestamp - a.timestamp;
     });
   }, [requisitions, readNotifications]);
 

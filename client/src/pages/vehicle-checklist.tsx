@@ -187,11 +187,8 @@ export default function VehicleChecklistPage() {
   const [entradaViewMode, setEntradaViewMode] = useState<'pending' | 'history'>('pending');
 
   useEffect(() => {
-    if (user?.role === 'admin' || user?.role === 'manager') {
-      setHistoryFilterMode('all');
-      return;
-    }
-    setHistoryFilterMode('mine');
+    const nextMode = user?.role === 'admin' || user?.role === 'manager' ? 'all' : 'mine';
+    setHistoryFilterMode((current) => (current === nextMode ? current : nextMode));
   }, [user?.role]);
 
   const historyVehicleId = useMemo(() => {
@@ -301,13 +298,14 @@ export default function VehicleChecklistPage() {
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
 
   useEffect(() => {
-    if (Array.isArray(savedObsConfig) && savedObsConfig.length > 0) {
-      setObsConfig(savedObsConfig);
-    } else {
-      // Fallback to default if no saved config
-      setObsConfig(defaultObsConfig.map(i => ({ ...i, defaultChecked: false })) as unknown as ObsItem[]);
-    }
-    setIsConfigLoaded(true);
+    const nextConfig = Array.isArray(savedObsConfig) && savedObsConfig.length > 0
+      ? savedObsConfig
+      : defaultObsConfig.map(i => ({ ...i, defaultChecked: false })) as unknown as ObsItem[];
+
+    setObsConfig((current) => {
+      return JSON.stringify(current) === JSON.stringify(nextConfig) ? current : nextConfig;
+    });
+    setIsConfigLoaded((current) => (current ? current : true));
   }, [savedObsConfig]);
 
   // Sorting State
@@ -407,11 +405,13 @@ export default function VehicleChecklistPage() {
         defaults[String(i.id)] = i.defaultChecked ? true : undefined;
       });
       const currentValues = exitForm.getValues();
-      // Remove old obsConfig keys from values to clean up? Not strictly necessary but good.
-      exitForm.reset({
-        ...currentValues,
-        ...defaults
-      });
+      const hasDifferences = Object.entries(defaults).some(([key, value]) => currentValues[key] !== value);
+      if (hasDifferences) {
+        exitForm.reset({
+          ...currentValues,
+          ...defaults
+        });
+      }
     } else if (selectedTemplateId === 'legacy' && obsConfig.length > 0) {
        // Re-apply legacy defaults if switching back
        const defaults: Record<string, boolean | undefined> = {};
@@ -420,10 +420,13 @@ export default function VehicleChecklistPage() {
          // In applyObsDefaultsToFormFor: defaults[i.key] = undefined;
        });
        const currentValues = exitForm.getValues();
-       exitForm.reset({
-         ...currentValues,
-         ...defaults
-       });
+       const hasDifferences = Object.keys(defaults).some((key) => currentValues[key] !== undefined);
+       if (hasDifferences) {
+         exitForm.reset({
+           ...currentValues,
+           ...defaults
+         });
+       }
     }
   }, [selectedTemplateItems, selectedTemplateId, obsConfig, exitForm]);
 

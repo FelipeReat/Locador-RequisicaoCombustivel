@@ -1,7 +1,7 @@
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/auth-context';
 import { useLocation } from 'wouter';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 
 interface ProtectedRouteProps {
@@ -25,19 +25,26 @@ export default function ProtectedRoute({ path, children }: ProtectedRouteProps) 
     }
     
     if (!hasAccess(path)) {
-      // Redireciona de forma segura
-      queueMicrotask(() => {
-        if (userRole === 'driver') {
-          navigate('/vehicle-checklist');
-        } else {
-          navigate('/dashboard');
-        }
-      });
       return 'no-access';
     }
     
     return 'allowed';
-  }, [authLoading, user, hasAccess, path, navigate, userRole]);
+  }, [authLoading, user, hasAccess, path]);
+
+  useEffect(() => {
+    if (accessState === 'no-user') {
+      navigate('/');
+      return;
+    }
+
+    if (accessState === 'no-access') {
+      if (userRole === 'driver') {
+        navigate('/vehicle-checklist');
+      } else {
+        navigate('/dashboard');
+      }
+    }
+  }, [accessState, navigate, userRole]);
 
   // Renderização baseada no estado
   switch (accessState) {
@@ -49,10 +56,6 @@ export default function ProtectedRoute({ path, children }: ProtectedRouteProps) 
       );
     
     case 'no-user':
-      // Redireciona para login se não há usuário autenticado
-      queueMicrotask(() => {
-        navigate('/');
-      });
       return null;
     
     case 'no-access':
