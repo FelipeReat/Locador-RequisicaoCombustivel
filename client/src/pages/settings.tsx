@@ -157,6 +157,13 @@ export default function Settings() {
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
+  const currentMonthYear = new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
+
+  const lastUpdateLabel = currentMonthYear.charAt(0).toUpperCase() + currentMonthYear.slice(1);
+
   // Update form defaults when user data loads
   if (user && !profileForm.getValues().fullName) {
     profileForm.reset({
@@ -662,15 +669,15 @@ export default function Settings() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{t('version-label')}:</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">1.0.0</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">3.5.9</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{t('last-update-label')}:</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Agosto 2025</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{lastUpdateLabel}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{t('developed-by-label')}:</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">NEOLOQ COMPANY</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">REAT INDUSTRIES</span>
                     </div>
                   </div>
                 </CardContent>
